@@ -11,31 +11,33 @@ PERMISSION_RESPONSIBLE_GROUPS = [
     UserGroups.staff.value, UserGroups.student.value, UserGroups.admin.value
 ]
 
-FIRST_DAY_DATE = datetime.datetime(2018, 8, 6, 0, 0).date()
+FIRST_DAY_DATE = datetime.datetime(2022, 8, 8, 0, 0).date()
 
 BOOK_CERTIFICATE_VALUE = 50
 INITIAL_MONEY = 120
 INITIAL_MONEY_DESC = 'Поздравляем с началом экономической игры!'
 
-WORKOUT_BUDGET = 25.
+WORKOUT_BUDGET = 35.
 EXAM_BUDGET = 80.
 ACTIVITY_REWARD = {
     'sport_activity': {
         'single': [20., 15., 10., 5.]
     },
     'evening_activity': {
-        'single': [20., 15., 10.],
-        'team': [120., 100., 80.]
+        'single': [20., 15., 10., 5],
+        'team': [120., 100., 80., 30]
     },
     'day_activity': {
-        'single': [20., 15., 10.],
-        'team': [120., 100., 80.]
+        'single': [20., 15., 10., 5],
+        'team': [120., 100., 80., 30]
     }
 }
 DS_REWARD = {'potato': 60., 'bread_cut': 60., 'serving': 60.}
 
 OBL_STUDY_NEEDED = 18
+OBL_STUDY_NEEDED_EQUATOR = 8
 LAB_PASS_NEEDED = {7: 3, 8: 3, 9: 2, 10: 2, 11: 2}
+LAB_PASS_NEEDED_EQUATOR = 1
 FAC_PASS_NEEDED = {7: 0, 8: 0, 9: 1, 10: 1, 11: 1}
 
 LAB_PENALTY = 50  # for each unmade lab
@@ -56,25 +58,25 @@ USE_PICS = False
 DEFAULT_PIC_PATH = 'bank/avatars/default.jpg'
 
 TAX_FROM_DAY = {
-    1: 0,
-    2: 5,
-    3: 7,
-    4: 9,
-    5: 12,
-    6: 15,
-    7: 18,
+    1: 20,
+    2: 20,
+    3: 20,
+    4: 20,
+    5: 20,
+    6: 20,
+    7: 20,
     8: 20,
-    9: 22,
-    10: 23,
-    11: 24,
-    12: 25,
-    13: 25,
-    14: 25,
-    15: 25,
-    16: 25,
-    17: 25,
-    18: 25,
-    19: 25,
-    20: 25,
-    21: 25
+    9: 20,
+    10: 20,
+    11: 20,
+    12: 20,
+    13: 20,
+    14: 20,
+    15: 20,
+    16: 20,
+    17: 20,
+    18: 20,
+    19: 20,
+    20: 20,
+    21: 20
 }

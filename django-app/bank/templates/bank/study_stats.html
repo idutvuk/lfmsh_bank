@@ -40,7 +40,8 @@
                 <th>Сделал Лаб</th>
                 <th>Факультативы</th>
                 <th>Семинары</th>
-                <th>Ожидаемый штраф</th>
+                <th>Ожидаемый экваториальный штраф</th>
+                <th>Ожидаемый финальный штраф</th>
             </tr>
         {% endif %}
     <tr>
@@ -48,6 +49,7 @@
         <td>{{ acc.counters.val.lab_pass }}</td>
         <td>{{ acc.counters.val.fac_attend }}</td>
         <td>{{ acc.counters.val.seminar_attend }}</td>
+        <td>{{ acc.counters.info.expected_equator_fine }}@</td>
         <td>{{ acc.counters.info.expected_fine }}@</td>
     </tr>
 

@@ -2,8 +2,8 @@ import math
 
 import logging
 
-from bank.constants import UserGroups, Actions, States, AttendanceTypeEnum, OBL_STUDY_NEEDED, BALANCE_DANGER, \
-    BALANCE_WARNING
+from bank.constants import UserGroups, Actions, States, AttendanceTypeEnum, OBL_STUDY_NEEDED,\
+                           BALANCE_DANGER, BALANCE_WARNING
 from bank.helper_functions import get_perm_name
 
 from bank.models.Attendance import Attendance
@@ -211,6 +211,7 @@ def get_counters_of_user_who_is(user, target_user, group):
   })
   info.update({
       'next_missed_lec_fine': target_user.account.get_next_missed_lec_penalty(),
+      'expected_equator_fine': target_user.account.get_equator_study_fine(),
       'expected_fine': target_user.account.get_final_study_fine()
   })
   return {'val': counters_val, 'info': info}

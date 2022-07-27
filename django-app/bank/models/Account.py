@@ -2,7 +2,8 @@ import itertools
 from django.db import models
 from django.contrib.auth.models import User
 from bank.constants import SIGN, SEM_NOT_READ_PEN, AttendanceTypeEnum, LAB_PENALTY, STEP_OBL_STD, \
-    INITIAL_STEP_OBL_STD, LAB_PASS_NEEDED, OBL_STUDY_NEEDED, FAC_PASS_NEEDED, FAC_PENALTY, \
+    INITIAL_STEP_OBL_STD, LAB_PASS_NEEDED, LAB_PASS_NEEDED_EQUATOR, OBL_STUDY_NEEDED, \
+    OBL_STUDY_NEEDED_EQUATOR, FAC_PASS_NEEDED, FAC_PENALTY, \
     LECTURE_PENALTY_STEP, LECTURE_PENALTY_INITIAL
 '''
 Extention of a User Class
@@ -75,6 +76,13 @@ class Account(models.Model):
 
     return fine
 
+  def get_equator_study_fine(self):
+    fine = 0
+    fine += self.get_obl_study_fine()
+    fine += self.get_lab_fine()
+
+    return fine
+
   def get_sem_fine(self):
     return SEM_NOT_READ_PEN * max(
         0, 1 - int(self.get_counter(AttendanceTypeEnum.seminar_pass.value)))
@@ -83,8 +91,23 @@ class Account(models.Model):
     return max(0, (self.lab_needed() - int(
         self.get_counter(AttendanceTypeEnum.lab_pass.value)))) * LAB_PENALTY
 
+  def get_lab_fine_equator(self):
+    return max(0, (LAB_PASS_NEEDED_EQUATOR - int(
+        self.get_counter(AttendanceTypeEnum.lab_pass.value)))) * LAB_PENALTY
+
   def get_obl_study_fine(self):
     deficit = max(0, (OBL_STUDY_NEEDED - int(
+        self.get_counter(AttendanceTypeEnum.seminar_attend.value) +
+        self.get_counter(AttendanceTypeEnum.fac_attend.value))))
+    single_fine = INITIAL_STEP_OBL_STD
+    fine = 0
+    for _ in range(deficit):
+      fine += single_fine
+      single_fine += STEP_OBL_STD
+    return fine
+
+  def get_obl_study_fine_equator(self):
+    deficit = max(0, (OBL_STUDY_NEEDED_EQUATOR - int(
         self.get_counter(AttendanceTypeEnum.seminar_attend.value) +
         self.get_counter(AttendanceTypeEnum.fac_attend.value))))
     single_fine = INITIAL_STEP_OBL_STD
