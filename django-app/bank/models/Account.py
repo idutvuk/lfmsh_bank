@@ -78,8 +78,8 @@ class Account(models.Model):
 
   def get_equator_study_fine(self):
     fine = 0
-    fine += self.get_obl_study_fine()
-    fine += self.get_lab_fine()
+    fine += self.get_obl_study_fine_equator()
+    fine += self.get_lab_fine_equator()
 
     return fine
 
