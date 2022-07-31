@@ -19,8 +19,8 @@ class Transaction(models.Model):
   creation_timestamp = models.DateTimeField(auto_now_add=True)
   type = models.ForeignKey(
       TransactionType, on_delete=models.PROTECT, null=False)
-  state = models.ForeignKey(TransactionState, on_delete=models.PROTECT)
-  update_of = models.ForeignKey('self', null=True, on_delete=models.PROTECT)
+  state = models.ForeignKey(TransactionState, on_delete=models.CASCADE)
+  update_of = models.ForeignKey('self', null=True, on_delete=models.CASCADE)
 
   @classmethod
   def new_transaction(cls, creator, type, creation_map, update_of=None):

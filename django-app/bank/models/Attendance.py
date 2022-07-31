@@ -16,7 +16,7 @@ class Attendance(AtomicTransaction):
       on_delete=models.CASCADE,
       null=False)
 
-  type = models.ForeignKey(AttendanceType, on_delete=models.PROTECT)
+  type = models.ForeignKey(AttendanceType, on_delete=models.CASCADE)
   attendance_block = models.ForeignKey(
       AttendanceBlock,
       on_delete=SET_NULL,

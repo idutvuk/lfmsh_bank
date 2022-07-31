@@ -154,10 +154,7 @@ class Command(BaseCommand):
     last_name_processed = ''.join(
         filter(str.isalpha, translit(last_name, 'ru', reversed=True))).lower()
 
-    if need_unique:
-      return last_name_processed + middle_name_repr + first_name_processed
-    else:
-      return last_name_processed
+    return last_name_processed + middle_name_repr + first_name_processed
 
   @staticmethod
   def read_file_as_csv(path):
