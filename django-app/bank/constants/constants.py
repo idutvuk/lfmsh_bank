@@ -11,13 +11,13 @@ PERMISSION_RESPONSIBLE_GROUPS = [
     UserGroups.staff.value, UserGroups.student.value, UserGroups.admin.value
 ]
 
-FIRST_DAY_DATE = datetime.datetime(2018, 8, 6, 0, 0).date()
+FIRST_DAY_DATE = datetime.datetime(2021, 8, 9, 0, 0).date()
 
 BOOK_CERTIFICATE_VALUE = 50
 INITIAL_MONEY = 120
 INITIAL_MONEY_DESC = 'Поздравляем с началом экономической игры!'
 
-WORKOUT_BUDGET = 25.
+WORKOUT_BUDGET = 35.
 EXAM_BUDGET = 80.
 ACTIVITY_REWARD = {
     'sport_activity': {
@@ -52,29 +52,29 @@ NUM_OF_PARTIES = 4
 BALANCE_DANGER = 0
 BALANCE_WARNING = 30
 
-USE_PICS = False
+USE_PICS = True
 DEFAULT_PIC_PATH = 'bank/avatars/default.jpg'
 
 TAX_FROM_DAY = {
-    1: 0,
-    2: 5,
-    3: 7,
-    4: 9,
-    5: 12,
-    6: 15,
-    7: 18,
+    1: 20,
+    2: 20,
+    3: 20,
+    4: 20,
+    5: 20,
+    6: 20,
+    7: 20,
     8: 20,
-    9: 22,
-    10: 23,
-    11: 24,
-    12: 25,
-    13: 25,
-    14: 25,
-    15: 25,
-    16: 25,
-    17: 25,
-    18: 25,
-    19: 25,
-    20: 25,
-    21: 25
+    9: 20,
+    10: 20,
+    11: 20,
+    12: 20,
+    13: 20,
+    14: 20,
+    15: 20,
+    16: 20,
+    17: 20,
+    18: 20,
+    19: 20,
+    20: 20,
+    21: 20
 }

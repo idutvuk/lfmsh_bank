@@ -10,11 +10,9 @@
 <div class="container">
 
 <form method="post" action="{% url 'bank:login' %}" class="form-signin">
-
+{% csrf_token %}
     <h2 class="form-signin-heading">Представьтесь, пожалуйста</h2>
 
-
-{% csrf_token %}
     <label >Логин:</label>
 
     {% bootstrap_field form.username show_label=False %}

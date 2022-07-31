@@ -74,6 +74,7 @@ and django app, all in separate containers.
 All postgres data would be stored in `docker/postgres/volumes` and would persist upon the container restart.
 
 After the first startup, you  will still need to populate tables manually. Log in to uwsgi container:
+docker exec -it lfmsh_bank_uwsgi_1 /bin/bash
 `docker exec -it lfmsh_bank_uwsgi_1 /bin/bash`
 and run migrations and static data operations from local startup section above.
 
@@ -83,6 +84,8 @@ Run `./django-app/manage.py collectstatic` from the host machine, and the nginx 
 After these two operations (static collection and db population), bank would be avaliable at http://localhost/bank
 You'll be able to toggle bank on and off with single `docker-compose up/down` command.
 
+
+You may need to manually bump permissions on socker after compose startup `chmod 666 docker.sock`
 
 ### History
 
