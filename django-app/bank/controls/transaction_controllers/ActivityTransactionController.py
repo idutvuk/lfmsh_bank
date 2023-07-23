@@ -35,8 +35,6 @@ class ActivityTransactionController(TableTransactionController):
     first_form = formset_data[0]
     creator = User.objects.get(username=first_form['creator_username'])
     money_type = MoneyType.objects.get(name=first_form['money_type'])
-    print(money_type)
-    print(first_form)
 
     new_transaction = Transaction.new_transaction(
         creator,

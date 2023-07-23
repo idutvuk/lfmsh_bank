@@ -1,7 +1,8 @@
+import datetime
 from django.contrib.auth.models import User
 from django.forms import formset_factory
 
-from bank.constants import UserGroups
+from bank.constants import UserGroups, FIRST_DAY_DATE
 from bank.controls.transaction_controllers.TransactionController import TransactionController
 from bank.helper_functions import get_students_markup
 
@@ -33,8 +34,10 @@ class TableTransactionController(TransactionController):
         'receiver_username': user.username,
         'creator_username': creator_username,
         'description': 'stub value',
+        'date': datetime.date.today()
     } for user in students_query]
     initial[0]['description'] = ''
+    initial[0]['date'] = FIRST_DAY_DATE
     return initial
 
   @staticmethod

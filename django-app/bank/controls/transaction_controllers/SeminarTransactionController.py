@@ -1,7 +1,8 @@
+import datetime
 from django.contrib.auth.models import User
 from django.forms import formset_factory
 
-from bank.constants import UserGroups, MoneyTypeEnum, TransactionTypeEnum, AttendanceTypeEnum
+from bank.constants import UserGroups, MoneyTypeEnum, TransactionTypeEnum, AttendanceTypeEnum, FIRST_DAY_DATE
 from bank.controls.transaction_controllers.TableTransactionController import TableTransactionController
 from bank.forms import SeminarKernelForm, SeminarFormset
 from bank.models.Money import Money
@@ -42,12 +43,14 @@ class SeminarTransactionController(TableTransactionController):
         'unusual_things': 0,
         'materials': 0,
         'discussion': 0,
-        'general_quality': 0
+        'general_quality': 0,
+        'date': datetime.date.today()
     } for user in students_query]
 
     initial[0]['description'] = ''
     initial[0]['receiver'] = None
     initial[0]['block'] = None
+    initial[0]['date'] = FIRST_DAY_DATE
 
     for key in SeminarTransactionController._get_mark_keys():
       initial[0][key] = None
@@ -104,10 +107,13 @@ class SeminarTransactionController(TableTransactionController):
 
   @staticmethod
   def _get_reward_from_mark(mark):
-    if mark > 0:
-      return mark * 5
-    else:
-      return mark * 10
+    min_reward = 0
+    max_reward = 80
+    min_mark = -5
+    max_mark = 19
+    norm_mark = (mark - min_mark) / (max_mark - min_mark)
+    reward = norm_mark * (max_reward - min_reward) - min_reward
+    return reward
 
   @classmethod
   def get_blank_form(cls, creator_username):

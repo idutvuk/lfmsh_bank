@@ -231,9 +231,9 @@ def user(request, username):
       _get_transactions_of_user_who_is(request.user, host, host_group.name))
   render_dict.update(
       {'counters': get_counters_of_user_who_is(request.user, host, host_group)})
-  avatar_url = 'bank/avatars/{} {}.*'.format(
-      host.last_name, host.first_name) if USE_PICS else DEFAULT_PIC_PATH
-  render_dict.update({'avatar_url': avatar_url})
+  avatar_url = 'bank/avatars/{}_{}.jpg'.format(host.last_name, host.first_name)
+  if USE_PICS and path.isfile('static/' + avatar_url):
+    host.account.avatar_url = avatar_url
   return render(request, 'bank/user_page.html', render_dict)
 
 

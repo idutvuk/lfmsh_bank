@@ -9,12 +9,19 @@ from django.forms import BaseFormSet
 from django.forms.widgets import ChoiceWidget
 from transliterate.utils import _
 
-from bank.constants import UserGroups, AttendanceTypeEnum
+from bank.constants import UserGroups, AttendanceTypeEnum, FIRST_DAY_DATE
 from bank.constants.transaction_type_enum import TransactionTypeEnum
 from bank.models.MoneyType import MoneyType
 from bank.models.AttendanceBlock import AttendanceBlock
 from bank.models.Attendance import Attendance
 
+YEARS = ['2023']
+MONTHS = {8:'Август'}
+def validate_date(value):
+    if datetime.datetime.strptime(value, "%Y-%m-%d").date() == FIRST_DAY_DATE:
+        raise ValidationError(
+            _('Введите дату'),
+        )
 
 # -*- coding: utf-8 -*-
 class AtomicTypeField(forms.ModelChoiceField):
@@ -27,10 +34,10 @@ class MyDateField(forms.DateField):
 
   def to_python(self, value):
     s = str(value)
-    # try:
-    #     datetime.datetime.strptime(s, '%Y-%m-%d')
-    # except ValueError:
-    #     raise ValidationError('Невозможная дата: %(value)s', params={'value': s})
+    try:
+        date = datetime.datetime.strptime(s, '%Y-%m-%d')
+    except ValueError:
+        raise ValidationError('Невозможная дата: %(value)s', params={'value': s})
     return s
 
 
@@ -118,7 +125,11 @@ class ActivityKernelForm(TableKernelForm):
       label='Описание',
       required=True)
 
-  date = MyDateField(initial=datetime.date.today, label='Дата проведения')
+  date = MyDateField(
+      label='Дата проведения',
+      widget=forms.SelectDateWidget(years=YEARS, months=MONTHS), 
+      validators=[validate_date])
+
   money_type = AtomicTypeField(
       label='Вид',
       queryset=MoneyType.objects.filter(
@@ -137,7 +148,10 @@ class ExamKernelForm(ValueKernelForm):
 
 
 class FacPassKernelForm(ValueKernelForm):
-  date = MyDateField(initial=datetime.date.today, label='Дата проведения')
+  date = MyDateField(
+      label='Дата проведения',
+      widget=forms.SelectDateWidget(years=YEARS, months=MONTHS), 
+      validators=[validate_date])
 
 
 class AttendKernelForm(TableKernelForm):
@@ -153,7 +167,11 @@ class AttendKernelForm(TableKernelForm):
       label='Описание',
       required=True)
 
-  date = MyDateField(initial=datetime.date.today, label='Дата проведения')
+  date = MyDateField(
+      label='Дата проведения',
+      initial=FIRST_DAY_DATE,
+      widget=forms.SelectDateWidget(years=YEARS, months=MONTHS), 
+      validators=[validate_date])
 
 
 class FacAttendForm(AttendKernelForm):
@@ -341,7 +359,11 @@ class LabKernelForm(forms.Form):
       label='Описание',
       required=True)
 
-  date = MyDateField(initial=datetime.date.today, label='Дата cдачи отчета')
+  date = MyDateField( 
+      label='Дата cдачи отчета',
+      initial=FIRST_DAY_DATE,
+      widget=forms.SelectDateWidget(years=YEARS, months=MONTHS), 
+      validators=[validate_date])
 
   creator_username = forms.CharField(max_length=200)
 

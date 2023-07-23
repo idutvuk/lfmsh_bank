@@ -143,4 +143,4 @@ class AccountTestCase(TestCase):
     self.assertEqual(account.get_obl_study_fine_equator(), obl_fine)
     self.assertEqual(account.get_lab_fine_equator(), lab_fine)
 
-    self.assertEqual(account.get_final_study_fine(), fine_with_zero_activity)
+    self.assertEqual(account.get_equator_study_fine(), fine_with_zero_activity)

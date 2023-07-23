@@ -26,7 +26,7 @@ class DSTransactionController(TableTransactionController):
         DSTransactionController,
         DSTransactionController).get_initial_form_data(creator_username)
     for in_data in initial:
-      in_data['money_type'] = MoneyTypeEnum.potato.value
+      in_data['money_type'] = MoneyTypeEnum.serving.value
     return initial
 
   @staticmethod

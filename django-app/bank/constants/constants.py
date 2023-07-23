@@ -11,14 +11,14 @@ PERMISSION_RESPONSIBLE_GROUPS = [
     UserGroups.staff.value, UserGroups.student.value, UserGroups.admin.value
 ]
 
-FIRST_DAY_DATE = datetime.datetime(2022, 8, 8, 0, 0).date()
+FIRST_DAY_DATE = datetime.datetime(2023, 8, 8, 0, 0).date()
 
-BOOK_CERTIFICATE_VALUE = 50
-INITIAL_MONEY = 120
+BOOK_CERTIFICATE_VALUE = 30
+INITIAL_MONEY = 80
 INITIAL_MONEY_DESC = 'Поздравляем с началом экономической игры!'
 
-WORKOUT_BUDGET = 35.
-EXAM_BUDGET = 80.
+WORKOUT_BUDGET = 50.
+EXAM_BUDGET = 54.
 ACTIVITY_REWARD = {
     'sport_activity': {
         'single': [20., 15., 10., 5.]
@@ -32,10 +32,10 @@ ACTIVITY_REWARD = {
         'team': [120., 100., 80., 30]
     }
 }
-DS_REWARD = {'potato': 60., 'bread_cut': 60., 'serving': 60.}
+DS_REWARD = { 'serving': 50.}
 
-OBL_STUDY_NEEDED = 18
-OBL_STUDY_NEEDED_EQUATOR = 8
+OBL_STUDY_NEEDED = 20
+OBL_STUDY_NEEDED_EQUATOR = 10
 LAB_PASS_NEEDED = {7: 3, 8: 3, 9: 2, 10: 2, 11: 2}
 LAB_PASS_NEEDED_EQUATOR = 1
 FAC_PASS_NEEDED = {7: 0, 8: 0, 9: 1, 10: 1, 11: 1}
@@ -52,9 +52,9 @@ STEP_OBL_STD = 5  # cumulative constant for each next
 NUM_OF_PARTIES = 4
 
 BALANCE_DANGER = 0
-BALANCE_WARNING = 30
+BALANCE_WARNING = 20
 
-USE_PICS = False
+USE_PICS = True
 DEFAULT_PIC_PATH = 'bank/avatars/default.jpg'
 
 TAX_FROM_DAY = {

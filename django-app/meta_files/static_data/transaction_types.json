@@ -130,9 +130,7 @@
     "name": "dining_services",
     "readable_name": "Дежурство по столовой",
     "money": [
-      "potato",
-      "serving",
-      "bread_cut"
+      "serving"
     ],
     "attendance": []
   },

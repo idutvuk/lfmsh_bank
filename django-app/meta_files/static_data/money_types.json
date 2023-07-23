@@ -19,9 +19,7 @@
     "readable_general": "Оплата труда",
     "dining_services": {
       "readable_local": "Работа в столовой",
-      "potato": "Чистка картошки",
-      "serving": "Дежурство в столовой",
-      "bread_cut": "Нарезка сухарей"
+      "serving": "Дежурство в столовой"
     },
     "cleaning": {
       "readable_local": "Уборка",

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from bank.constants import SIGN, SEM_NOT_READ_PEN, AttendanceTypeEnum, LAB_PENALTY, STEP_OBL_STD, \
     INITIAL_STEP_OBL_STD, LAB_PASS_NEEDED, LAB_PASS_NEEDED_EQUATOR, OBL_STUDY_NEEDED, \
     OBL_STUDY_NEEDED_EQUATOR, FAC_PASS_NEEDED, FAC_PENALTY, \
-    LECTURE_PENALTY_STEP, LECTURE_PENALTY_INITIAL
+    LECTURE_PENALTY_STEP, LECTURE_PENALTY_INITIAL, DEFAULT_PIC_PATH
 '''
 Extention of a User Class
 '''
@@ -18,6 +18,8 @@ class Account(models.Model):
 
   party = models.IntegerField(default=0)
   grade = models.IntegerField(blank=True, default=0)
+
+  avatar_url = DEFAULT_PIC_PATH
 
   def get_counter(self, counter_name):
     return int(
@@ -78,9 +80,8 @@ class Account(models.Model):
 
   def get_equator_study_fine(self):
     fine = 0
-    fine += self.get_obl_study_fine()
-    fine += self.get_lab_fine()
-
+    fine += self.get_obl_study_fine_equator()
+    fine += self.get_lab_fine_equator()
     return fine
 
   def get_sem_fine(self):
