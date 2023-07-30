@@ -345,6 +345,7 @@ def _get_transactions_of_user_who_is(request_owner, target_user, group):
                                 target_transaction_identifier))
               and trans.state.possible_transitions.filter(
                   name=States.substituted.value).exists()
+              and get_perm_name(Actions.UPDATE.value, group, target_transaction_identifier) != "bank.update_self_seminar"
       })
       trans_info.update({
           'decline':
@@ -380,6 +381,8 @@ def user_can_update(request, updated_transaction):
     can update only self transactions with rights
     """
   if not updated_transaction.can_be_transitioned_to(States.substituted.value):
+    return False
+  if get_perm_name(Actions.UPDATE.value, 'self', updated_transaction.type.name) == 'bank.update_self_seminar':
     return False
   if updated_transaction.creator.username == request.user.username:
     return request.user.has_perm(
