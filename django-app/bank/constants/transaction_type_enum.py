@@ -16,3 +16,4 @@ class TransactionTypeEnum(Enum):
   lab = 'lab'
   ds = 'dining_services'
   tax = 'tax'
+  certificate = 'certificate'

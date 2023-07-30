@@ -93,6 +93,14 @@
     ]
   },
   {
+    "name": "certificate",
+    "readable_name": "Начисление сертификатов",
+    "money": [ ],
+    "attendance": [
+      "book_certificate"
+    ]
+  },
+  {
     "name": "fine",
     "readable_name": "Штраф",
     "money": [

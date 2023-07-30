@@ -25,7 +25,7 @@
   "certificates": {
     "readable_general": "Сертификаты",
     "activity": {
-      "readable_local": "Сертификаты за мероприятия",
+      "readable_local": "Сертификаты за отличные результаты",
       "book_certificate": "Сертификат на книжки"
     }
   },

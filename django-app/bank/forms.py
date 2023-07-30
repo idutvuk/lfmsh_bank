@@ -189,6 +189,8 @@ class FacAttendForm(AttendKernelForm):
 class LectureForm(AttendKernelForm):
   pass
 
+class CertificateForm(AttendKernelForm):
+  pass
 
 class WorkoutForm(AttendKernelForm):
   pass

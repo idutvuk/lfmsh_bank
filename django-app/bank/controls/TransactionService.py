@@ -1,5 +1,6 @@
 from bank.constants.transaction_type_enum import TransactionTypeEnum
 from bank.controls.transaction_controllers.ActivityTransactionController import ActivityTransactionController
+from bank.controls.transaction_controllers.CertificateTransactionController import CertificateTransactionController
 from bank.controls.transaction_controllers.DSTransactionController import DSTransactionController
 from bank.controls.transaction_controllers.ExamTransactionController import ExamTransactionController
 from bank.controls.transaction_controllers.FacAttendTransactionController import FacAttendTransactionController
@@ -45,5 +46,7 @@ class TransactionService:
       return LabTransactionController
     if trans_type == TransactionTypeEnum.ds.value:
       return DSTransactionController
+    if trans_type == TransactionTypeEnum.certificate.value:
+      return CertificateTransactionController
 
     raise ModuleNotFoundError('no controller for this type')

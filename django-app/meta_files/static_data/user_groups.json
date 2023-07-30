@@ -50,7 +50,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ]
       },
       "process": {
@@ -66,7 +67,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ],
         "student": [
           "created_transactions"
@@ -85,7 +87,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ]
       },
       "decline": {
@@ -101,7 +104,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ],
         "student": [
           "created_transactions"
@@ -148,7 +152,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ]
       },
       "process": {
@@ -164,7 +169,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ],
         "student": [
           "created_transactions"
@@ -186,7 +192,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ]
       },
       "decline": {
@@ -202,7 +209,8 @@
           "exam",
           "activity",
           "lab",
-          "dining_services"
+          "dining_services",
+          "certificate"
         ],
         "student": [
           "created_transactions"
