@@ -185,16 +185,16 @@ STATIC_URL = '/static/'
 BOOTSTRAP3 = {
     'css_url': {
         'url':
-            os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap',
+            os.path.join(STATIC_URL, 'django-bootstrap', 'bootstrap',
                          'css', 'bootstrap.css'),
     },
     'javascript_url': {
         'url':
-            os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap',
+            os.path.join(STATIC_URL, 'django-bootstrap', 'bootstrap',
                          'js', 'bootstrap.js'),
     },
     'jquery_url':
-        os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'jquery.js'),
+        os.path.join(STATIC_URL, 'django-bootstrap', 'jquery.js'),
     'base_url':
-        os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap/')
+        os.path.join(STATIC_URL, 'django-bootstrap', 'bootstrap/')
 }

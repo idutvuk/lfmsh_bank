@@ -29,7 +29,7 @@ services:
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./django-app/main/uwsgi_params:/usr/share/nginx/uwsgi_params:ro
-      - ./django-app/static:/usr/share/nginx/static
+      - ./django-app/bank/static/bank:/usr/share/nginx/static
       - ./django-app/media:/usr/share/nginx/media
       - ./docker/socket:/usr/share/nginx/socket
     ports:

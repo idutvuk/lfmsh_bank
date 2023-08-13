@@ -32,7 +32,9 @@ ACTIVITY_REWARD = {
         'team': [120., 100., 80., 30]
     }
 }
-DS_REWARD = { 'serving': 50.}
+
+DS_REWARD = { 'serving': 60.}
+
 
 OBL_STUDY_NEEDED = 20
 OBL_STUDY_NEEDED_EQUATOR = 10
@@ -55,7 +57,7 @@ BALANCE_DANGER = 0
 BALANCE_WARNING = 20
 
 USE_PICS = True
-DEFAULT_PIC_PATH = 'bank/avatars/default.jpg'
+DEFAULT_PIC_PATH = 'avatars/default.jpg'
 
 TAX_FROM_DAY = {
     1: 20,

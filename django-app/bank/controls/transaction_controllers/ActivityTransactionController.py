@@ -70,8 +70,8 @@ class ActivityTransactionController(TableTransactionController):
     if money_type.name == MoneyTypeEnum.sport_activity.value:
       return ActivityTransactionController._get_sport_reward(place)
     else:
-      if place in [1, 2, 3]:
-        if num_of_att == 1:
+      if place in [1, 2, 3, 4]:
+        if num_of_att == 1 or place == 4:
           return ACTIVITY_REWARD[money_type.name].get('single')[place - 1]
         else:
           return ACTIVITY_REWARD[money_type.name].get('team')[place -
