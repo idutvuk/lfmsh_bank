@@ -30,6 +30,7 @@ class Command(BaseCommand):
   STUDENT_DATA_OUT = 'student_out.txt'
 
   def handle(self, *args, **options):
+    print(args)
     if options.get('student', 'none') != 'none':
       Command.STUDENT_DATA = options.get('student')
     if options.get('staff', 'none') != 'none':
@@ -48,6 +49,29 @@ class Command(BaseCommand):
                      UserGroups.student.value)
       self.add_initial_money(UserGroups.student.value)
 
+
+  def add_arguments(self, parser):
+      parser.add_argument(
+          '--student',
+          type=str,
+          help='Path to student CSV file'
+      )
+      parser.add_argument(
+          '--staff',
+          type=str,
+          help='Path to staff CSV file'
+      )
+      parser.add_argument(
+          '--student_out',
+          type=str,
+          help='Path to student output file'
+      )
+      parser.add_argument(
+          '--staff_out',
+          type=str,
+          help='Path to staff output file'
+      )
+      
   @staticmethod
   def flush_all_users():
 
@@ -114,12 +138,14 @@ class Command(BaseCommand):
   @staticmethod
   def add_bank_user():
     login = BANKIR_USERNAME
-    password = generate_password(8)
+    password = 'r' # TODO: generate_password(8)
     new_u = User.objects.create_user(
-        first_name='Банкир',
-        last_name='ЛФМШ',
+        first_name='Повелитель',
+        last_name='о,',
         username=login,
-        password=password)
+        password=password,
+        is_superuser = True # TODO: remove, security risk
+    )
     new_u.save()
     new_a = Account(user=new_u, middle_name='Ф', grade=0, party=0)
     new_a.save()

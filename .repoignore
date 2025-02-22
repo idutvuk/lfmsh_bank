@@ -20,3 +20,16 @@ django-app/static/
 venv/
 .venv/
 .env
+.git/
+uv.lock
+.pylintrc
+*/__pycache__/
+*/static/
+templates
+django-bootstrap
+fonts
+
+
+# tmp
+scripts/
+meta_files/
