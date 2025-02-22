@@ -25,7 +25,7 @@ dotenv.load_dotenv(os.path.join(PROJECT_DIR, '.env'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ['BANK_SECRET_KEY']
 
-ALLOWED_HOSTS = ['.c9users.io', '.localhost', '127.0.0.1', '192.168.88.5', 'lfm.sh']
+ALLOWED_HOSTS = ['.c9users.io', '.localhost', '127.0.0.1', '192.168.88.5', 'lfm.sh', '*']
 
 CACHES = {
     'default': {

@@ -17,6 +17,6 @@ main/error_log.log
 django-app/static/
 /docker/postgres/volumes
 .vscode/
-.venv/
 venv/
+.venv/
 .env
