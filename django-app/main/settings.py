@@ -42,7 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bank',
-    'bootstrap3',
+    'django_bootstrap5',
     'django_tables2',
 )
 
@@ -182,7 +182,7 @@ STATIC_URL = '/static/'
 
 # Default settings
 # The URL to the jQuery JavaScript file
-BOOTSTRAP3 = {
+BOOTSTRAP5 = {
     'css_url': {
         'url':
             os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap',

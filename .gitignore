@@ -20,3 +20,5 @@ django-app/static/
 .venv/
 venv/
 .env
+media/
+gasha_scripts/

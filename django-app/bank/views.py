@@ -51,6 +51,42 @@ def index(request):
 
 
 @login_required
+def dev(request):
+  """
+  Renders a development page template for the user.
+
+  Logs the request, retrieves statistical data for the student, 
+  collects information about transaction types and checks user 
+  permissions to create those transactions. Also calculates user 
+  counters.
+
+  Returns:
+      HttpResponse: The rendered development page with transaction 
+      type information, student statistics, and user counters.
+  """
+  log.info('index page request from %s', request.user.account.long_name())
+  student_stats = get_student_stats(request.user)
+  transaction_types = TransactionType.objects.all()
+  transaction_type_info = [{
+      'name':
+          t.name,
+      'readable_name':
+          t.readable_name,
+      'can_create':
+          request.user.has_perm(
+              get_perm_name(Actions.CREATE.value, 'self', t.name))
+  } for t in transaction_types]
+  counters = get_counters_of_user_who_is(request.user, request.user, 'self')
+  return render(
+      request, 'bank/base5.html', {
+          'transaction_type_info': transaction_type_info,
+          'st_stats': student_stats,
+          'counters': counters
+      })
+
+
+
+@login_required
 def add_transaction(request, type_name, update_of=None, from_template=None):
   """Generic view to serve a form to add/update new transactions of any type
   Get's transaction type

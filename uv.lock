@@ -73,15 +73,15 @@ wheels = [
 ]
 
 [[package]]
-name = "django-bootstrap3"
+name = "django-bootstrap5"
 version = "24.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/51/d8/4eb4a9a673975bfbb82dff3f3b5a97f12c9d566f884c7e64d52e90928303/django_bootstrap3-24.3.tar.gz", hash = "sha256:e3d85ed48c131ed3535cb7dbad760275473052f18470b3fc060018cb21d229e0", size = 46104 }
+sdist = { url = "https://files.pythonhosted.org/packages/64/ef/c37f1c2f5a40919217251ad6b2c825bfcec0e8ed5024b5c6df874cbc8caf/django_bootstrap5-24.3.tar.gz", hash = "sha256:ca5ec5568fc2a3fc239f0cb8ce41a7df3802b8c4af930d7f64451784ec7ddc16", size = 54344 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/61/80ef3b0cac4a411cc04d989edae1cb36a5b2d95cc87ce274c87dc20cf5b6/django_bootstrap3-24.3-py3-none-any.whl", hash = "sha256:65bbc34a85002e41923d3ba544febbcacfdc91d39186f284fc6748fad43909fa", size = 24288 },
+    { url = "https://files.pythonhosted.org/packages/e8/11/e5ab1d37bae5bd4e10e240c99601f450db618f6d370d75e742f9104778b9/django_bootstrap5-24.3-py3-none-any.whl", hash = "sha256:98f7916f9f7f9c34dfe157f7c062a28ebf6d17ff95307bef260ba794ba34e2a0", size = 26321 },
 ]
 
 [[package]]
@@ -143,7 +143,7 @@ dependencies = [
     { name = "appdirs" },
     { name = "astroid" },
     { name = "django" },
-    { name = "django-bootstrap3" },
+    { name = "django-bootstrap5" },
     { name = "django-tables2" },
     { name = "isort" },
     { name = "lazy-object-proxy" },
@@ -172,7 +172,7 @@ requires-dist = [
     { name = "appdirs", specifier = ">=1.4.4" },
     { name = "astroid", specifier = ">=3.3.8" },
     { name = "django", specifier = ">=5.1.6" },
-    { name = "django-bootstrap3", specifier = ">=24.3" },
+    { name = "django-bootstrap5", specifier = ">=24.3" },
     { name = "django-tables2", specifier = ">=2.7.5" },
     { name = "isort", specifier = ">=6.0.0" },
     { name = "lazy-object-proxy", specifier = ">=1.10.0" },
