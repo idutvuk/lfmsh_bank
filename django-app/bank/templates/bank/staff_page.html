@@ -1,0 +1,110 @@
+{% extends 'bank/base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="container py-4">
+    <!-- Top Section -->
+    <div class="p-4 p-lg-5 bg-light rounded-3 mb-3">
+      <p class="fs-4">Здравствуйте, {{ request.user.account.long_name }}</p>
+
+      <div class="d-flex justify-content-around mt-4">
+        <div class="col">
+          <a href="https://google.com">
+            <div class="button-container">
+              <button class="circle-btn lgreen"><i class="bi bi-plus"></i></button>
+              <div class="btn-text">Начисление</div>
+            </div>
+          </a>
+        </div>
+        <div class="col">
+          <a href="https://google.com">
+            <div class="button-container">
+              <button class="circle-btn lblue"><i class="bi bi-journal"></i></button>
+              <div class="btn-text">Занятие</div>
+            </div>
+          </a>
+        </div>
+        <div class="col">
+          <a href="https://google.com">
+            <div class="button-container">
+              <button class="circle-btn lred"><i class="bi bi-dash"></i></button>
+              <div class="btn-text">Штраф</div>
+            </div>
+          </a>
+        </div>
+        <div class="col">
+          <a href="https://google.com">
+            <div class="button-container">
+              <button class="circle-btn lyellow"><i class="bi bi-three-dots"></i></button>
+              <div class="btn-text">Еще</div>
+            </div>
+          </a>
+        </div>
+      </div>
+      <div class="row"></div>
+    </div>
+  </div>
+  <!-- Savings and Investments Section -->
+  <div class="row mb-4">
+    <div class="col-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">В банке:</h5>
+          <h3 class="card-text">{{ st_stats.sum_money }}@</h3>
+          <small class="text-success">+2.4%</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Среднее:</h5>
+          <h3 class="card-text">{{ st_stats.mean_money }}@</h3>
+          <small class="text-success">+5.8%</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  {% if 'bank.see_staff_created_transactions' in request.user.get_all_permissions %}
+    <a href="{% url 'bank:monitor_table' %}">Сводка транзакций</a><br />
+  {% endif %}
+  <div>
+    <div class="d-flex justify-content-center">
+      <a class="btn btn-lg mb-2 text-center bg-light" href="{% url 'bank:my_transactions' %}">Транзакции</a><br />
+    </div>
+
+    <ul class="list-group">
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Виталич <span>-@84.50</span>
+      </li>
+      <li class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span>Name</span>
+          </div>
+          <div>
+            <small class="text-muted">02-24</small><br />
+            <span>100@</span>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="container py-4">
+    <!-- Top Section -->
+    <div class="p-4 p-lg-5 bg-light rounded-3 mb-3">
+      <h4>Списки пользователей</h4>
+      {% include 'bank/transaction_lists/transaction.html' %}
+      {% if 'bank.see_student_balance' in request.user.get_all_permissions %}
+        <a href="{% url 'bank:students' %}">Пионеры</a><br />
+      {% endif %}
+      {% if 'bank.see_staff_balance' in request.user.get_all_permissions %}
+        <a href="{% url 'bank:staff' %}">Педсостав</a>
+      {% endif %}
+      <a class="nav-link" href="{% url 'bank:my_transactions' %}">Мои транзакции</a>
+      <p>{{ request.user }}</p>
+    </div>
+  </div>
+{% endblock %}

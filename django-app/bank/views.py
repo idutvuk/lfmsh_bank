@@ -66,11 +66,12 @@ def dev(request):
   } for t in transaction_types]
   counters = get_counters_of_user_who_is(request.user, request.user, 'self')
   return render(
-      request, 'bank/newui.html', {
+      request, 'bank/staff_page.html', {
           'transaction_type_info': transaction_type_info,
           'st_stats': student_stats,
-          'counters': counters
-      })
+          'counters': counters,
+      }.update(_get_transactions_of_user_who_is(request.user, request.user, 'self'))
+      )
 
 
 
