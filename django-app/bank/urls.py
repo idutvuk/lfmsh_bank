@@ -6,6 +6,7 @@ from bank import views
 app_name = 'bank'
 
 urlpatterns = [
+    url(r'^dev/$', views.dev, name='dev'),
     url(r'^$', views.index, name='index'),
     url(r'^logout/$', auth_views.LogoutView.as_view(), name='logout'),
     url(r'^login/$',

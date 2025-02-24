@@ -1,0 +1,55 @@
+{% extends "bank/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Top Section -->
+  <div class="mb-4">
+    <h2 class="mb-1">Total Balance</h2>
+    <h1 class="display-4">$24,580.45</h1>
+    <p class="text-muted">Hello, Alex Morgan</p>
+    
+    <div class="d-flex justify-content-around mt-4">
+      <button class="btn btn-primary">Send</button>
+      <button class="btn btn-primary">Receive</button>
+      <button class="btn btn-primary">Cards</button>
+      <button class="btn btn-primary">More</button>
+    </div>
+  </div>
+  
+  <!-- Savings and Investments Section -->
+  <div class="row mb-4">
+    <div class="col-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Savings</h5>
+          <h3 class="card-text">$12,450.00</h3>
+          <small class="text-success">+2.4%</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Investments</h5>
+          <h3 class="card-text">$8,230.00</h3>
+          <small class="text-success">+5.8%</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent Transactions -->
+  <div>
+    <h5 class="mb-3">Recent Transactions</h5>
+    <ul class="list-group">
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Amazon <span>-$84.50</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Starbucks <span>-$5.80</span>
+      </li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

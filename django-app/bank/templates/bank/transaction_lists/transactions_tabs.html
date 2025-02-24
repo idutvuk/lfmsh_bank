@@ -40,22 +40,27 @@
                 <td>{{ transaction_info.transaction.state }}</td>
                 <td>
                     {% if transaction_info.decline %}
-                        <a class="btn btn-danger"
+                        <a class="btn"
                            href="{% url 'bank:decline' transaction_info.transaction.id %}">
-                            Откатить</a>
+                            <i class="bi bi-trash"></i>
+                        </a>
                     {% endif %}
+                
                     {% if transaction_info.update %}
-                        <a class="btn btn-warning"
+                        <a class="btn"
                            href="{% url 'bank:update_transaction' transaction_info.transaction.type.name transaction_info.transaction.id %}">
-                            Изменить</a>
+                            <i class="bi bi-pencil"></i>
+                        </a>
                     {% endif %}
+                
                     {% if transaction_info.create %}
-                        <a class="btn btn-info"
-                           href="{% url 'bank:add_transaction_from_template' transaction_info.transaction.type.name transaction_info.transaction.id %}">По
-                            шаблону</a>
+                        <a class="btn"
+                           href="{% url 'bank:add_transaction_from_template' transaction_info.transaction.type.name transaction_info.transaction.id %}">
+                            <i class="bi bi-clipboard"></i>
+                        </a>
                     {% endif %}
                 </td>
-
+                
             </tr>
             <tr style="display: none" id="trans-info-{{ transaction_info.transaction.id }}" loaded = "false">
                 <td colspan="6">{#% include 'bank/transaction_lists/transaction.html' with transaction=transaction_info.transaction viewer_role='creator'%#}</td>

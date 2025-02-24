@@ -39,6 +39,7 @@ class Command(BaseCommand):
 
         try:
             group = Group.objects.get(name=group_name)
+            is_staff = group.name == 'staff'
         except Group.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Group '{group_name}' does not exist."))
             return
@@ -56,13 +57,17 @@ class Command(BaseCommand):
                 middle_name = row[2].strip() if len(row) > 2 else ''
                 party = int(row[3].strip()) if len(row) > 3 and row[3].strip().isdigit() else 0
                 grade = int(row[4].strip()) if len(row) > 4 and row[4].strip().isdigit() else 0
-
                 login = self.generate_login(first_name, last_name, middle_name)
                 password = generate_password(8)
 
                 try:
                     user = User.objects.get(username=login)
                     updated = False
+                    if user.is_staff != is_staff:
+                        if self.confirm_update(f"Change staff/student status for '{login}'?"):
+                            user.is_staff = is_staff
+                            updated = True
+
                     # Compare and resolve differences for User fields.
                     if user.first_name != first_name:
                         self.stdout.write(f"[Conflict] User '{login}': first_name DB='{user.first_name}' vs CSV='{first_name}'")

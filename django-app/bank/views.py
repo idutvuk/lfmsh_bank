@@ -52,18 +52,6 @@ def index(request):
 
 @login_required
 def dev(request):
-  """
-  Renders a development page template for the user.
-
-  Logs the request, retrieves statistical data for the student, 
-  collects information about transaction types and checks user 
-  permissions to create those transactions. Also calculates user 
-  counters.
-
-  Returns:
-      HttpResponse: The rendered development page with transaction 
-      type information, student statistics, and user counters.
-  """
   log.info('index page request from %s', request.user.account.long_name())
   student_stats = get_student_stats(request.user)
   transaction_types = TransactionType.objects.all()
@@ -78,7 +66,7 @@ def dev(request):
   } for t in transaction_types]
   counters = get_counters_of_user_who_is(request.user, request.user, 'self')
   return render(
-      request, 'bank/base5.html', {
+      request, 'bank/newui.html', {
           'transaction_type_info': transaction_type_info,
           'st_stats': student_stats,
           'counters': counters
