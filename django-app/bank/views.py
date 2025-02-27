@@ -70,7 +70,9 @@ def dev(request):
           'transaction_type_info': transaction_type_info,
           'st_stats': student_stats,
           'counters': counters,
-      }.update(_get_transactions_of_user_who_is(request.user, request.user, 'self'))
+          'transactions': Transaction.objects.filter(
+        creator=request.user).order_by('-creation_timestamp').all()
+      }    
       )
 
 
