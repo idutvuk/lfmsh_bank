@@ -25,7 +25,7 @@ dotenv.load_dotenv(os.path.join(PROJECT_DIR, '.env'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ['BANK_SECRET_KEY']
 
-ALLOWED_HOSTS = ['.c9users.io', '.localhost', '127.0.0.1', '192.168.88.5', 'lfm.sh', 'idutvuk.online']
+ALLOWED_HOSTS = ['.c9users.io', '.localhost', '127.0.0.1', '192.168.88.5', 'lfm.sh', 'idutvuk.online', 'www.idutvuk.online', '194.28.226.206']
 CSRF_TRUSTED_ORIGINS = [
     "https://idutvuk.online"
 ]
@@ -48,7 +48,10 @@ INSTALLED_APPS = (
     'bank',
     'django_bootstrap5',
     'django_tables2',
+    'django_extensions',
 )
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
