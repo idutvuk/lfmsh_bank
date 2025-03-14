@@ -38,7 +38,7 @@ class Command(BaseCommand):
             return
 
         try:
-            group = Group.objects.get(name=group_name)
+            group = Group.objects.get_or_create(name=group_name)[0]
             is_staff = group.name == 'staff'
         except Group.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Group '{group_name}' does not exist."))
