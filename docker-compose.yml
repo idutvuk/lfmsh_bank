@@ -1,28 +1,31 @@
-version: '3.10'
-
 services:
   db:
     image: postgres
     environment:
       POSTGRES_PASSWORD: $BANK_POSTGRESS_PASSWORD
     volumes: 
-      - ./docker/postgres/volumes:/var/lib/postgresql/data
+      - pg-data:/var/lib/postgresql/data
 
-  uwsgi:
+  web:
     build:
       context: .
       dockerfile: ./docker/django-app/Dockerfile
-    environment:
-      BANK_MODE: docker-prod
-      BANK_POSTGRESS_PASSWORD: $BANK_POSTGRESS_PASSWORD
-      BANK_SECRET_KEY: $BANK_SECRET_KEY
+    command: >
+      bash -c "
+      uv run manage.py collectstatic --noinput &&
+      uv run manage.py makemigrations &&
+      uv run manage.py migrate &&
+      uv run manage.py runserver 0.0.0.0:8000
+      "
+#      uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    env_file: .env
     volumes:
-      - ./docker/django-app/uwsgi.ini:/usr/src/django-app/main/uwsgi.ini:ro
       - ./docker/socket:/usr/src/django-app/socket
       - ./docker/django-app/logs:/usr/src/django-app/logs
     depends_on:
       - db
-    entrypoint: uwsgi --ini /usr/src/django-app/main/uwsgi.ini
+    ports:
+        - 8000:8000
 
   nginx:
     image: nginx
@@ -35,5 +38,7 @@ services:
     ports:
       - 80:8080
     depends_on:
-      - uwsgi
+      - web
       - db
+volumes:
+    pg-data:
