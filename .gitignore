@@ -1,7 +1,7 @@
 __pycache__/
 *.sqlite3
 .DS_Store
-django-app/bank/migrations
+#django-app/bank/migrations
 *.pyc
 *.log
 django-app/meta_files/users_data/staff_out.txt
