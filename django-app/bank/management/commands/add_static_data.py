@@ -7,6 +7,7 @@ import json
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import BaseCommand
+from loguru import logger
 
 from bank.constants import UserGroups, Actions, PERMISSION_RESPONSIBLE_GROUPS
 from bank.models.TransactionType import TransactionType
@@ -83,7 +84,7 @@ class Command(BaseCommand):
             continue
           if model.objects.filter(name=type_name).exists():
             if not silent:
-              print('changing atomic type', type_name)
+              logger.info('changing atomic type %s', type_name)
             atomic_type = model.objects.get(name=type_name)
             setattr(atomic_type, 'group_general', general_group_name)
             setattr(atomic_type, 'group_local', local_group_name)
@@ -94,7 +95,7 @@ class Command(BaseCommand):
             setattr(atomic_type, 'readable_name', type_readable_name)
           else:
             if not silent:
-              print('creating atomic type', type_name)
+              logger.info('creating atomic type %s', type_name)
             atomic_type = model.objects.create(
                 group_general=general_group_name,
                 group_local=local_group_name,
@@ -113,7 +114,7 @@ class Command(BaseCommand):
           name=trans_type['name'], readable_name=trans_type['readable_name'])
       new_type.save()
       if not silent:
-        print(trans_type)
+        logger.info(trans_type)
       Command.add_type_to_atomic_type(trans_type['money'], new_type, MoneyType)
       Command.add_type_to_atomic_type(trans_type['attendance'], new_type,
                                       AttendanceType)
@@ -133,7 +134,7 @@ class Command(BaseCommand):
       for perm in per_trans_type_permissions:
         name = Command.make_perm_name(perm.value, 'self', trans_type['name'])
         if not silent:
-          print(name)
+          logger.info(name)
         content_type = ContentType.objects.get_for_model(TransactionType)
         new_perm = Permission.objects.get_or_create(
             codename=name, name=name, content_type=content_type)[0]
@@ -175,7 +176,7 @@ class Command(BaseCommand):
         for target, perm_list in per_action_perm.items():
           for perm in perm_list:
             if not silent:
-              print(Command.make_perm_name(action, target, perm))
+              logger.info(Command.make_perm_name(action, target, perm))
             name = Command.make_perm_name(action, target, perm)
             p = Permission.objects.get_or_create(
                 name=name, codename=name, content_type=content_type)[0]
@@ -190,7 +191,7 @@ class Command(BaseCommand):
 
       if AttendanceBlock.objects.filter(name=block_data['name']).exists():
         if not silent:
-          print('changing att block', block_data['name'])
+          logger.info('changing att block %s', block_data['name'])
         block = AttendanceBlock.objects.get(name=block_data['name'])
 
         setattr(block, 'readable_name', block_data['readable_name'])
@@ -204,7 +205,7 @@ class Command(BaseCommand):
         block.save()
       else:
         if not silent:
-          print('creating att block', block_data['name'])
+          logger.info('creating att block %s', block_data['name'])
         block, _ = AttendanceBlock.objects.get_or_create(
             name=block_data['name'],
             readable_name=block_data['readable_name'],

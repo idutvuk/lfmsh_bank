@@ -1,0 +1,197 @@
+{
+  "info": {
+    "name": "Bank API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    }
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (get_session)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/",
+              "host": ["{{base_url}}"],
+              "path": ["auth", ""]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Capture sessionid cookie",
+                  "var sid = pm.response.cookies.get('sessionid');",
+                  "if (sid) {",
+                  "    pm.environment.set('session_id', sid.value);",
+                  "}",
+                  "// Optional: capture CSRF token if needed",
+                  "var csr = pm.response.cookies.get('csrftoken');",
+                  "if (csr) {",
+                  "    pm.environment.set('csrftoken', csr.value);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User Transactions",
+      "item": [
+        {
+          "name": "Get My Transactions (get_user_transactions)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "sessionid={{session_id}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user/",
+              "host": ["{{base_url}}"],
+              "path": ["user", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Add Transaction (add_transaction)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Cookie",
+                "value": "sessionid={{session_id}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_type\": \"DEPOSIT\",\n  \"creator\": \"{{username}}\",\n  \"amount\": 100.00,\n  \"recipient\": \"alice\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/add_transaction/",
+              "host": ["{{base_url}}"],
+              "path": ["add_transaction", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Data Exports",
+      "item": [
+        {
+          "name": "Get Students Money CSV (get_students_money)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "sessionid={{session_id}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/money/",
+              "host": ["{{base_url}}"],
+              "path": ["money", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Students Counters CSV (get_students_counters)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "sessionid={{session_id}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/counters/",
+              "host": ["{{base_url}}"],
+              "path": ["counters", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Endpoints",
+      "item": [
+        {
+          "name": "List Students (get_students)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/students/",
+              "host": ["{{base_url}}"],
+              "path": ["students", ""]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

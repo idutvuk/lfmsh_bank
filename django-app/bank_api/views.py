@@ -1,7 +1,7 @@
 import csv
 import json
 
-import logging
+from loguru import logger
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -18,14 +18,12 @@ from bank.models.TransactionType import TransactionType
 from bank.models.Money import Money
 from bank.models.Attendance import Attendance
 
-log = logging.getLogger('bank_api_log')
-
 
 @csrf_exempt
 @login_required()
 def get_user_transactions(request):
   user = request.user
-  log.info('api user info call from %s', user.account.long_name())
+  logger.info('api user info call from %s', user.account.long_name())
 
   if not (user.has_perm(get_perm_name(Actions.SEE.value, 'self', 'balance')) and
           user.has_perm(get_perm_name(Actions.SEE.value, 'self',
@@ -72,7 +70,7 @@ def get_students(_):
 
 def make_transaction(request):
   user = request.user
-  log.info('api add transaction call from %s', user.account.long_name())
+  logger.info('api add transaction call from %s', user.account.long_name())
 
   trans_data = json.loads(str(request.body, 'utf-8'))
 
@@ -91,8 +89,8 @@ def make_transaction(request):
   # check user can create such transactions
   if not request.user.has_perm(
       get_perm_name(Actions.CREATE.value, 'self', type_name)):
-    log.warning('%s access denied on add trans %s through API',
-                request.user.get_username(), type_name)
+    logger.warning('%s access denied on add trans %s through API',
+                   request.user.get_username(), type_name)
     raise CantCreateThisType(type_name)
 
   # if can -- call transaction controller to create

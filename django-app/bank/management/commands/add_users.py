@@ -6,6 +6,7 @@ from django.db.utils import IntegrityError
 from django.db import transaction
 
 from transliterate import translit
+from loguru import logger
 
 from bank.constants import UserGroups, BANKIR_USERNAME, TransactionTypeEnum, MoneyTypeEnum, INITIAL_MONEY, \
 	INITIAL_MONEY_DESC
@@ -31,7 +32,7 @@ class Command(BaseCommand):
 	STUDENT_DATA_OUT = 'student_out.txt'
 
 	def handle(self, *args, **options):
-		print(args)
+		logger.info(args)
 		if options.get('student', 'none') != 'none':
 			Command.STUDENT_DATA = options.get('student')
 		if options.get('staff', 'none') != 'none':
@@ -78,7 +79,7 @@ class Command(BaseCommand):
 	@staticmethod
 	def flush_all_users(options):
 		if options.get('yes', False):
-			print("Skipping confirmation with --yes flag.")
+			logger.info("Skipping confirmation with --yes flag.")
 			Account.objects.all().delete()
 			User.objects.all().delete()
 			return True
@@ -100,7 +101,7 @@ class Command(BaseCommand):
 
 		group = Group.objects.get(name=group)
 		for person in data:
-			print(person)
+			logger.info(person)
 			last_name = person[0]
 			first_name = person[1]
 			if len(person) > 2:
@@ -142,7 +143,7 @@ class Command(BaseCommand):
 			out.write('\n\n' + '-' * 20 + '\n')
 			out.write(' '.join(person) + '\n')
 			out.write('Login: ' + login + ' Password: ' + password)
-			print(' '.join(person), login, password)
+			logger.info(' '.join(person) + ' ' + login + ' ' + password)
 
 	@staticmethod
 	def add_bank_user():
@@ -164,7 +165,7 @@ class Command(BaseCommand):
 		out = open(BASE_DIR + Command.STATIC_DATA_PATH + 'bankir.txt', 'w')
 		out.write(' Банкир ЛФМШ \n')
 		out.write('Login: ' + login + ' Password: ' + password)
-		print('admin:   ', login, password)
+		logger.info('admin:   %s %s', login, password)
 
 	@staticmethod
 	def add_initial_money(group_name):

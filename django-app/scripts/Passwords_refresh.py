@@ -3,6 +3,7 @@ __author__ = 'nkorobkov'
 
 from django.contrib.auth.models import User
 from bank.helper_functions import generate_password
+from loguru import logger
 
 p_out = open('meta_files/new_passwords.txt', 'w')
 '''
@@ -24,7 +25,7 @@ for u in User.objects.filter(groups__name='pedsostav'):
   u.set_password(pd)
   u.save()
 
-  print(('login: ' + u.username + ' password: ' + pd))
+  logger.info('login: %s password: %s', u.username, pd)
   info = '\n' + 'login: ' + u.username + ' password: ' + pd
 
   p_out.write(info.encode('utf-8'))

@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import json
 from os import path
 import os
@@ -20,7 +20,6 @@ from .forms import *
 from .tables import *
 from .constants import *
 
-log = logging.getLogger('bank_log')
 
 
 @login_required
@@ -29,7 +28,7 @@ def index(request):
   Lists avaliable get transactions and add transactios menues
   Shows user's current balace (student) or general stats (staff)
   """
-  log.info('index page request from %s', request.user.account.long_name())
+  logger.info('index page request from %s', request.user.account.long_name())
   student_stats = get_student_stats(request.user)
   transaction_types = TransactionType.objects.all()
   transaction_type_info = [{
@@ -52,7 +51,7 @@ def index(request):
 
 @login_required
 def dev(request):
-  log.info('index page request from %s', request.user.account.long_name())
+  logger.info('index page request from %s', request.user.account.long_name())
   student_stats = get_student_stats(request.user)
   transaction_types = TransactionType.objects.all()
   transaction_type_info = [{
@@ -90,8 +89,8 @@ def add_transaction(request, type_name, update_of=None, from_template=None):
   """
   if not request.user.has_perm(
       get_perm_name(Actions.CREATE.value, 'self', type_name)):
-    log.warning('%s access denied on add trans %s', request.user.get_username(),
-                type_name)
+    logger.warning('%s access denied on add trans %s', request.user.get_username(),
+                   type_name)
     return HttpResponseForbidden()
 
   if update_of or from_template:
@@ -128,8 +127,8 @@ def add_transaction(request, type_name, update_of=None, from_template=None):
               'Attempt to update transaction that can not be updated') from e
       created_transaction = controller.get_transaction_from_form_data(
           formset.cleaned_data, update_of)
-      log.info('Valid add transaction from %s, update=%s, transaction=%s',
-               request.user.account.long_name(), update_of, created_transaction)
+      logger.info('Valid add transaction from %s, update=%s, transaction=%s',
+                  request.user.account.long_name(), update_of, created_transaction)
       if request.user.has_perm(
           get_perm_name(Actions.PROCESS.value, 'self', type_name)):
         # Process transaction if have rights to do so.
@@ -164,8 +163,8 @@ def add_transaction(request, type_name, update_of=None, from_template=None):
 def decline(request, transaction_id):
   """Cancel a transaction by id"""
   declined_transaction = get_object_or_404(Transaction, id=transaction_id)
-  log.info('Decline transaction from %s, transaction=%s',
-           request.user.account.long_name(), declined_transaction)
+  logger.info('Decline transaction from %s, transaction=%s',
+              request.user.account.long_name(), declined_transaction)
 
   if not user_can_decline(request, declined_transaction):
     return HttpResponseForbidden('У вас нет прав отменить эту транзакцию')
@@ -317,8 +316,8 @@ def upload_file(request):
       f = request.FILES['file']
       local_path = form.cleaned_data['path'].strip('/')
       user_path = path.join(MEDIA_ROOT, local_path, f.name)
-      log.info('file uploaded by %s,path=%s', request.user.account.long_name(),
-               user_path)
+      logger.info('file uploaded by %s,path=%s', request.user.account.long_name(),
+                  user_path)
       os.makedirs(path.dirname(user_path), exist_ok=True)
       with open(user_path, 'wb+') as destination:
         for chunk in f.chunks():
@@ -426,7 +425,7 @@ def user_can_use_template(request, template_trans):
 
 def user_can_decline(request, updated_transaction):
   if not updated_transaction.can_be_transitioned_to(States.declined.value):
-    log.warning(
+    logger.warning(
         '%s cant decline transaction because transaction can not be transitioned to declined state',
         request.user.account.long_name())
     return False
@@ -435,7 +434,7 @@ def user_can_decline(request, updated_transaction):
         get_perm_name(Actions.DECLINE.value, 'self',
                       updated_transaction.type.name)):
       return True
-    log.warning(
+    logger.warning(
         request.user.account.long_name() +
         ' cant decline transaction because user do not have rights to decline self created '
         + updated_transaction.type.name)
@@ -449,7 +448,7 @@ def user_can_decline(request, updated_transaction):
                 name__in=PERMISSION_RESPONSIBLE_GROUPS).name,
             'created_transactions')):
       return True
-    log.warning(
+    logger.warning(
         '%s is not owner of transaction and do not have rights to decline %s group.'
         ' but tries to decline it', request.user.account.long_name(),
         updated_transaction.creator.groups.get(

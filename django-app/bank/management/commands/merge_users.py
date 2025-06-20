@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
 from django.conf import settings
 from django.db import IntegrityError
+from loguru import logger
 
 from bank.models.Account import Account
 from bank.helper_functions import generate_password
@@ -70,13 +71,13 @@ class Command(BaseCommand):
 
                     # Compare and resolve differences for User fields.
                     if user.first_name != first_name:
-                        self.stdout.write(f"[Conflict] User '{login}': first_name DB='{user.first_name}' vs CSV='{first_name}'")
+                        logger.info("[Conflict] User '%s': first_name DB='%s' vs CSV='%s'", login, user.first_name, first_name)
                         if self.confirm_update(f"Update first_name for '{login}'?"):
                             user.first_name = first_name
                             updated = True
 
                     if user.last_name != last_name:
-                        self.stdout.write(f"[Conflict] User '{login}': last_name DB='{user.last_name}' vs CSV='{last_name}'")
+                        logger.info("[Conflict] User '%s': last_name DB='%s' vs CSV='%s'", login, user.last_name, last_name)
                         if self.confirm_update(f"Update last_name for '{login}'?"):
                             user.last_name = last_name
                             updated = True
@@ -84,19 +85,19 @@ class Command(BaseCommand):
                     # Compare and resolve differences for Account fields.
                     account = user.account
                     if account.middle_name != middle_name:
-                        self.stdout.write(f"[Conflict] User '{login}': middle_name DB='{account.middle_name}' vs CSV='{middle_name}'")
+                        logger.info("[Conflict] User '%s': middle_name DB='%s' vs CSV='%s'", login, account.middle_name, middle_name)
                         if self.confirm_update(f"Update middle_name for '{login}'?"):
                             account.middle_name = middle_name
                             updated = True
 
                     if account.party != party:
-                        self.stdout.write(f"[Conflict] User '{login}': party DB='{account.party}' vs CSV='{party}'")
+                        logger.info("[Conflict] User '%s': party DB='%s' vs CSV='%s'", login, account.party, party)
                         if self.confirm_update(f"Update party for '{login}'?"):
                             account.party = party
                             updated = True
 
                     if account.grade != grade:
-                        self.stdout.write(f"[Conflict] User '{login}': grade DB='{account.grade}' vs CSV='{grade}'")
+                        logger.info("[Conflict] User '%s': grade DB='%s' vs CSV='%s'", login, account.grade, grade)
                         if self.confirm_update(f"Update grade for '{login}'?"):
                             account.grade = grade
                             updated = True

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
+from loguru import logger
 
 from bank.constants import UserGroups, BANKIR_USERNAME, TransactionTypeEnum, MoneyTypeEnum
 from bank.helper_functions import get_session_day, get_tax_from_session_day
@@ -20,9 +21,9 @@ class Command(BaseCommand):
   def charge_tax():
     day = get_session_day()
     tax_value = get_tax_from_session_day(day)
-    print('Current day {}, tax: {}'.format(day, tax_value))
+    logger.info('Current day %s, tax: %s', day, tax_value)
     if tax_value <= 0:
-      print('Tax is < 0 transactions not created')
+      logger.info('Tax is < 0 transactions not created')
       return
     creator = User.objects.get(username=BANKIR_USERNAME)
     t_type = TransactionType.objects.get(name=TransactionTypeEnum.tax.value)
@@ -32,4 +33,4 @@ class Command(BaseCommand):
       Money.new_money(student, -tax_value, money_type, '', new_transaction)
     new_transaction.process()
     for ad in new_transaction.related_money_atomics.all():
-      print(ad.receiver.account.long_name(), ad.receiver.account.get_balance())
+      logger.info('%s %s', ad.receiver.account.long_name(), ad.receiver.account.get_balance())

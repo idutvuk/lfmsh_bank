@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from loguru import logger
 
 from bank.constants import TransactionTypeEnum, MoneyTypeEnum, ACTIVITY_REWARD, BOOK_CERTIFICATE_VALUE, \
     AttendanceTypeEnum
@@ -35,8 +36,8 @@ class ActivityTransactionController(TableTransactionController):
     first_form = formset_data[0]
     creator = User.objects.get(username=first_form['creator_username'])
     money_type = MoneyType.objects.get(name=first_form['money_type'])
-    print(money_type)
-    print(first_form)
+    logger.info(money_type)
+    logger.info(first_form)
 
     new_transaction = Transaction.new_transaction(
         creator,

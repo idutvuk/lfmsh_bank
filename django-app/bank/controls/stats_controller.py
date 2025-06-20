@@ -1,6 +1,6 @@
 import math
 
-import logging
+from loguru import logger
 
 from bank.constants import UserGroups, Actions, States, AttendanceTypeEnum, OBL_STUDY_NEEDED,\
                            BALANCE_DANGER, BALANCE_WARNING
@@ -13,7 +13,6 @@ from bank.models.Account import Account
 
 import statistics
 
-log = logging.getLogger('unexpected_things_logger')
 
 
 def get_student_stats(user):
@@ -115,7 +114,7 @@ def get_report_student_stats(user):
       accounts_info.append(acc_info)
       if math.fabs(acc_info['balance_calculated'] -
                    acc_info['balance_stored']) > 10:
-        log.warning('balances for {} differs more than {}'.format(acc, 10))
+        logger.warning('balances for {} differs more than {}'.format(acc, 10))
 
     best_activity = max(
         get_list_from_dict_list_by_key(accounts_info, 'earned_activity'))
