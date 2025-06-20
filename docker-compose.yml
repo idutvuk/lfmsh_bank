@@ -2,30 +2,29 @@ services:
   db:
     image: postgres
     environment:
-      POSTGRES_PASSWORD: $BANK_POSTGRESS_PASSWORD
-    volumes: 
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: $BANK_POSTGRES_PASSWORD
+    volumes:
       - pg-data:/var/lib/postgresql/data
-
-  web:
+    ports:
+        - "5432:5432"
+  backend:
     build:
       context: .
       dockerfile: ./docker/django-app/Dockerfile
-    command: >
-      bash -c "
-      uv run manage.py collectstatic --noinput &&
-      uv run manage.py makemigrations &&
-      uv run manage.py migrate &&
-      uv run manage.py runserver 0.0.0.0:8000
-      "
-#      uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    command: ./entrypoint.sh && uv run manage.py runserver 0.0.0.0:8000
+
+    # uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3 # error no module named core
     env_file: .env
     volumes:
       - ./docker/socket:/usr/src/django-app/socket
       - ./docker/django-app/logs:/usr/src/django-app/logs
+      - ./bank/migrations:/usr/src/django-app/bank/migrations
+
     depends_on:
       - db
     ports:
-        - 8000:8000
+      - "8000:8000"
 
   nginx:
     image: nginx
@@ -36,9 +35,9 @@ services:
       - ./django-app/media:/usr/share/nginx/media
       - ./docker/socket:/usr/share/nginx/socket
     ports:
-      - 80:8080
+      - "80:8080"
     depends_on:
-      - web
+      - backend
       - db
 volumes:
-    pg-data:
+  pg-data:

@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -24,105 +23,103 @@ SECRET_KEY = os.environ['BANK_SECRET_KEY']
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
-    "https://idutvuk.online"
+	"https://idutvuk.online"
 ]
 
-
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    }
+	'default': {
+		'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+	}
 }
 # Application definition
 
 INSTALLED_APPS = (
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'bank',
-    'django_bootstrap5',
-    'django_tables2',
-    'django_extensions',
+	'django.contrib.admin',
+	'django.contrib.auth',
+	'django.contrib.contenttypes',
+	'django.contrib.sessions',
+	'django.contrib.messages',
+	'django.contrib.staticfiles',
+	'bank',
+	'django_bootstrap5',
+	'django_tables2',
+	'django_extensions',
 )
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
 MIDDLEWARE = (
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+	'django.contrib.sessions.middleware.SessionMiddleware',
+	'django.middleware.common.CommonMiddleware',
+	'django.middleware.csrf.CsrfViewMiddleware',
+	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	'django.contrib.messages.middleware.MessageMiddleware',
+	'django.contrib.sessions.middleware.SessionMiddleware',
+	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	'django.middleware.security.SecurityMiddleware',
 )
 
 ROOT_URLCONF = 'main.urls'
 
 TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages'
-            ],
-        },
-    },
+	{
+		'BACKEND': 'django.template.backends.django.DjangoTemplates',
+		'DIRS': [],
+		'APP_DIRS': True,
+		'OPTIONS': {
+			'context_processors': [
+				'django.template.context_processors.debug',
+				'django.template.context_processors.request',
+				'django.contrib.auth.context_processors.auth',
+				'django.contrib.messages.context_processors.messages'
+			],
+		},
+	},
 ]
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
-        }
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
-        },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'main/', 'warning_log.log'),
-            'formatter': 'simple'
-        },
-        'errors_file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'main/', 'error_log.log'),
-            'formatter': 'simple'
-        }
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'errors_file'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
-        },
-        'bank_log': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-        'bank_api_log': {
-            'handlers': ['console'],
-            'level': 'INFO',
-        },
-        'unexpected_things_logger': {
-            'handlers': ['file'],
-            'level': 'WARNING',
-        }
-    },
+	'version': 1,
+	'disable_existing_loggers': False,
+	'formatters': {
+		'simple': {
+			'format': '%(levelname)s %(asctime)s %(message)s'
+		}
+	},
+	'handlers': {
+		'console': {
+			'class': 'logging.StreamHandler',
+			'formatter': 'simple'
+		},
+		'file': {
+			'level': 'DEBUG',
+			'class': 'logging.FileHandler',
+			'filename': os.path.join(BASE_DIR, 'main/', 'warning_log.log'),
+			'formatter': 'simple'
+		},
+		'errors_file': {
+			'level': 'ERROR',
+			'class': 'logging.FileHandler',
+			'filename': os.path.join(BASE_DIR, 'main/', 'error_log.log'),
+			'formatter': 'simple'
+		}
+	},
+	'loggers': {
+		'django': {
+			'handlers': ['console', 'errors_file'],
+			'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+		},
+		'bank_log': {
+			'handlers': ['console'],
+			'level': 'INFO',
+		},
+		'bank_api_log': {
+			'handlers': ['console'],
+			'level': 'INFO',
+		},
+		'unexpected_things_logger': {
+			'handlers': ['file'],
+			'level': 'WARNING',
+		}
+	},
 }
 
 WSGI_APPLICATION = 'main.wsgi.application'
@@ -131,33 +128,34 @@ WSGI_APPLICATION = 'main.wsgi.application'
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+	'default': {
+		'ENGINE': 'django.db.backends.sqlite3',
+		'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+	}
 }
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-#ESSION_COOKIE_SECURE = True
-#CSRF_COOKIE_SECURE = True
+# ESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 if os.environ.get('BANK_MODE', '') == 'docker-prod':
-  DATABASES = {
-      'default': {
-          'ENGINE': 'django.db.backends.postgresql',
-          'NAME': 'postgres',
-          'USER': 'postgres',
-          'PASSWORD': os.environ['BANK_POSTGRESS_PASSWORD'],
-          'HOST': 'db',
-          'PORT': 5432,
-      }
-  }
-  DEBUG = False
+	DATABASES = {
+		'default': {
+			'ENGINE': 'django.db.backends.postgresql',
+			'NAME': os.environ.get('POSTGRES_DB', 'postgres'),
+			'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+			# Читаем стандартную переменную
+			'PASSWORD': os.environ['BANK_POSTGRES_PASSWORD'],
+			'HOST': 'db',
+			'PORT': '5432',
+		}
+	}
+DEBUG = False
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
@@ -187,18 +185,18 @@ STATIC_URL = '/static/'
 # Default settings
 # The URL to the jQuery JavaScript file
 BOOTSTRAP5 = {
-    'css_url': {
-        'url':
-            os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap',
-                         'css', 'bootstrap.css'),
-    },
-    'javascript_url': {
-        'url':
-            os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap',
-                         'js', 'bootstrap.js'),
-    },
-    'jquery_url':
-        os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'jquery.js'),
-    'base_url':
-        os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap/')
+	'css_url': {
+		'url':
+			os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap',
+						 'css', 'bootstrap.css'),
+	},
+	'javascript_url': {
+		'url':
+			os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap',
+						 'js', 'bootstrap.js'),
+	},
+	'jquery_url':
+		os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'jquery.js'),
+	'base_url':
+		os.path.join(STATIC_URL, 'bank', 'django-bootstrap', 'bootstrap/')
 }
