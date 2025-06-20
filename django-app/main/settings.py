@@ -25,6 +25,7 @@ ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
 	"https://idutvuk.online"
 ]
+AUTH_USER_MODEL = 'bank.Account'
 
 CACHES = {
 	'default': {
@@ -59,7 +60,6 @@ MIDDLEWARE = (
 )
 
 ROOT_URLCONF = 'main.urls'
-
 TEMPLATES = [
 	{
 		'BACKEND': 'django.template.backends.django.DjangoTemplates',

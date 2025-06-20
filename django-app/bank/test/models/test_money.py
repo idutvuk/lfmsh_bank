@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.test import TestCase
 
 from bank.models.Money import Money
@@ -44,8 +44,8 @@ class MoneyTestCase(TestCase):
   def test_apply_changes_balances(self):
     creator = User.objects.get(username='creator')
     receiver = User.objects.get(username='receiver')
-    creator_balance = creator.account.balance
-    receiver_balance = receiver.account.balance
+    creator_balance = creator.balance
+    receiver_balance = receiver.balance
     money_type = MoneyType.objects.get(name=MoneyTypeEnum.radio_help.value)
     transaction_type = \
       TransactionType.objects.get(name=TransactionTypeEnum.seminar.value)
@@ -56,8 +56,8 @@ class MoneyTestCase(TestCase):
 
     money.apply()
 
-    self.assertEqual(creator.account.balance, creator_balance - 10)
-    self.assertEqual(receiver.account.balance, receiver_balance + 10)
+    self.assertEqual(creator.balance, creator_balance - 10)
+    self.assertEqual(receiver.balance, receiver_balance + 10)
 
   def test_apply_twice_raises(self):
     creator = User.objects.get(username='creator')
@@ -76,8 +76,8 @@ class MoneyTestCase(TestCase):
   def test_undo_changes_ballances(self):
     creator = User.objects.get(username='creator')
     receiver = User.objects.get(username='receiver')
-    creator_balance = creator.account.balance
-    receiver_balance = receiver.account.balance
+    creator_balance = creator.balance
+    receiver_balance = receiver.balance
     money_type = MoneyType.objects.get(name=MoneyTypeEnum.radio_help.value)
     transaction_type = \
       TransactionType.objects.get(name=TransactionTypeEnum.seminar.value)
@@ -87,8 +87,8 @@ class MoneyTestCase(TestCase):
                             transaction)
     money.apply()
     money.undo()
-    self.assertEqual(creator.account.balance, creator_balance)
-    self.assertEqual(receiver.account.balance, receiver_balance)
+    self.assertEqual(creator.balance, creator_balance)
+    self.assertEqual(receiver.balance, receiver_balance)
 
   def test_undo_non_applied_transaction_raises(self):
     creator = User.objects.get(username='creator')

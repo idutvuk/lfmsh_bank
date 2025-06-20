@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.core.management import BaseCommand
 from loguru import logger
 
@@ -33,4 +33,4 @@ class Command(BaseCommand):
       Money.new_money(student, -tax_value, money_type, '', new_transaction)
     new_transaction.process()
     for ad in new_transaction.related_money_atomics.all():
-      logger.info('%s %s', ad.receiver.account.long_name(), ad.receiver.account.get_balance())
+      logger.info('%s %s', ad.receiver.long_name(), ad.receiver.get_balance())

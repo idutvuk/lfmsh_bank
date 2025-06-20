@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.forms import formset_factory
 
 from bank.constants import UserGroups, MoneyTypeEnum, TransactionTypeEnum, AttendanceTypeEnum
@@ -25,10 +25,10 @@ class SeminarTransactionController(TableTransactionController):
   def get_initial_form_data(creator_username):
     students_query = User.objects.filter(
         groups__name__contains=UserGroups.student.value).order_by(
-            'account__party', 'last_name')
+            'party', 'last_name')
     initial = [{
-        'student_name': user.account.long_name(),
-        'student_party': user.account.party,
+        'student_name': user.long_name(),
+        'student_party': user.party,
         'receiver_username': user.username,
         'creator_username': creator_username,
         'description': 'stub value',

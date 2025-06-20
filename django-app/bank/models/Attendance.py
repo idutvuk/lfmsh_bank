@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.db import models
 from django.db.models import CASCADE, SET_NULL
 from django.utils.timezone import now
@@ -89,7 +89,7 @@ class Attendance(AtomicTransaction):
         'value':
             self.value,
         'receiver':
-            self.receiver.account.long_name(),
+            self.receiver.long_name(),
         'counted':
             self.counted,
         'description':
@@ -112,7 +112,7 @@ class Attendance(AtomicTransaction):
            [self.date.strftime('%d.%m.%Y')] + \
            at_block_info + \
            super(Attendance, self).full_info_as_list() + \
-           self.receiver.account.full_info_as_list() + \
+           self.receiver.full_info_as_list() + \
            self.related_transaction.full_info_as_list()
 
   def full_info_headers_as_list(self):
@@ -120,5 +120,5 @@ class Attendance(AtomicTransaction):
            ['date'] + \
            ['attendance_block_' + x for x in self.attendance_block.full_info_headers_as_list()] + \
            super(Attendance, self).full_info_headers_as_list() + \
-           ['receiver_' + x for x in self.receiver.account.full_info_headers_as_list()] + \
+           ['receiver_' + x for x in self.receiver.full_info_headers_as_list()] + \
            ['transaction_' + x for x in self.related_transaction.full_info_headers_as_list()]

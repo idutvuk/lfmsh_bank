@@ -15,7 +15,7 @@ class TransTable(tables.Table):
   creator = LinkColumn(
       'bank:user',
       args=[A('creator.username')],
-      accessor='creator.account.long_name',
+      accessor='creator.long_name',
       verbose_name='Cоздатель')
   type = Column(accessor='type.readable_name', verbose_name='Тип')
   state = Column(accessor='state.readable_name', verbose_name='Состояние')

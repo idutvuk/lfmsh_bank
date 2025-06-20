@@ -23,7 +23,7 @@
                 {% for transaction in transactions %}
                     <tr>
                         <td>{{ transaction.get_creation_timestamp }}</td>
-                        <td>{{ transaction.creator.account.name_with_balance }}</td>
+                        <td>{{ transaction.creator.name_with_balance }}</td>
                         <td>
                             <a onclick="$('#trans-info-{{ transaction.id }}').toggle()">{{ transaction.type }}</a>
                         </td>

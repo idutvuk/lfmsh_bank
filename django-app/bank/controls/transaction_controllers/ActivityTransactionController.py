@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from loguru import logger
+from django.contrib.auth import get_user_model; User = get_user_model()
 
 from bank.constants import TransactionTypeEnum, MoneyTypeEnum, ACTIVITY_REWARD, BOOK_CERTIFICATE_VALUE, \
     AttendanceTypeEnum

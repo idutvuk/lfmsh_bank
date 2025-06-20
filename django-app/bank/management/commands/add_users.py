@@ -14,10 +14,11 @@ from bank.models.Money import Money
 from bank.models.TransactionType import TransactionType
 from bank.models.MoneyType import MoneyType
 from bank.models.Transaction import Transaction
-from bank.models.Account import Account
 from bank.helper_functions import generate_password
 
 from main.settings import BASE_DIR
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -80,14 +81,12 @@ class Command(BaseCommand):
 	def flush_all_users(options):
 		if options.get('yes', False):
 			logger.info("Skipping confirmation with --yes flag.")
-			Account.objects.all().delete()
 			User.objects.all().delete()
 			return True
 		a = input('this command will delete all existing users'
 				  'and transactions info and create new ones'
 				  'are you sure you want to continue ? (print yes to proceed)')
 		if a == 'yes':
-			Account.objects.all().delete()
 			User.objects.all().delete()
 			return True
 		return False
@@ -128,14 +127,13 @@ class Command(BaseCommand):
 
 					new_u = User.objects.create_user(
 						first_name=first_name,
+						middle_name=middle_name,
 						last_name=last_name,
 						username=login,
-						password=password)
+						password=password,
+					grade=grade, party=party)
 					new_u.save()
 					group.user_set.add(new_u)
-					new_a = Account(
-						user=new_u, middle_name=middle_name, grade=grade, party=party)
-					new_a.save()
 					user_created = True
 				except IntegrityError as _:
 					need_unique_login = True
@@ -148,18 +146,18 @@ class Command(BaseCommand):
 	@staticmethod
 	def add_bank_user():
 		login = BANKIR_USERNAME
-		password = 'r'  # TODO: generate_password(8)
+		password = 'r' # TODO: generate_password(8)
 		new_u = User.objects.create_user(
 			first_name='Повелитель',
+			middle_name='Ф',
 			last_name='о,',
 			username=login,
 			password=password,
+			grade=0, party=0,
 			is_superuser=True  # TODO: remove, security risk
 		)
 		new_u.save()
-		new_a = Account(user=new_u, middle_name='Ф', grade=0, party=0)
-		new_a.save()
-		group = Group.objects.get(name='admin')
+		group = Group.objects.get_or_create(name='admin')
 		group.user_set.add(new_u)
 
 		out = open(BASE_DIR + Command.STATIC_DATA_PATH + 'bankir.txt', 'w')

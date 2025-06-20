@@ -1,6 +1,6 @@
 import json
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.db import models
 from django.shortcuts import get_object_or_404
 
@@ -107,7 +107,7 @@ class Transaction(models.Model):
   def to_python(self):
     return {
         'creator':
-            self.creator.account.long_name(),
+            self.creator.long_name(),
         'creation_timestamp':
             self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
         'state':
@@ -121,7 +121,7 @@ class Transaction(models.Model):
     }
 
   def full_info_as_list(self):
-    return self.creator.account.full_info_as_list() + [
+    return self.creator.full_info_as_list() + [
         self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
         self.state.readable_name, self.state.counted
     ] + self.type.full_info_as_list()
@@ -129,6 +129,6 @@ class Transaction(models.Model):
   def full_info_headers_as_list(self):
     return [
         'creator_' + x
-        for x in self.creator.account.full_info_headers_as_list()
+        for x in self.creator.full_info_headers_as_list()
     ] + ['creation_timestamp', 'state_name', 'counted'
         ] + self.type.full_info_headers_as_list()

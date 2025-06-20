@@ -21,7 +21,7 @@ def get_student_stats(user):
   if user.has_perm(
       get_perm_name(Actions.SEE.value, UserGroups.student.value, 'balance')):
     student_accounts = Account.objects.filter(
-        user__groups__name__contains=UserGroups.student.value)
+        groups__name__contains=UserGroups.student.value)
     balances = [a.balance for a in student_accounts]
     stats.update({
         'sum_money': int(sum(balances)),
@@ -57,8 +57,8 @@ def get_report_student_stats(user):
   if user.has_perm(
       get_perm_name(Actions.SEE.value, UserGroups.student.value, 'balance')):
     student_accounts = Account.objects.filter(
-        user__groups__name__contains=UserGroups.student.value).order_by(
-            'party', 'user__last_name')
+        groups__name__contains=UserGroups.student.value).order_by(
+            'party', 'last_name')
     balances = [a.balance for a in student_accounts]
     stats.update({
         'sum_money': int(sum(balances)),
@@ -196,8 +196,8 @@ def get_counters_of_user_who_is(user, target_user, group):
       counted=True)
   info = {
       'study_needed': OBL_STUDY_NEEDED,
-      'fac_pass_needed': target_user.account.fac_needed(),
-      'lab_pass_needed': target_user.account.lab_needed()
+      'fac_pass_needed': target_user.fac_needed(),
+      'lab_pass_needed': target_user.lab_needed()
   }
   counters_val = {}
   for counter_type in AttendanceType.objects.all():
@@ -209,8 +209,8 @@ def get_counters_of_user_who_is(user, target_user, group):
           counters_val.get(AttendanceTypeEnum.seminar_attend.value)
   })
   info.update({
-      'next_missed_lec_fine': target_user.account.get_next_missed_lec_penalty(),
-      'expected_equator_fine': target_user.account.get_equator_study_fine(),
-      'expected_fine': target_user.account.get_final_study_fine()
+      'next_missed_lec_fine': target_user.get_next_missed_lec_penalty(),
+      'expected_equator_fine': target_user.get_equator_study_fine(),
+      'expected_fine': target_user.get_final_study_fine()
   })
   return {'val': counters_val, 'info': info}

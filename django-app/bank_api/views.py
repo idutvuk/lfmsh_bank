@@ -4,7 +4,7 @@ import json
 from loguru import logger
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 
@@ -23,7 +23,7 @@ from bank.models.Attendance import Attendance
 @login_required()
 def get_user_transactions(request):
   user = request.user
-  logger.info('api user info call from %s', user.account.long_name())
+  logger.info('api user info call from %s', user.long_name())
 
   if not (user.has_perm(get_perm_name(Actions.SEE.value, 'self', 'balance')) and
           user.has_perm(get_perm_name(Actions.SEE.value, 'self',
@@ -31,11 +31,11 @@ def get_user_transactions(request):
     return HttpResponseForbidden('user do not have perm to see this info')
 
   data = {
-      'balance': user.account.balance,
+      'balance': user.balance,
       'username': user.username,
       'first_name': user.first_name,
       'last_name': user.last_name,
-      'balance_changes': [t.to_python() for t in user.account.get_all_money()],
+      'balance_changes': [t.to_python() for t in user.get_all_money()],
       'counters': [t.to_python() for t in user.received_attendance.all()],
       'counters_value': get_counters_of_user_who_is(user, user, 'self')
   }
@@ -63,14 +63,14 @@ def add_transaction(request):
 def get_students(_):
   students_data = User.objects.filter(
       groups__name__contains=UserGroups.student.value).order_by(
-          'account__party', 'last_name')
+          'party', 'last_name')
   data = [u.account.full_info_as_map(True) for u in students_data]
   return HttpResponse(json.dumps(data), content_type='application/json')
 
 
 def make_transaction(request):
   user = request.user
-  logger.info('api add transaction call from %s', user.account.long_name())
+  logger.info('api add transaction call from %s', user.long_name())
 
   trans_data = json.loads(str(request.body, 'utf-8'))
 

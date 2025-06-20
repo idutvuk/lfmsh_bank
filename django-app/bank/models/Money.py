@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.db import models
 from django.db.models import CASCADE
 from django.utils.timezone import now
@@ -43,8 +43,8 @@ class Money(AtomicTransaction):
     if self.counted == value:
       raise AttributeError
     super()._switch_counted(value)
-    creator = self.related_transaction.creator.account
-    receiver = self.receiver.account
+    creator = self.related_transaction.creator
+    receiver = self.receiver
     if not value:
       creator.balance += self.value
       receiver.balance -= self.value
@@ -69,8 +69,8 @@ class Money(AtomicTransaction):
         'local_group': self.type.readable_group_local,
         'type': self.type.readable_name,
         'value': self.value,
-        'receiver': self.receiver.account.long_name(),
-        'creator': self.related_transaction.creator.account.long_name(),
+        'receiver': self.receiver.long_name(),
+        'creator': self.related_transaction.creator.long_name(),
         'counted': self.counted,
         'state': self.related_transaction.state.readable_name,
         'description': self.description,
@@ -81,11 +81,11 @@ class Money(AtomicTransaction):
   def full_info_as_list(self):
     return self.type.full_info_as_list() + \
            super(Money, self).full_info_as_list() + \
-           self.receiver.account.full_info_as_list() + \
+           self.receiver.full_info_as_list() + \
            self.related_transaction.full_info_as_list()
 
   def full_info_headers_as_list(self):
     return self.type.full_info_headers_as_list() + \
            super(Money, self).full_info_headers_as_list() + \
-           ['receiver_' + x for x in self.receiver.account.full_info_headers_as_list()] + \
+           ['receiver_' + x for x in self.receiver.full_info_headers_as_list()] + \
            ['transaction_' + x for x in self.related_transaction.full_info_headers_as_list()]

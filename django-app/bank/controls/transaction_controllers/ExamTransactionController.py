@@ -1,5 +1,5 @@
 import math
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 
 from bank.constants import MoneyTypeEnum, TransactionTypeEnum, EXAM_BUDGET
 from bank.controls.transaction_controllers.TableTransactionController import TableTransactionController

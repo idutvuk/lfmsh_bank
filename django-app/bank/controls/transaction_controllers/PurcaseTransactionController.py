@@ -1,6 +1,6 @@
 import datetime
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 
 from bank.constants import MoneyTypeEnum, TransactionTypeEnum, AttendanceTypeEnum
 from bank.controls.transaction_controllers.TableTransactionController import TableTransactionController
@@ -28,12 +28,12 @@ class PurchaseTransactionController(TableTransactionController):
     initial = [{
         'student_name':
             '{} {}crt.'.format(
-                user.account.name_with_balance(),
+                user.name_with_balance(),
                 str(
-                    user.account.get_counter(
+                    user.get_counter(
                         AttendanceTypeEnum.book_certificate.value))),
         'student_party':
-            user.account.party,
+            user.party,
         'receiver_username':
             user.username,
         'creator_username':
@@ -80,7 +80,7 @@ class PurchaseTransactionController(TableTransactionController):
 
   @staticmethod
   def _get_certificate_split(user, value):
-    cert_amount = user.account.get_counter(
+    cert_amount = user.get_counter(
         AttendanceTypeEnum.book_certificate.value)
     if cert_amount > value:
       return 0, value

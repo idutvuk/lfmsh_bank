@@ -11,9 +11,9 @@
     <div class="container px-lg-5">
         <div class="p-4 p-lg-5 bg-light rounded-3 text-center">
             <div class="m-4 m-lg-5">
-                <p class="fs-4">Здравствуйте, {{ request.user.account.long_name }}</p>
+                <p class="fs-4">Здравствуйте, {{ request.user.long_name }}</p>
                 {% if 'bank.see_self_balance' in request.user.get_all_permissions %}
-                    <h1 class="display-5 fw-bold">{{ request.user.account.get_balance }}
+                    <h1 class="display-5 fw-bold">{{ request.user.get_balance }}
                     {% if counters.val.book_certificate %}
                         {{ counters.val.book_certificate }} <i class="bi bi-book"></i>
                     {% endif %}

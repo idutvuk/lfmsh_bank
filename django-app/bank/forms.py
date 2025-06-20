@@ -3,7 +3,7 @@ import datetime
 import string
 
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.core.exceptions import ValidationError
 from django.forms import BaseFormSet
 from django.forms.widgets import ChoiceWidget
@@ -46,7 +46,7 @@ class ReceiverField(forms.ModelChoiceField):
     return value
 
   def label_from_instance(self, user):
-    return '{} {}'.format(user.account.party, user.account.long_name())
+    return '{} {}'.format(user.party, user.long_name())
 
 
 class PlaceWidget(ChoiceWidget):
@@ -192,7 +192,7 @@ class SeminarKernelForm(AttendKernelForm):
       label='Докладчик',
       queryset=User.objects.filter(
           groups__name__in=[UserGroups.student.value]).order_by(
-              'account__party', 'last_name'),
+              'party', 'last_name'),
       empty_label='Жертва',
       to_field_name='username')
 
@@ -283,14 +283,14 @@ class P2PKernelForm(forms.Form):
   def __init__(self, creator, *args, **kwargs):
     super(P2PKernelForm, self).__init__(*args, **kwargs)
     self.fields['value'] = forms.IntegerField(
-        max_value=creator.account.balance,
+        max_value=creator.balance,
         label='Сумма',
         min_value=1,
         required=True)
     self.fields['receiver_username'] = ReceiverField(
         queryset=User.objects.filter(
             groups__name__in=[UserGroups.student.value]).exclude(
-                username=creator.username).order_by('account__party',
+                username=creator.username).order_by('party',
                                                     'last_name'),
         required=True,
         empty_label='Выберите получателя',
@@ -318,7 +318,7 @@ class LabKernelForm(forms.Form):
   receiver_username_1 = ReceiverField(
       queryset=User.objects.filter(
           groups__name__in=[UserGroups.student.value]).order_by(
-              'account__party', 'last_name'),
+              'party', 'last_name'),
       required=True,
       empty_label='Первый Пионер',
       to_field_name='username',
@@ -326,7 +326,7 @@ class LabKernelForm(forms.Form):
   receiver_username_2 = ReceiverField(
       queryset=User.objects.filter(
           groups__name__in=[UserGroups.student.value]).order_by(
-              'account__party', 'last_name'),
+              'party', 'last_name'),
       required=True,
       empty_label='Второй пионер',
       to_field_name='username',

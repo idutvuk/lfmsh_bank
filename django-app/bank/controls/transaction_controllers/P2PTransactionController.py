@@ -1,6 +1,6 @@
 from functools import partial, wraps
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 from django.forms import formset_factory
 
 from bank.constants import MoneyTypeEnum, TransactionTypeEnum
@@ -62,7 +62,7 @@ class P2PTransactionController(TransactionController):
     }]
 
     # validation
-    if value < 1 or value > creator.account.balance:
+    if value < 1 or value > creator.balance:
       raise P2PIllegalAmount(value)
     if creator.username == receiver_username:
       raise SelfMoneyTransfer()

@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 
 from bank.constants import TransactionTypeEnum, AttendanceTypeEnum, AttendanceBlockEnum, MoneyTypeEnum
 from bank.controls.transaction_controllers.TableTransactionController import TableTransactionController
@@ -39,7 +39,7 @@ class LectureTransactionController(TableTransactionController):
         attendance_type_name = AttendanceTypeEnum.lecture_attend.value
       else:
         attendance_type_name = AttendanceTypeEnum.lecture_miss.value
-        fine_value = receiver.account.get_next_missed_lec_penalty()
+        fine_value = receiver.get_next_missed_lec_penalty()
         Money.new_money(receiver, -fine_value, money_type,
                         first_form['description'], new_transaction)
 

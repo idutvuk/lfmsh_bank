@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 
 from bank.constants import TransactionTypeEnum, AttendanceTypeEnum, AttendanceBlockEnum, WORKOUT_BUDGET, MoneyTypeEnum
 from bank.controls.transaction_controllers.TableTransactionController import TableTransactionController

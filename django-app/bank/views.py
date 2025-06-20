@@ -28,7 +28,7 @@ def index(request):
   Lists avaliable get transactions and add transactios menues
   Shows user's current balace (student) or general stats (staff)
   """
-  logger.info('index page request from %s', request.user.account.long_name())
+  logger.info('index page request from %s', request.user.long_name())
   student_stats = get_student_stats(request.user)
   transaction_types = TransactionType.objects.all()
   transaction_type_info = [{
@@ -51,7 +51,7 @@ def index(request):
 
 @login_required
 def dev(request):
-  logger.info('index page request from %s', request.user.account.long_name())
+  logger.info('index page request from %s', request.user.long_name())
   student_stats = get_student_stats(request.user)
   transaction_types = TransactionType.objects.all()
   transaction_type_info = [{
@@ -128,7 +128,7 @@ def add_transaction(request, type_name, update_of=None, from_template=None):
       created_transaction = controller.get_transaction_from_form_data(
           formset.cleaned_data, update_of)
       logger.info('Valid add transaction from %s, update=%s, transaction=%s',
-                  request.user.account.long_name(), update_of, created_transaction)
+                  request.user.long_name(), update_of, created_transaction)
       if request.user.has_perm(
           get_perm_name(Actions.PROCESS.value, 'self', type_name)):
         # Process transaction if have rights to do so.
@@ -164,7 +164,7 @@ def decline(request, transaction_id):
   """Cancel a transaction by id"""
   declined_transaction = get_object_or_404(Transaction, id=transaction_id)
   logger.info('Decline transaction from %s, transaction=%s',
-              request.user.account.long_name(), declined_transaction)
+              request.user.long_name(), declined_transaction)
 
   if not user_can_decline(request, declined_transaction):
     return HttpResponseForbidden('У вас нет прав отменить эту транзакцию')
@@ -213,7 +213,7 @@ def get_transaction_HTML(request):
 def students(request):
   students_data = User.objects.filter(
       groups__name__contains=UserGroups.student.value).order_by(
-          'account__party', 'last_name')
+          'party', 'last_name')
   render_dict = get_students_markup(students_data)
   render_dict.update({'students': students_data})
   render_dict.update({
@@ -316,7 +316,7 @@ def upload_file(request):
       f = request.FILES['file']
       local_path = form.cleaned_data['path'].strip('/')
       user_path = path.join(MEDIA_ROOT, local_path, f.name)
-      logger.info('file uploaded by %s,path=%s', request.user.account.long_name(),
+      logger.info('file uploaded by %s,path=%s', request.user.long_name(),
                   user_path)
       os.makedirs(path.dirname(user_path), exist_ok=True)
       with open(user_path, 'wb+') as destination:
@@ -427,7 +427,7 @@ def user_can_decline(request, updated_transaction):
   if not updated_transaction.can_be_transitioned_to(States.declined.value):
     logger.warning(
         '%s cant decline transaction because transaction can not be transitioned to declined state',
-        request.user.account.long_name())
+        request.user.long_name())
     return False
   if updated_transaction.creator.username == request.user.username:
     if request.user.has_perm(
@@ -435,7 +435,7 @@ def user_can_decline(request, updated_transaction):
                       updated_transaction.type.name)):
       return True
     logger.warning(
-        request.user.account.long_name() +
+        request.user.long_name() +
         ' cant decline transaction because user do not have rights to decline self created '
         + updated_transaction.type.name)
 
@@ -450,7 +450,7 @@ def user_can_decline(request, updated_transaction):
       return True
     logger.warning(
         '%s is not owner of transaction and do not have rights to decline %s group.'
-        ' but tries to decline it', request.user.account.long_name(),
+        ' but tries to decline it', request.user.long_name(),
         updated_transaction.creator.groups.get(
             name__in=PERMISSION_RESPONSIBLE_GROUPS).name)
 

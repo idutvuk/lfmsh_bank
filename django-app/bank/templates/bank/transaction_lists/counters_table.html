@@ -18,10 +18,10 @@
         <tr>
             <td>{{ counter.get_creation_timestamp }}</td>
             {% if not viewer_role == 'receiver' %}
-                <td>{{ counter.receiver.account.long_name }}</td>
+                <td>{{ counter.receiver.long_name }}</td>
             {% endif %}
             {% if not viewer_role == 'creator' %}
-                <td>{{ counter.related_transaction.creator.account.long_name }}</td>
+                <td>{{ counter.related_transaction.creator.long_name }}</td>
             {% endif %}
             <td><span class="{% if counter.value > 0 %} green{% else %}red{% endif %}">{{ counter.get_value }}</span> {% include 'bank/transaction_lists/counted_marker.html' with counted=counter.counted %}</td>
             <td>{{ counter.description }}</td>

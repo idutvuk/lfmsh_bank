@@ -12,7 +12,7 @@ def get_students_markup(students):
   marker = 0
   for party in range(1, NUM_OF_PARTIES + 1):
     starttable.append(marker + 1)
-    marker += len(students.filter(account__party=party))
+    marker += len(students.filter(party=party))
     endtable.append(marker)
 
   return {

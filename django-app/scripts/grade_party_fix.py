@@ -1,7 +1,7 @@
 # coding=utf-8
 __author__ = 'nkorobkov'
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model; User = get_user_model()
 
 for u in User.objects.filter(groups__name='student'):
 

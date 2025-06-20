@@ -1,7 +1,7 @@
 import csv
 import os
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django.conf import settings
 from django.db import IntegrityError
 from loguru import logger
@@ -9,6 +9,8 @@ from loguru import logger
 from bank.models.Account import Account
 from bank.helper_functions import generate_password
 from transliterate import translit
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -83,28 +85,26 @@ class Command(BaseCommand):
                             updated = True
 
                     # Compare and resolve differences for Account fields.
-                    account = user.account
-                    if account.middle_name != middle_name:
-                        logger.info("[Conflict] User '%s': middle_name DB='%s' vs CSV='%s'", login, account.middle_name, middle_name)
+                    if user.middle_name != middle_name:
+                        logger.info("[Conflict] User '%s': middle_name DB='%s' vs CSV='%s'", login, user.middle_name, middle_name)
                         if self.confirm_update(f"Update middle_name for '{login}'?"):
-                            account.middle_name = middle_name
+                            user.middle_name = middle_name
                             updated = True
 
-                    if account.party != party:
-                        logger.info("[Conflict] User '%s': party DB='%s' vs CSV='%s'", login, account.party, party)
+                    if user.party != party:
+                        logger.info("[Conflict] User '%s': party DB='%s' vs CSV='%s'", login, user.party, party)
                         if self.confirm_update(f"Update party for '{login}'?"):
-                            account.party = party
+                            user.party = party
                             updated = True
 
-                    if account.grade != grade:
-                        logger.info("[Conflict] User '%s': grade DB='%s' vs CSV='%s'", login, account.grade, grade)
+                    if user.grade != grade:
+                        logger.info("[Conflict] User '%s': grade DB='%s' vs CSV='%s'", login, user.grade, grade)
                         if self.confirm_update(f"Update grade for '{login}'?"):
-                            account.grade = grade
+                            user.grade = grade
                             updated = True
 
                     if updated:
                         user.save()
-                        account.save()
                         self.stdout.write(self.style.SUCCESS(f"User '{login}' updated."))
                     else:
                         self.stdout.write(f"User '{login}' exists and matches CSV data.")
@@ -112,10 +112,8 @@ class Command(BaseCommand):
                 except User.DoesNotExist:
                     # Create new user if not exists.
                     try:
-                        user = User.objects.create_user(username=login, first_name=first_name, last_name=last_name, password=password)
+                        user = User.objects.create_user(username=login, first_name=first_name, last_name=last_name, password=password, middle_name=middle_name, party=party, grade=grade)
                         group.user_set.add(user)
-                        account = Account(user=user, middle_name=middle_name, party=party, grade=grade)
-                        account.save()
                         self.stdout.write(self.style.SUCCESS(f"Created user '{login}' with password: {password}"))
                     except IntegrityError as e:
                         self.stdout.write(self.style.ERROR(f"Failed to create user '{login}': {e}"))

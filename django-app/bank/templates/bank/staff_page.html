@@ -5,11 +5,10 @@
   <div class="container py-4">
     <!-- Top Section -->
     <div class="p-4 p-lg-5 bg-light rounded-3 mb-2">
-      <p class="fs-4">Здравствуйте, {{ request.user.account.long_name }}</p>
-
-      <div class="d-flex justify-content-around mt-4">
+      <p class="fs-4">Здравствуйте, {{ request.user.long_name }}</p>
+       <div class="d-flex justify-content-around mt-4">
         <div class="col">
-          <a href="https://google.com">
+          <a href="{% url 'bank:add_transaction' 'general_money' %}">
             <div class="button-container">
               <button class="circle-btn lgreen"><i class="bi bi-plus"></i></button>
               <div class="btn-text">Начисление</div>
@@ -17,7 +16,7 @@
           </a>
         </div>
         <div class="col">
-          <a href="https://google.com">
+          <a href="{% url 'bank:add_transaction' 'fac_attend' %}">
             <div class="button-container">
               <button class="circle-btn lblue"><i class="bi bi-journal"></i></button>
               <div class="btn-text">Занятие</div>
@@ -25,7 +24,7 @@
           </a>
         </div>
         <div class="col">
-          <a href="https://google.com">
+          <a href="{% url 'bank:add_transaction' 'fine' %}">
             <div class="button-container">
               <button class="circle-btn lred"><i class="bi bi-dash"></i></button>
               <div class="btn-text">Штраф</div>
@@ -33,14 +32,13 @@
           </a>
         </div>
         <div class="col">
-          <a href="https://google.com">
+          <!-- TODO add popup menu -->
             <div class="button-container">
               <button class="circle-btn lyellow"><i class="bi bi-three-dots"></i></button>
               <div class="btn-text">Еще</div>
             </div>
-          </a>
         </div>
-      </div>
+      </div> 
       <div class="row"></div>
     </div>
   </div>

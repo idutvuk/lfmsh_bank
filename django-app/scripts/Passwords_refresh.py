@@ -1,13 +1,13 @@
 # coding=utf-8
 __author__ = 'nkorobkov'
 
-from django.contrib.auth.models import User
+from bank.models.Account import Account
 from bank.helper_functions import generate_password
 from loguru import logger
 
 p_out = open('meta_files/new_passwords.txt', 'w')
 '''
-for u in User.objects.filter(groups__name='pioner'):
+for u in Account.objects.filter(groups__name='pioner'):
     
     pd = get_pd(8)
     u.set_password(pd)
@@ -19,7 +19,7 @@ for u in User.objects.filter(groups__name='pioner'):
     p_out.write(info.encode('utf-8'))
     p_out.write('\n ' + '--'*30 +' \n\n')
 '''
-for u in User.objects.filter(groups__name='pedsostav'):
+for u in Account.objects.filter(groups__name='pedsostav'):
 
   pd = generate_password(12)
   u.set_password(pd)
