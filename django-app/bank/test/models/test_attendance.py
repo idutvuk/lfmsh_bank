@@ -3,7 +3,6 @@ from django.test import TestCase
 
 from bank.models.Attendance import Attendance
 from bank.models.Transaction import Transaction
-from bank.models.Account import Account
 from bank.models.AttendanceType import AttendanceType
 from bank.models.TransactionType import TransactionType
 from bank.models.AttendanceBlock import AttendanceBlock
@@ -28,19 +27,15 @@ class AttendanceTestCase(TestCase):
         first_name='Creator',
         last_name='Last',
         username='creator',
-        password='1234')
+        password='1234', middle_name='Middle', grade=10, party=1)
     user_creator.save()
-    Account.objects.create(
-        user=user_creator, middle_name='Middle', grade=10, party=1)
 
     user_receiver = User.objects.create_user(
         first_name='Receiver',
         last_name='Last',
         username='receiver',
-        password='1234')
+        password='1234',  middle_name='Middle', grade=10, party=1)
     user_receiver.save()
-    Account.objects.create(
-        user=user_receiver, middle_name='Middle', grade=10, party=1)
 
     AttendanceBlock.objects.create(
         name='10-11', start_time='10:00:00', end_time='11:00:00')

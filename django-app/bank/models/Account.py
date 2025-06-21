@@ -12,7 +12,9 @@ class Account(AbstractUser):
   middle_name = models.CharField(max_length=40, default='Not stated')
   party = models.IntegerField(default=0)
   grade = models.IntegerField(blank=True, default=0)
-  
+  username = models.CharField(max_length=256, unique=True, blank=True, default='default_username')
+  password = models.CharField(max_length=256, blank=True, default='changeme')
+
   def get_counter(self, counter_name):
     return int(sum([
         a.value for a in self.received_attendance.filter(

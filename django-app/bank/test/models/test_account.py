@@ -13,36 +13,34 @@ from bank.models.TransactionState import TransactionState
 from bank.models.Attendance import Attendance
 from bank.models.AttendanceType import AttendanceType
 from bank.models.Transaction import Transaction
-from bank.models.Account import Account
 
 
 class AccountTestCase(TestCase):
 
   def setUp(self):
     user = User.objects.create_user(
-        first_name='First', last_name='Last', username='user', password='1234')
+        first_name='First', last_name='Last', username='user', password='1234', middle_name='Middle', grade=10, party=1)
     user.save()
-    Account.objects.create(user=user, middle_name='Middle', grade=10, party=1)
 
     user2 = User.objects.create_user(
         first_name='First2',
         last_name='Last2',
         username='user2',
-        password='1234')
+        password='1234',
+        middle_name='Middle2', grade=10, party=1)
     user2.save()
-    Account.objects.create(user=user2, middle_name='Middle2', grade=10, party=1)
 
   def test_basic_acc_created(self):
-    account = Account.objects.get(party=1, middle_name='Middle')
+    account = User.objects.get(party=1, middle_name='Middle')
     self.assertEqual(account.middle_name, 'Middle')
     self.assertEqual(account.grade, 10)
     self.assertEqual(account.party, 1)
-    self.assertEqual(account.user.first_name, 'First')
-    self.assertEqual(account.user.username, 'user')
+    self.assertEqual(account.first_name, 'First')
+    self.assertEqual(account.username, 'user')
     self.assertEqual(account.balance, 0)
 
   def test_final_study_fine_calc(self):
-    account = Account.objects.get(party=1, middle_name='Middle')
+    account = User.objects.get(party=1, middle_name='Middle')
 
     single_fac_fine = FAC_PENALTY
     lab_fine = LAB_PASS_NEEDED[account.grade] * LAB_PENALTY
@@ -61,7 +59,7 @@ class AccountTestCase(TestCase):
     self.assertEqual(account.get_final_study_fine(), fine_with_zero_activity)
 
   def test_equator_study_fine_calc(self):
-    account = Account.objects.get(party=1, middle_name='Middle')
+    account = User.objects.get(party=1, middle_name='Middle')
 
     lab_fine = LAB_PASS_NEEDED_EQUATOR * LAB_PENALTY
     # arithmetic progression
@@ -76,7 +74,7 @@ class AccountTestCase(TestCase):
     self.assertEqual(account.get_equator_study_fine(), fine_with_zero_activity)
 
   def test_final_study_fine_calc_with_activity(self):
-    account = Account.objects.get(party=1, middle_name='Middle')
+    account = User.objects.get(party=1, middle_name='Middle')
 
     single_fac_fine = FAC_PENALTY
     lab_fine = LAB_PASS_NEEDED[account.grade] * LAB_PENALTY
@@ -113,7 +111,7 @@ class AccountTestCase(TestCase):
     self.assertEqual(account.get_final_study_fine(), fine_with_zero_activity)
 
   def test_equator_study_fine_calc_with_activity(self):
-    account = Account.objects.get(party=1, middle_name='Middle')
+    account = User.objects.get(party=1, middle_name='Middle')
 
     lab_fine = LAB_PASS_NEEDED_EQUATOR * LAB_PENALTY
     # arithmetic progression

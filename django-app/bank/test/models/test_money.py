@@ -3,7 +3,6 @@ from django.test import TestCase
 
 from bank.models.Money import Money
 from bank.models.Transaction import Transaction
-from bank.models.Account import Account
 from bank.models.MoneyType import MoneyType
 from bank.models.TransactionType import TransactionType
 from bank.test.seeder import seed_db
@@ -27,19 +26,17 @@ class MoneyTestCase(TestCase):
         first_name='Creator',
         last_name='Last',
         username='creator',
-        password='1234')
+        password='1234',
+        middle_name='Middle', grade=10, party=1)
     user_creator.save()
-    Account.objects.create(
-        user=user_creator, middle_name='Middle', grade=10, party=1)
 
     user_receiver = User.objects.create_user(
         first_name='Receiver',
         last_name='Last',
         username='receiver',
-        password='1234')
+        password='1234',
+        middle_name='Middle', grade=10, party=1)
     user_receiver.save()
-    Account.objects.create(
-        user=user_receiver, middle_name='Middle', grade=10, party=1)
 
   def test_apply_changes_balances(self):
     creator = User.objects.get(username='creator')

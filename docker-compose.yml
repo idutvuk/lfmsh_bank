@@ -40,4 +40,4 @@ services:
       - backend
       - db
 volumes:
-  pg-data:
+  pg-data: {}

@@ -157,7 +157,7 @@ class Command(BaseCommand):
 			is_superuser=True  # TODO: remove, security risk
 		)
 		new_u.save()
-		group = Group.objects.get_or_create(name='admin')
+		group, _ = Group.objects.get_or_create(name='admin')
 		group.user_set.add(new_u)
 
 		out = open(BASE_DIR + Command.STATIC_DATA_PATH + 'bankir.txt', 'w')
