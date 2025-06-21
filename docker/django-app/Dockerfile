@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       build-essential \
       libpq-dev && \
-    rm -rf /var/lib/apt/lists/* \
+    rm -rf /var/lib/apt/lists/*
 
 # no venv
 ENV UV_SYSTEM_PYTHON=1
@@ -17,6 +17,7 @@ RUN mkdir -p /app/logs
 
 COPY django-app/ ./
 COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 
 
 #CMD ["sh", "-c", "gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3"]

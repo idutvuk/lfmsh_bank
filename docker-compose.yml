@@ -11,8 +11,12 @@ services:
   backend:
     build:
       context: .
-      dockerfile: ./docker/django-app/Dockerfile
-    command: ./entrypoint.sh && uv run manage.py runserver 0.0.0.0:8000
+      dockerfile: docker/django-app/Dockerfile
+    command: >
+      bash -c "
+      /app/entrypoint.sh &&
+      uv run manage.py runserver 0.0.0.0:8000
+      "
 
     # uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3 # error no module named core
     env_file: .env
