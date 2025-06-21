@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# if error occures check if file has LF line endings
 set -euo pipefail
 
 echo "Ожидание запуска базы данных..."

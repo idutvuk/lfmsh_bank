@@ -16,8 +16,8 @@ RUN uv sync
 RUN mkdir -p /app/logs
 
 COPY django-app/ ./
-COPY entrypoint.sh ./
-RUN chmod +x entrypoint.sh
+COPY entry.sh ./
+RUN chmod +x entry.sh
 
 
 #CMD ["sh", "-c", "gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3"]

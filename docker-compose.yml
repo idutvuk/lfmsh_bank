@@ -14,7 +14,7 @@ services:
       dockerfile: docker/django-app/Dockerfile
     command: >
       bash -c "
-      /app/entrypoint.sh &&
+      /app/entry.sh &&
       uv run manage.py runserver 0.0.0.0:8000
       "
 
