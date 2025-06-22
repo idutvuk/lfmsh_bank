@@ -43,5 +43,16 @@ services:
     depends_on:
       - backend
       - db
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
+    image: bank-frontend:latest
+    environment:
+      - VITE_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
 volumes:
   pg-data: {}
