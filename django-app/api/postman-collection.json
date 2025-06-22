@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Summer School Bank API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0
+    },
+  "variable": [
+    {
+        "key": "baseUrl",
+        "value": "http://localhost:8000"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth: obtain JWT",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/jwt/create/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "jwt",
+            "create",
+            ""
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"ivan.petrov\",\n  \"password\": \"secret123\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Проверяем, что логин успешен",
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "let json = pm.response.json();",
+              "pm.expect(json.access).to.eql(\"mocked-access-token\");",
+              "pm.expect(json.refresh).to.eql(\"mocked-refresh-token\");",
+              "pm.environment.set(\"accessToken\", json.access);",
+              "pm.environment.set(\"refreshToken\", json.refresh);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users: GET /users/me/",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "me",
+            ""
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test(\"Has user fields\", () => {",
+              "    pm.expect(json).to.have.all.keys('username','name','balance','expected_penalty','counters');",
+              "});",
+              "pm.test(\"Counters is an array\", () => {",
+              "    pm.expect(json.counters).to.be.an('array');",
+              "});",
+              "pm.test(\"Each counter has required props\", () => {",
+              "    json.counters.forEach(c => {",
+              "        pm.expect(c).to.have.all.keys('counter_name','value','max_value');",
+              "        pm.expect(c.counter_name).to.be.a('string');",
+              "        pm.expect(c.value).to.be.a('number');",
+              "        pm.expect(c.max_value).to.be.a('number');",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions: POST /transactions/",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "transactions",
+            ""
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"description\": \"Бонус за экзамен\",\n  \"type\": \"exam\",\n  \"receivers\": [\n    { \"username\": \"ivan.petrov\", \"bucks\": 50, \"certs\": 0, \"lab\":0, \"lec\":0, \"sem\":0, \"fac\":0 }\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Created 201\", () => pm.response.to.have.status(201));",
+              "var t = pm.response.json();",
+              "pm.test(\"Transaction has id & status=created\", () => {",
+              "    pm.expect(t).to.have.property('id');",
+              "    pm.expect(t.status).to.eql('created');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions: GET /transactions/?status=created",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/transactions/?status=created",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "transactions",
+            ""
+          ],
+          "query": [
+            {
+              "key": "status",
+              "value": "created"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Array of transactions\", () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

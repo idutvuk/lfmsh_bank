@@ -1,0 +1,543 @@
+# спасибо LLM за то, что документация это теперь рай, а не ад
+openapi: 3.0.3
+info:
+  title: Summer School Bank API
+  version: "1.0.0"
+  description: |
+    API банковского сервиса летней школы.  
+    Все пути начинаются с `/api`.  
+    Авторизация — JWT (Djoser).
+servers:
+  - url: /api
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # Входные данные для логина
+    Credentials:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Никнейм (lowercase английские буквы и точки)
+        password:
+          type: string
+          description: Пароль
+
+    # Ответ при получении JWT
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          description: JWT access token
+        refresh:
+          type: string
+          description: JWT refresh token
+
+    # Ответ при обновлении access-токена
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          description: Новый access token
+
+    # Профиль пользователя
+    UserProfile:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Никнейм текущего пользователя
+        name:
+          type: string
+          description: Полное имя пользователя
+        balance:
+          type: number
+          description: Текущий баланс (денежная сумма)
+        expected_penalty:
+          type: number
+          description: Ожидаемая сумма штрафов (для пионеров)
+        counters:
+          type: array
+          description: Счётчики посещений текущего пионера
+          items:
+            $ref: '#/components/schemas/Counter'
+
+    # Счётчик посещений (только для пионеров)
+    Counter:
+      type: object
+      properties:
+        counter_name:
+          type: string
+          description: Название счётчика (lab, lec, sem, fac)
+        value:
+          type: integer
+          description: Текущее значение
+        max_value:
+          type: integer
+          description: Максимальное значение
+
+    # Получатель транзакции в запросе/ответе
+    TransactionReceiver:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          description: Никнейм получателя
+        bucks:
+          type: integer
+          description: Денежная сумма
+        certs:
+          type: integer
+          description: Количество сертификатов
+        lab:
+          type: integer
+          description: Изменение счётчика лабораторных
+        lec:
+          type: integer
+          description: Изменение счётчика лекций
+        sem:
+          type: integer
+          description: Изменение счётчика семинаров
+        fac:
+          type: integer
+          description: Изменение счётчика факультативов
+
+    # Полная модель транзакции
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный ID транзакции
+        author:
+          type: string
+          description: Никнейм автора транзакции
+        description:
+          type: string
+          description: Описание транзакции
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        date_created:
+          type: string
+          format: date-time
+          description: Дата и время создания
+        receivers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionReceiver'
+
+    # Тело запроса для создания транзакции
+    TransactionCreate:
+      type: object
+      required:
+        - description
+        - type
+        - receivers
+      properties:
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        receivers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionReceiver'
+
+    # Перечисление типов транзакций
+    TransactionType:
+      type: string
+      description: Тип транзакции
+      enum:
+        - exam       # экзамен
+        - elective   # факультатив
+        - laboratory # лабораторная работа
+        - penalty    # штраф
+        - general    # общее начисление
+        - sport      # спорт/физкультура
+
+    # Статусы транзакций
+    TransactionStatus:
+      type: string
+      description: Статус транзакции
+      enum:
+        - created   # создана, ждёт одобрения
+        - approved  # начислена
+        - cancelled # отменена
+        - replaced  # заменена
+
+    # Базовая информация о пионере
+    PionerBasic:
+      type: object
+      properties:
+        username:
+          type: string
+        name:
+          type: string
+
+    # Статистика балансов
+    Statistics:
+      type: object
+      properties:
+        avg_balance:
+          type: number
+          description: Средний баланс по всем пионерам
+        total_balance:
+          type: number
+          description: Общая сумма денег в банке
+
+    # Обобщённая ошибка
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+
+paths:
+
+  /auth/jwt/create/:
+    post:
+      summary: Получить JWT по логину/паролю
+      tags: [Authentication]
+      security: []  # без токена
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credentials'
+            example:
+              username: "ivan.petrov"
+              password: "secret123"
+      responses:
+        '200':
+          description: Токены получены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+
+  /auth/jwt/refresh/:
+    post:
+      summary: Обновить access-токен
+      tags: [Authentication]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh]
+              properties:
+                refresh:
+                  type: string
+              example:
+                refresh: "eyJ0eXAiOiJKV1QiLCJh..."
+      responses:
+        '200':
+          description: Access-токен обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+
+  paths:
+    /users/me/:
+      get:
+        summary: Профиль текущего пользователя (счётчики включены)
+        tags: [ Users ]
+        responses:
+          '200':
+            description: Данные пользователя и его счётчики
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UserProfile'
+                example:
+                  username: "petya.ivanov"
+                  name: "Пётр Иванов"
+                  balance: 120.50
+                  expected_penalty: 10
+                  counters:
+                    - counter_name: "lab"
+                      value: 2
+                      max_value: 3
+                    - counter_name: "lec"
+                      value: 5
+                      max_value: 10
+                    - counter_name: "sem"
+                      value: 3
+                      max_value: 5
+                    - counter_name: "fac"
+                      value: 1
+                      max_value: 2
+
+  /users/me/counters/:
+    get:
+      summary: Счётчики текущего пионера
+      tags: [Users]
+      description: Только для роли pioner
+      responses:
+        '200':
+          description: Массив счётчиков
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Counter'
+              example:
+                - counter_name: "lab"
+                  value: 2
+                  max_value: 3
+                - counter_name: "lec"
+                  value: 5
+                  max_value: 10
+
+  /transactions/:
+    get:
+      summary: Список транзакций
+      tags: [Transactions]
+      description: |
+        - role=staff: возвращает все транзакции;  
+        - role=pioner: только где он получатель.
+      parameters:
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/TransactionStatus'
+          description: Фильтр по статусу
+        - in: query
+          name: type
+          schema:
+            $ref: '#/components/schemas/TransactionType'
+          description: Фильтр по типу
+        - in: query
+          name: author
+          schema:
+            type: string
+          description: Никнейм автора (staff)
+        - in: query
+          name: receiver
+          schema:
+            type: string
+          description: Никнейм получателя (pioner)
+      responses:
+        '200':
+          description: Список транзакций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+              example:
+                - id: 101
+                  author: "staff.member"
+                  description: "Штраф за опоздание"
+                  type: penalty
+                  status: created
+                  date_created: "2025-06-20T09:15:00Z"
+                  receivers:
+                    - username: "petya.ivanov"
+                      bucks: -5
+                      certs: 0
+                      lab: 0
+                      lec: 0
+                      sem: 0
+                      fac: 0
+                - id: 102
+                  author: "staff.member"
+                  description: "Лабораторная работа"
+                  type: laboratory
+                  status: approved
+                  date_created: "2025-06-19T14:00:00Z"
+                  receivers:
+                    - username: "petya.ivanov"
+                      bucks: 20
+                      certs: 1
+                      lab: 1
+                      lec: 0
+                      sem: 0
+                      fac: 0
+
+    post:
+      summary: Создать новую транзакцию
+      tags: [Transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreate'
+            example:
+              description: "Бонус за экзамен"
+              type: exam
+              receivers:
+                - username: "ivan.petrov"
+                  bucks: 50
+                  certs: 0
+                  lab: 0
+                  lec: 0
+                  sem: 0
+                  fac: 0
+      responses:
+        '201':
+          description: Транзакция создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+              example:
+                id: 123
+                author: "staff.member"
+                description: "Бонус за экзамен"
+                type: exam
+                status: created
+                date_created: "2025-06-21T12:34:56Z"
+                receivers:
+                  - username: "ivan.petrov"
+                    bucks: 50
+                    certs: 0
+                    lab: 0
+                    lec: 0
+                    sem: 0
+                    fac: 0
+
+  /transactions/{transaction_id}/:
+    get:
+      summary: Детали транзакции
+      tags: [Transactions]
+      parameters:
+        - in: path
+          name: transaction_id
+          required: true
+          schema:
+            type: integer
+          description: ID транзакции
+      responses:
+        '200':
+          description: Полная информация о транзакции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Не найдена или нет прав доступа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /transactions/pending/:
+    get:
+      summary: Ожидающие одобрения транзакции
+      tags: [Transactions]
+      description: Только для staff
+      responses:
+        '200':
+          description: Список созданных студентами транзакций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+
+  /transactions/{transaction_id}/approve/:
+    patch:
+      summary: Одобрить транзакцию
+      tags: [Transactions]
+      parameters:
+        - in: path
+          name: transaction_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Транзакция одобрена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /transactions/{transaction_id}/reject/:
+    patch:
+      summary: Отклонить транзакцию
+      tags: [Transactions]
+      parameters:
+        - in: path
+          name: transaction_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Транзакция отклонена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+
+  /pioneers/:
+    get:
+      summary: Список всех пионеров
+      tags: [Pioneers]
+      description: Только для staff; можно искать по нику или отряду
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Строка поиска (username или имя)
+      responses:
+        '200':
+          description: Массив пионеров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PionerBasic'
+              example:
+                - username: "petya.ivanov"
+                  name: "Пётр Иванов"
+                - username: "masha.sidorova"
+                  name: "Маша Сидорова"
+
+  /statistics/:
+    get:
+      summary: Общая статистика банка
+      tags: [Statistics]
+      description: Только для staff
+      responses:
+        '200':
+          description: Средний и общий баланс
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Statistics'
+              example:
+                avg_balance: 75.32
+                total_balance: 43210.50
+
+# Все защищенные маршруты требуют JWT
+security:
+  - BearerAuth: []

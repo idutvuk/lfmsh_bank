@@ -23,7 +23,7 @@ from bank.models.Attendance import Attendance
 @login_required()
 def get_user_transactions(request):
   user = request.user
-  logger.info('api user info call from %s', user.long_name())
+  logger.info('яapi user info call from %s', user.long_name())
 
   if not (user.has_perm(get_perm_name(Actions.SEE.value, 'self', 'balance')) and
           user.has_perm(get_perm_name(Actions.SEE.value, 'self',
@@ -70,7 +70,7 @@ def get_students(_):
 
 def make_transaction(request):
   user = request.user
-  logger.info('api add transaction call from %s', user.long_name())
+  logger.info('яapi add transaction call from %s', user.long_name())
 
   trans_data = json.loads(str(request.body, 'utf-8'))
 

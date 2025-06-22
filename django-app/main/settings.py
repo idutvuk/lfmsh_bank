@@ -42,6 +42,10 @@ INSTALLED_APPS = (
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'bank',
+	'api',
+	'rest_framework',
+	# djoser disabled while i mocking data todo remove
+	# 'djoser',
 	'django_bootstrap5',
 	'django_tables2',
 	'django_extensions',
@@ -89,6 +93,25 @@ DATABASES = {
 		'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 	}
 }
+# todo uncomment
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ),
+# }
+# todo comment mock
+REST_FRAMEWORK = {
+    # Полностью отключаем аутентификацию и требование авторизации
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+}
+
+DJOSER = {
+    'LOGIN_FIELD': 'username',
+    'TOKEN_MODEL': None,
+}
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -105,7 +128,6 @@ if os.environ.get('BANK_MODE', '') == 'docker-prod':
 			'ENGINE': 'django.db.backends.postgresql',
 			'NAME': os.environ.get('POSTGRES_DB', 'postgres'),
 			'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-			# Читаем стандартную переменную
 			'PASSWORD': os.environ['BANK_POSTGRES_PASSWORD'],
 			'HOST': 'db',
 			'PORT': '5432',
