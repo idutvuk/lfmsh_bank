@@ -35,6 +35,7 @@ dependencies = [
     "loguru",
     "djangorestframework>=3.16.0",
     "djoser",
+    "django-cors-headers",
 ]
 
 [dependency-groups]

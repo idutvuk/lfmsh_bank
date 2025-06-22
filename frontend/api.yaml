@@ -62,6 +62,8 @@ components:
         name:
           type: string
           description: Полное имя пользователя
+        staff:
+          type: boolean
         balance:
           type: number
           description: Текущий баланс (денежная сумма)

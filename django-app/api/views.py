@@ -19,6 +19,7 @@ def mock_obtain_jwt(request):
 MOCK_USER = {
     "username": "petya.ivanov",
     "name": "Пётр Иванов",
+    "staff": False,
     "balance": 120.50,
     "expected_penalty": 10
 }

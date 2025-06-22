@@ -46,6 +46,7 @@ INSTALLED_APPS = (
 	'rest_framework',
 	# djoser disabled while i mocking data todo remove
 	# 'djoser',
+	"corsheaders",
 	'django_bootstrap5',
 	'django_tables2',
 	'django_extensions',
@@ -61,6 +62,7 @@ MIDDLEWARE = (
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'django.middleware.security.SecurityMiddleware',
+  	"corsheaders.middleware.CorsMiddleware",
 )
 
 ROOT_URLCONF = 'main.urls'
@@ -80,7 +82,12 @@ TEMPLATES = [
 	},
 ]
 
-# LOGGING dict removed for loguru usage
+CORS_ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  # ваши фронтенд-домены
+]
+
 
 WSGI_APPLICATION = 'main.wsgi.application'
 

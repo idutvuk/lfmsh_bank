@@ -1,39 +1,29 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { Button } from '@/components/ui/button'
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import UserPage from "./pages/UserPage";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+const App: React.FC = () => {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
-    </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <BrowserRouter>
+      <Routes>
+        {/* Перенаправление с корня на /user */}
+        <Route path="/" element={<Navigate to="/user" replace />} />
 
-export default App
+        {/* Основной маршрут страницы пользователя */}
+        <Route path="/user" element={<UserPage />} />
+
+        {/* Необязательно: «404» для всех прочих путей */}
+        <Route
+          path="*"
+          element={
+            <main>
+              <h1>Страница не найдена</h1>
+            </main>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+export default App;
