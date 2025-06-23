@@ -62,95 +62,46 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [showAllTransactions, setShowAllTransactions] = useState(false)
 
-  useEffect(() => {
-    // Симуляция загрузки данных с API
+  const API_URL = "http://localhost:8000/api/"
+
+    useEffect(() => {
     const fetchData = async () => {
+      setLoading(true)
+
       try {
-        // Симулируем данные пользователя
-        const mockUserData: UserData = {
-          username: "petya.ivanov",
-          name: "Пётр Иванов",
-          staff: false,
-          balance: 120.5,
-          expected_penalty: 230,
-          counters: [
-            { counter_name: "lab", value: 2, max_value: 3 },
-            { counter_name: "lec", value: 5, max_value: 15 },
-            { counter_name: "sem", value: 0, max_value: 1 },
-            { counter_name: "fac", value: 1, max_value: 24 },
-          ],
+        const token = localStorage.getItem("accessToken")
+        if (!token) throw new Error("Нет JWT-токена")
+
+        const commonOpts = {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
 
-        const mockStatistics: Statistics = {
-          avg_balance: 75.32,
-          total_balance: 43210.5,
+        // Профиль
+        const userRes = await fetch(`${API_URL}users/me/`, commonOpts)
+        if (!userRes.ok) throw new Error(`Профиль: ${userRes.status}`)
+        const userJson = await userRes.json()
+
+        // Транзакции
+        const txRes = await fetch(`${API_URL}transactions/`, commonOpts)
+        if (!txRes.ok) throw new Error(`Транзакции: ${txRes.status}`)
+        const txJson = await txRes.json()
+
+        // Статистика (только для staff)
+        let statsJson = null
+        if (userJson.staff) {
+          const statsRes = await fetch(`${API_URL}statistics/`, commonOpts)
+          if (!statsRes.ok) throw new Error(`Статистика: ${statsRes.status}`)
+          statsJson = await statsRes.json()
         }
 
-        const mockTransactions: Transaction[] = [
-          {
-            id: 123,
-            author: "staff.member",
-            description: "Бонус за экзамен",
-            type: "exam",
-            status: "created",
-            date_created: "2025-06-21T12:34:56Z",
-            receivers: [
-              {
-                username: "ivan.petrov",
-                bucks: 50,
-                certs: 0,
-                lab: 0,
-                lec: 0,
-                sem: 0,
-                fac: 0,
-              },
-            ],
-          },
-          {
-            id: 124,
-            author: "another.staff",
-            description: "Штраф за опоздание",
-            type: "penalty",
-            status: "completed",
-            date_created: "2025-06-20T10:15:30Z",
-            receivers: [
-              {
-                username: "ivan.petrov",
-                bucks: -25,
-                certs: 0,
-                lab: 0,
-                lec: 0,
-                sem: 0,
-                fac: 0,
-              },
-            ],
-          },
-          {
-            id: 125,
-            author: "staff.member",
-            description: "Перевод от друга",
-            type: "transfer",
-            status: "completed",
-            date_created: "2025-06-19T14:22:45Z",
-            receivers: [
-              {
-                username: "ivan.petrov",
-                bucks: 30,
-                certs: 0,
-                lab: 0,
-                lec: 0,
-                sem: 0,
-                fac: 0,
-              },
-            ],
-          },
-        ]
-
-        setUserData(mockUserData)
-        setStatistics(mockStatistics)
-        setTransactions(mockTransactions)
-      } catch (error) {
-        console.error("Ошибка загрузки данных:", error)
+        setUserData(userJson)
+        setTransactions(txJson)
+        setStatistics(statsJson)
+      } catch (err) {
+        console.error("Ошибка загрузки:", err)
       } finally {
         setLoading(false)
       }
