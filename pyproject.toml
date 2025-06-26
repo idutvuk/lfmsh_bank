@@ -36,6 +36,7 @@ dependencies = [
     "djangorestframework>=3.16.0",
     "djoser",
     "django-cors-headers",
+    "djangorestframework-simplejwt",
 ]
 
 [dependency-groups]

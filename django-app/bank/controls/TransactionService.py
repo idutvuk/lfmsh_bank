@@ -12,7 +12,10 @@ from bank.controls.transaction_controllers.SeminarTransactionController import S
 from bank.controls.transaction_controllers.P2PTransactionController import P2PTransactionController
 from bank.controls.transaction_controllers.GeneralTransactionController import GeneralTransactionController
 from bank.controls.transaction_controllers.WorkoutTransactionController import WorkoutTransactionController
+from django.contrib.auth import get_user_model
+from bank.constants.bank_api_exeptions import TransactionTypeNotSupported
 
+User = get_user_model()
 
 class TransactionService:
 
@@ -47,3 +50,26 @@ class TransactionService:
       return DSTransactionController
 
     raise ModuleNotFoundError('no controller for this type')
+    
+  @staticmethod
+  def create_transaction(creator, request_data):
+    """
+    Create a transaction from API request data.
+    
+    Args:
+        creator: User creating the transaction
+        request_data: Dictionary containing transaction data
+        
+    Returns:
+        Created transaction object
+    """
+    trans_type = request_data.get('type')
+    
+    # Get the appropriate controller
+    try:
+        controller = TransactionService.get_controller_for(trans_type)
+    except ModuleNotFoundError:
+        raise TransactionTypeNotSupported(trans_type)
+    
+    # Create transaction using the controller
+    return controller.build_transaction_from_api_request(creator, request_data)

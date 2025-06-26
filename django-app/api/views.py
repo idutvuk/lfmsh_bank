@@ -1,131 +1,263 @@
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
+from django.db.models import Avg, Sum
+from bank.models.Transaction import Transaction
+from bank.models.TransactionState import TransactionState
+from bank.constants import AttendanceTypeEnum, States
+from bank.controls.TransactionService import TransactionService
+from bank.controls.stats_controller import StatsController
 
-# Примеры «мок» данных
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def mock_obtain_jwt(request):
-    """
-    Всегда возвращает фиктивные токены.
-    """
-    return Response({
-        "access": "mocked-access-token",
-        "refresh": "mocked-refresh-token"
-    })
+User = get_user_model()
 
-MOCK_USER = {
-    "username": "petya.ivanov",
-    "name": "Пётр Иванов",
-    "staff": False,
-    "balance": 120.50,
-    "expected_penalty": 10
-}
-MOCK_COUNTERS = [
-    {"counter_name": "lab", "value": 2, "max_value": 3},
-    {"counter_name": "lec", "value": 5, "max_value": 10},
-]
-MOCK_TX = {
-    "id": 123,
-    "author": "staff.member",
-    "description": "Бонус за экзамен",
-    "type": "exam",
-    "status": "created",
-    "date_created": "2025-06-21T12:34:56Z",
-    "receivers": [
-        {"username": "ivan.petrov","bucks": 50,"certs": 0,"lab":0,"lec":0,"sem":0,"fac":0}
-    ]
-}
-MOCK_TX_LIST = [MOCK_TX]
-
-class ObtainJWT(APIView):
-    permission_classes = []  # AllowAny
-    def post(self, request):
-        # вернём всегда один и тот же мок
-        return Response({"access": "jwt-access-token", "refresh": "jwt-refresh-token"})
-
-class RefreshJWT(APIView):
-    permission_classes = []
-    def post(self, request):
-        return Response({"access": "new-jwt-access-token"})
+# The mock functions are removed as we'll use Djoser for authentication
 
 class UserProfileView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
-        profile_with_counters = {
-            **MOCK_USER,
-            "counters": MOCK_COUNTERS
+        user = request.user
+        counters = [
+            {
+                "counter_name": AttendanceTypeEnum.lab_pass.value,
+                "value": user.get_counter(AttendanceTypeEnum.lab_pass.value),
+                "max_value": user.lab_needed()
+            },
+            {
+                "counter_name": AttendanceTypeEnum.lecture_attend.value,
+                "value": user.get_counter(AttendanceTypeEnum.lecture_attend.value),
+                "max_value": 10
+            },
+            {
+                "counter_name": AttendanceTypeEnum.seminar_attend.value,
+                "value": user.get_counter(AttendanceTypeEnum.seminar_attend.value),
+                "max_value": 10
+            },
+            {
+                "counter_name": AttendanceTypeEnum.fac_attend.value,
+                "value": user.get_counter(AttendanceTypeEnum.fac_attend.value),
+                "max_value": 10
+            },
+            {
+                "counter_name": AttendanceTypeEnum.fac_pass.value,
+                "value": user.get_counter(AttendanceTypeEnum.fac_pass.value),
+                "max_value": user.fac_needed()
+            }
+        ]
+        
+        profile_data = {
+            "username": user.username,
+            "name": f"{user.first_name} {user.last_name}",
+            "staff": user.is_staff,
+            "balance": user.balance,
+            "expected_penalty": user.get_final_study_fine(),
+            "counters": counters
         }
-        return Response(profile_with_counters)
+        return Response(profile_data)
 
 class UserCountersView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Можно проверить роль: request.user.is_staff / pioner
-        return Response(MOCK_COUNTERS)
+        user = request.user
+        counters = [
+            {
+                "counter_name": AttendanceTypeEnum.lab_pass.value,
+                "value": user.get_counter(AttendanceTypeEnum.lab_pass.value),
+                "max_value": user.lab_needed()
+            },
+            {
+                "counter_name": AttendanceTypeEnum.lecture_attend.value,
+                "value": user.get_counter(AttendanceTypeEnum.lecture_attend.value),
+                "max_value": 10
+            },
+            {
+                "counter_name": AttendanceTypeEnum.seminar_attend.value,
+                "value": user.get_counter(AttendanceTypeEnum.seminar_attend.value),
+                "max_value": 10
+            },
+            {
+                "counter_name": AttendanceTypeEnum.fac_attend.value,
+                "value": user.get_counter(AttendanceTypeEnum.fac_attend.value),
+                "max_value": 10
+            },
+            {
+                "counter_name": AttendanceTypeEnum.fac_pass.value,
+                "value": user.get_counter(AttendanceTypeEnum.fac_pass.value),
+                "max_value": user.fac_needed()
+            }
+        ]
+        return Response(counters)
 
 class TransactionListCreate(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response(MOCK_TX_LIST)
+        user = request.user
+        if user.is_staff:
+            transactions = Transaction.objects.all().order_by('-creation_timestamp')[:20]
+        else:
+            # Get transactions where the user is a receiver
+            transactions = Transaction.objects.filter(
+                related_money_atomics__receiver=user
+            ).distinct().order_by('-creation_timestamp')[:20]
+        
+        return Response([self._format_transaction(tx) for tx in transactions])
+    
     def post(self, request):
-        return Response(MOCK_TX, status=status.HTTP_201_CREATED)
+        try:
+            transaction = TransactionService.create_transaction(request.user, request.data)
+            return Response(self._format_transaction(transaction), status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def _format_transaction(self, transaction):
+        receivers_data = []
+        money_atomics = transaction.related_money_atomics.all()
+        attendance_atomics = transaction.related_attendance_atomics.all()
+        
+        receivers = {}
+        for atomic in money_atomics:
+            username = atomic.receiver.username
+            if username not in receivers:
+                receivers[username] = {
+                    "username": username,
+                    "bucks": 0,
+                    "certs": 0,
+                    "lab": 0,
+                    "lec": 0,
+                    "sem": 0,
+                    "fac": 0
+                }
+            if atomic.type.name == "Сертификаты":
+                receivers[username]["certs"] += atomic.value
+            else:
+                receivers[username]["bucks"] += atomic.value
+        
+        for atomic in attendance_atomics:
+            username = atomic.receiver.username
+            if username not in receivers:
+                receivers[username] = {
+                    "username": username,
+                    "bucks": 0,
+                    "certs": 0,
+                    "lab": 0,
+                    "lec": 0,
+                    "sem": 0,
+                    "fac": 0
+                }
+            
+            if atomic.type.name == AttendanceTypeEnum.lab_pass.value:
+                receivers[username]["lab"] += atomic.value
+            elif atomic.type.name == AttendanceTypeEnum.lecture_attend.value:
+                receivers[username]["lec"] += atomic.value
+            elif atomic.type.name == AttendanceTypeEnum.seminar_attend.value:
+                receivers[username]["sem"] += atomic.value
+            elif atomic.type.name in [AttendanceTypeEnum.fac_attend.value, AttendanceTypeEnum.fac_pass.value]:
+                receivers[username]["fac"] += atomic.value
+        
+        return {
+            "id": transaction.id,
+            "author": transaction.creator.username,
+            "description": transaction.type.readable_name,
+            "type": transaction.type.name,
+            "status": transaction.state.name,
+            "date_created": transaction.creation_timestamp,
+            "receivers": list(receivers.values())
+        }
 
 class TransactionDetail(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, transaction_id):
-        if transaction_id != MOCK_TX["id"]:
+        try:
+            transaction = get_object_or_404(Transaction, id=transaction_id)
+            
+            # Check if the user has permission to view this transaction
+            if not request.user.is_staff and not transaction.related_money_atomics.filter(receiver=request.user).exists():
+                return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+                
+            view = TransactionListCreate()
+            return Response(view._format_transaction(transaction))
+        except Transaction.DoesNotExist:
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(MOCK_TX)
 
 class PendingTransactions(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Только staff
-        return Response(MOCK_TX_LIST)
+        # Only staff can view pending transactions
+        if not request.user.is_staff:
+            return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        created_state = get_object_or_404(TransactionState, name=States.created.value)
+        transactions = Transaction.objects.filter(state=created_state).order_by('-creation_timestamp')
+        
+        view = TransactionListCreate()
+        return Response([view._format_transaction(tx) for tx in transactions])
 
 class TransactionApprove(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, transaction_id):
-        tx = MOCK_TX.copy()
-        tx["status"] = "approved"
-        return Response(tx)
+        # Only staff can approve transactions
+        if not request.user.is_staff:
+            return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        
+        try:
+            transaction.process()
+            view = TransactionListCreate()
+            return Response(view._format_transaction(transaction))
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class TransactionReject(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def patch(self, request, transaction_id):
-        tx = MOCK_TX.copy()
-        tx["status"] = "cancelled"
-        return Response(tx)
+        # Only staff can reject transactions
+        if not request.user.is_staff:
+            return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        transaction = get_object_or_404(Transaction, id=transaction_id)
+        
+        try:
+            transaction.decline()
+            view = TransactionListCreate()
+            return Response(view._format_transaction(transaction))
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PioneersList(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Only staff can access the full pioneers list
+        if not request.user.is_staff:
+            return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        pioneers = User.objects.filter(is_staff=False)
         return Response([
-            {"username": "petya.ivanov","name": "Пётр Иванов"},
-            {"username": "masha.sidorova","name": "Маша Сидорова"}
+            {"username": user.username, "name": f"{user.first_name} {user.last_name}"}
+            for user in pioneers
         ])
 
 class StatisticsView(APIView):
-#     permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"avg_balance": 75.32, "total_balance": 43210.50})
+        # Only staff can access statistics
+        if not request.user.is_staff:
+            return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        
+        stats = StatsController.get_general_stats()
+        return Response({
+            "avg_balance": stats.get("avg_balance", 0),
+            "total_balance": stats.get("total_balance", 0)
+        })

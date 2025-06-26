@@ -7,6 +7,21 @@ interface CommonOpts {
     };
 }
 
+// Helper to build fetch options with auth header
+function getCommonOpts(): CommonOpts {
+    const token = localStorage.getItem("accessToken");
+    
+    if (!token) {
+        throw new Error("Нет JWT-токена");
+    }
+    return {
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+    };
+}
+
 export interface Counter {
     counter_name: string;
     value: number;
@@ -45,21 +60,15 @@ export interface Transaction {
     }>;
 }
 
-
-// src/services/api.ts
-async function request<T>(endpoint: string, token: string): Promise<T> {
-    const opts: CommonOpts = {
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-    };
+async function request<T>(endpoint: string): Promise<T> {
+    const opts = getCommonOpts();
     const res = await fetch(`${API_URL}${endpoint}`, opts);
-    if (!res.ok) throw new Error(`API error ${endpoint}: ${res.status}`);
+    if (!res.ok) {
+        throw new Error(`API error ${endpoint}: ${res.status}`);
+    }
     return res.json();
 }
 
-export const getMe = (token: string) => request<UserData>("users/me/", token);
-export const getTransactions = (token: string) => request<Transaction[]>("transactions/", token);
-export const getStatistics = (token: string) => request<Statistics>("statistics/", token);
-
+export const getMe = (): Promise<UserData> => request<UserData>("users/me/");
+export const getTransactions = (): Promise<Transaction[]> => request<Transaction[]>("transactions/");
+export const getStatistics = (): Promise<Statistics> => request<Statistics>("statistics/");

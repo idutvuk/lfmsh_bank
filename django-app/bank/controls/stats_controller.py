@@ -14,6 +14,28 @@ from bank.models.Account import Account
 import statistics
 
 
+class StatsController:
+    @staticmethod
+    def get_general_stats():
+        """
+        Returns general statistics about student balances
+        
+        Returns:
+            Dictionary with avg_balance and total_balance
+        """
+        student_accounts = Account.objects.filter(
+            groups__name__contains=UserGroups.student.value)
+        
+        if not student_accounts.exists():
+            return {"avg_balance": 0, "total_balance": 0}
+            
+        balances = [a.balance for a in student_accounts]
+        
+        return {
+            "avg_balance": statistics.mean(balances),
+            "total_balance": sum(balances)
+        }
+
 
 def get_student_stats(user):
   stats = {}

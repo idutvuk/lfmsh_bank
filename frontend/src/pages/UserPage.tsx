@@ -29,12 +29,11 @@ export default function HomePage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("accessToken") || "";
-        const me = await getMe(token);
-        const tx = await getTransactions(token);
+        const me = await getMe();
+        const tx = await getTransactions();
         let stats = null;
         if (me.staff) {
-          stats = await getStatistics(token);
+          stats = await getStatistics();
         }
         setUserData(me);
         setTransactions(tx);
