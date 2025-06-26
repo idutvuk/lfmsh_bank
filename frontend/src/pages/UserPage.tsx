@@ -1,6 +1,6 @@
 "use client"
-
 import { useEffect, useState } from "react"
+import { getMe, getTransactions, getStatistics, type UserData, type Statistics, type Transaction } from "../services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,102 +17,38 @@ import {
   ChevronDown,
 } from "lucide-react"
 
-interface Counter {
-  counter_name: string
-  value: number
-  max_value: number
-}
-
-interface UserData {
-  username: string
-  name: string
-  staff: boolean
-  balance: number
-  expected_penalty: number
-  counters: Counter[]
-}
-
-interface Statistics {
-  avg_balance: number
-  total_balance: number
-}
-
-interface Transaction {
-  id: number
-  author: string
-  description: string
-  type: string
-  status: string
-  date_created: string
-  receivers: Array<{
-    username: string
-    bucks: number
-    certs: number
-    lab: number
-    lec: number
-    sem: number
-    fac: number
-  }>
-}
 
 export default function HomePage() {
-  const [userData, setUserData] = useState<UserData | null>(null)
-  const [statistics, setStatistics] = useState<Statistics | null>(null)
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showAllTransactions, setShowAllTransactions] = useState(false)
+  const [showAllTransactions, setShowAllTransactions] = useState<boolean>(false)
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const API_URL = "http://localhost:8000/api/"
-
-    useEffect(() => {
-      const fetchData = async () => {
-      setLoading(true)
-
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const token = localStorage.getItem("accessToken")
-        // if (!token) throw new Error("Нет JWT-токена")
-
-        const commonOpts = {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        const token = localStorage.getItem("accessToken") || "";
+        const me = await getMe(token);
+        const tx = await getTransactions(token);
+        let stats = null;
+        if (me.staff) {
+          stats = await getStatistics(token);
         }
-
-        // Профиль
-        const userRes = await fetch(`${API_URL}users/me/`, commonOpts)
-        if (!userRes.ok) throw new Error(`Профиль: ${userRes.status}`)
-        const userJson = await userRes.json()
-
-        // Транзакции
-        const txRes = await fetch(`${API_URL}transactions/`, commonOpts)
-        if (!txRes.ok) throw new Error(`Транзакции: ${txRes.status}`)
-        const txJson = await txRes.json()
-
-        // Статистика (только для staff)
-        let statsJson = null
-        if (userJson.staff) {
-          const statsRes = await fetch(`${API_URL}statistics/`, commonOpts)
-          if (!statsRes.ok) throw new Error(`Статистика: ${statsRes.status}`)
-          statsJson = await statsRes.json()
-        }
-
-        setUserData(userJson)
-        setTransactions(txJson)
-        setStatistics(statsJson)
+        setUserData(me);
+        setTransactions(tx);
+        setStatistics(stats);
       } catch (err) {
-        console.error("Ошибка загрузки:", err)
+        console.error("Ошибка загрузки:", err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-
-     fetchData()
-         .then(res=> {
-       debugger;
-       console.log(res);}
-     )
-  }, [])
+    };
+    fetchData().then(res => {
+      console.log(res)
+    })
+  }, []);
 
   const getCounterLabel = (counterName: string) => {
     const labels: Record<string, string> = {
