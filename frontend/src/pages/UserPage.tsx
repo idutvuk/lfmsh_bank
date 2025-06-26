@@ -65,12 +65,12 @@ export default function HomePage() {
   const API_URL = "http://localhost:8000/api/"
 
     useEffect(() => {
-    const fetchData = async () => {
+      const fetchData = async () => {
       setLoading(true)
 
       try {
         const token = localStorage.getItem("accessToken")
-        if (!token) throw new Error("Нет JWT-токена")
+        // if (!token) throw new Error("Нет JWT-токена")
 
         const commonOpts = {
           headers: {
@@ -107,7 +107,11 @@ export default function HomePage() {
       }
     }
 
-    fetchData()
+     fetchData()
+         .then(res=> {
+       debugger;
+       console.log(res);}
+     )
   }, [])
 
   const getCounterLabel = (counterName: string) => {
