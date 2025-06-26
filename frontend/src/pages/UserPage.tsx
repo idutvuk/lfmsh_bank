@@ -101,7 +101,7 @@ export default function HomePage() {
       <div className="w-full max-w-screen-xl mx-auto px-4 space-y-4">
         {/* Заголовок */}
         <div className="text-center py-3">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Банк ЛФМШ</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Банк ЛФМШ {new Date().getFullYear() - 1987 /* yeah */ }</h1>
           {userData.staff && <p className="text-gray-600 dark:text-gray-400">Добро пожаловать, {userData.name}</p>}
         </div>
 

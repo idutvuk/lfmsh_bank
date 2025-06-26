@@ -157,6 +157,25 @@ class Command(BaseCommand):
 			is_superuser=True  # TODO: remove, security risk
 		)
 		new_u.save()
+		# tmp users for testing todo handle this
+		new_student = User.objects.create_user(
+			first_name='Санька',
+			middle_name='Антонович',
+			last_name='Гиричев',
+			username='girik',
+			password='r',
+			grade=8, party=4,
+		)
+		Group.objects.get(name=UserGroups.student.value).user_set.add(new_student)
+		new_staff = User.objects.create_user(
+			first_name='Сан',
+			middle_name='Саныч',
+			last_name='Гирич',
+			username='girix',
+			password='r',
+			grade=0, party=0,
+		)
+		Group.objects.get(name=UserGroups.staff.value).user_set.add(new_staff)
 		group, _ = Group.objects.get_or_create(name='admin')
 		group.user_set.add(new_u)
 
