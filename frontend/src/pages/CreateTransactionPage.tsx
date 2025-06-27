@@ -26,7 +26,7 @@ export default function CreateTransactionPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [description, setDescription] = useState("")
     const [transactionType, setTransactionType] = useState("")
-    const [amount, setAmount] = useState<number | "">("")
+    const [amount, setAmount] = useState<number>(0)
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -59,20 +59,23 @@ export default function CreateTransactionPage() {
         setUserTransactions(prev =>
             prev.map(u =>
                 u.id === user.id
-                    ? {...u, isSelected: !u.isSelected, bucks: Number(amount)}
+                    ? {...u, isSelected: !u.isSelected, bucks: amount}
                     : u
             )
         )
     }
 
     function userAmountChanged(uid: number, newAmount: number) {
+        if (isNaN(newAmount)) {
+            return; // игнорируем некорректный ввод
+        }
         setUserTransactions(prev =>
             prev.map(u =>
                 u.id === uid
                     ? {...u, bucks: newAmount}
                     : u
             )
-        )
+        );
     }
 
 
@@ -80,7 +83,7 @@ export default function CreateTransactionPage() {
         setUserTransactions(prev =>
             prev.map(u =>
                 u.id === uid
-                    ? {...u, bucks: Number(amount)}
+                    ? {...u, bucks: amount}
                     : u
             )
         )
@@ -93,10 +96,9 @@ export default function CreateTransactionPage() {
         console.log({
             type: transactionType,
             description,
-            amount,
             recipients: userTransactions.map(user => ({
                 id: user.id,
-                amount: user.bucks || amount
+                amount: user.bucks
             })),
         })
 
@@ -106,10 +108,9 @@ export default function CreateTransactionPage() {
 
     function onAmountChanged(e: React.ChangeEvent<HTMLInputElement>) {
         const prevAmount = amount
-        const newAmount = e.target.value ? Number(e.target.value) : ""
+        const newAmount = e.target.value ? Number(e.target.value) : 0
         if (typeof newAmount === 'number') {
             setAmount(newAmount)
-
 
             setUserTransactions(prev =>
                 prev.map(u =>
@@ -144,10 +145,11 @@ export default function CreateTransactionPage() {
                                         onValueChange={setTransactionType}
                                         required
                                     >
-                                        <SelectTrigger id="type">
+                                        <SelectTrigger className="bg-white" id="type">
+
                                             <SelectValue placeholder="Выберите тип перевода"/>
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="bg-white">
                                             <SelectItem value="p2p">Перевод между пионерами</SelectItem>
                                             <SelectItem value="fine">Штраф</SelectItem>
                                             <SelectItem value="reward">Награда</SelectItem>
@@ -184,7 +186,7 @@ export default function CreateTransactionPage() {
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                disabled={!description || !transactionType || amount === "" || userTransactions.length === 0}
+                                disabled={!description || !transactionType || amount === 0 || userTransactions.length === 0}
                             >
                                 Создать перевод
                             </Button>
@@ -224,8 +226,8 @@ export default function CreateTransactionPage() {
                                                     <div className="flex-1 flex items-center">
                                                         <Checkbox
                                                             className="mr-3"
-                                                            onClick={() => handleSelectUser(user)}
                                                             checked={user.isSelected}
+                                                            onClick={() => handleSelectUser(user)}
                                                         />
                                                         <div>
                                                             <p className="font-medium">{user.name}</p>
@@ -233,24 +235,24 @@ export default function CreateTransactionPage() {
                                                         </div>
                                                     </div>
 
-                                                    {user.isSelected && amount !== "" && (
+                                                    {user.isSelected && amount !== 0 && (
                                                         <div className="flex items-center">
-                                                            <Button
-                                                                type="button"
-                                                                size="sm"
-                                                                onClick={() => handleCustomAmountChange(user.id)}
-                                                                className="text-xs mr-2"
-                                                            >
-                                                                reset
-                                                            </Button>
+                                                            {user.bucks !== amount && (
+                                                                <Button
+                                                                    variant="text"
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    onClick={() => handleCustomAmountChange(user.id)}
+                                                                    className="text-xl mr-2"
+                                                                >
+                                                                    ⟳
+                                                                </Button>
+                                                            )}
                                                             <Input
-                                                                type="number"
-                                                                placeholder="{}"
                                                                 value={user.bucks}
-                                                                onChange={(e) =>
-                                                                    userAmountChanged(user.id, Number(e.target.value))}
+                                                                className="bg-transparent w-20"
+                                                                onChange={(e) => userAmountChanged(user.id, Number(e.target.value))}
                                                             />
-
                                                         </div>
                                                     )}
                                                 </div>

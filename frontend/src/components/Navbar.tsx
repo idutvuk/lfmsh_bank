@@ -19,15 +19,13 @@ export function Navbar({
 }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentYear = new Date().getFullYear();
-  
+
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     navigate("/login", { replace: true });
   };
 
-  const defaultTitle = `Банк ЛФМШ ${currentYear - 1987}`;
 
   return (
     <header className="w-full bg-background sticky top-0 z-10 shadow-sm">
@@ -36,7 +34,7 @@ export function Navbar({
         <div className="flex items-center gap-2">
           {showBackButton && (
             <Button
-              variant="neutral"
+              variant="text"
               size="sm"
               className="mr-2"
               onClick={() => navigate(-1)}
@@ -46,7 +44,7 @@ export function Navbar({
             </Button>
           )}
           <div className="text-l font-bold">
-            {title || defaultTitle}
+            {title}
           </div>
         </div>
 

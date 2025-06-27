@@ -3,7 +3,6 @@ import { useEffect, useState } from "react"
 import { getMe, getTransactions, getStatistics, type UserData, type Statistics, type Transaction } from "../services/api";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 
 import {
@@ -157,7 +156,7 @@ export default function UserPage() {
                   onClick={() => navigate('/create-transfer')}
                 >
                   <Send className="h-5 w-5 mr-2" />
-                  Создать перевод
+                  Начислить
                 </Button>
               </>
             )}
