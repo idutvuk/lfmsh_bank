@@ -31,8 +31,7 @@ export function TransactionItem({ id, description, author, date_created, status,
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ru-RU", {
       day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
+      month: "long",
       hour: "2-digit",
       minute: "2-digit",
     })
@@ -45,9 +44,7 @@ export function TransactionItem({ id, description, author, date_created, status,
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="flex items-center justify-center w-6 h-6 bg-green-100 rounded-full">
-                  <Check className="h-4 w-4 text-green-600" />
-                </span>
+                  <Check className="h-4 w-4" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Эта транзакция одобрена Банкиром</p>
@@ -60,9 +57,7 @@ export function TransactionItem({ id, description, author, date_created, status,
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="flex items-center justify-center w-6 h-6 bg-red-100 rounded-full">
-                  <X className="h-4 w-4 text-red-600" />
-                </span>
+                  <X className="h-4 w-4" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Эта транзакция отменена и не учитывается</p>
@@ -75,9 +70,7 @@ export function TransactionItem({ id, description, author, date_created, status,
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="flex items-center justify-center w-6 h-6 bg-yellow-100 rounded-full">
                   <AlertCircle className="h-4 w-4 text-yellow-600" />
-                </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Эта транзакция ожидает одобрения Банкиром</p>

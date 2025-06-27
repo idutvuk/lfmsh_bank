@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -99,7 +100,6 @@ export default function CreateTransactionPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="type">Тип перевода</Label>
                   <Select
                     value={transactionType}
                     onValueChange={setTransactionType}
@@ -120,8 +120,7 @@ export default function CreateTransactionPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Описание перевода</Label>
-                  <Input
+                  <Textarea
                     id="description"
                     placeholder="Введите описание перевода"
                     value={description}
@@ -131,7 +130,7 @@ export default function CreateTransactionPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Сумма (в @)</Label>
+                  <Label htmlFor="amount">Сумма</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -182,7 +181,7 @@ export default function CreateTransactionPage() {
                 </div>
                 
                 {/* User list */}
-                <div className="border rounded-md divide-y max-h-80 overflow-y-auto">
+                <div className="rounded-md divide-y max-h-80 overflow-y-auto">
                   {loading ? (
                     <div className="p-4 text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -204,17 +203,16 @@ export default function CreateTransactionPage() {
                     ))
                   ) : (
                     <div className="p-4 text-center text-muted-foreground">
-                      {searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва"}
+                      {searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
                     </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex justify-end">
+            <div className="flex justify-center">
               <Button
                 type="submit"
-                className="bg-[#1e99a0] hover:bg-[#1e99a0]/90"
                 disabled={!description || !transactionType || amount === "" || selectedUsers.length === 0}
               >
                 Создать перевод

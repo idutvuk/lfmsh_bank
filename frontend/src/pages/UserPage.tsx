@@ -4,6 +4,8 @@ import { getMe, getTransactions, getStatistics, type UserData, type Statistics, 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+
 import {
   User,
   Wallet,
@@ -89,18 +91,36 @@ export default function UserPage() {
   const displayedTransactions = showAllTransactions ? transactions : transactions.slice(0, 3)
 
   return (
-      <div className="min-h-screen w-full items-center justify-center">
+      <div className="min-h-screen w-full items-center justify-center bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px]">
       {/* Header */}
       <header className="w-full bg-background/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
-          <h1 className="text-l font-bold">
-            Банк ЛФМШ {new Date().getFullYear() - 1987}
-          </h1>
-          <Button onClick={handleLogout} size="sm">Выйти</Button>
-        </div>
-      </header>
+  <div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
+    {/* Левый блок — название */}
+    <div className="text-l font-bold">
+      Банк ЛФМШ {new Date().getFullYear() - 1987}
+    </div>
 
-      <div className="w-full max-w-screen-xl mx-auto px-4 py-6 space-y-4">
+    {/* Правый блок — две кнопки */}
+    <div className="flex items-center gap-2">
+      {!userData.staff && (
+        <Button
+          variant="default"
+          className="bg-primary hover:bg-primary/90 flex justify-end"
+          onClick={() => navigate('/rules')}
+        >
+          <FileText className="h-4 w-4 mr-1" />
+          Правила
+        </Button>
+      )}
+      <Button onClick={handleLogout} size="sm">
+        Выйти
+      </Button>
+    </div>
+  </div>
+</header>
+
+
+      <div className="w-full max-w-screen-xl mx-auto py-6 space-y-4 min-h-[100dvh]">
         {/* User info */}
         <Card>
           <CardHeader>
@@ -108,49 +128,30 @@ export default function UserPage() {
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5" />
                 {userData.staff ? "Профиль" : userData.name}
-                {userData.staff && (
-                  <Badge variant="neutral" className="bg-[#f3bb4c]/20 text-[#f3bb4c] border-[#f3bb4c]/30">
-                    Педсостав
-                  </Badge>
-                )}
-                {!userData.staff && (
-                  <Badge variant="neutral" className="bg-[#1e99a0]/20 text-[#1e99a0] border-[#1e99a0]/30">
-                    Пионер
-                  </Badge>
-                )}
               </div>
-              {!userData.staff && (
-                <Button 
-                  variant="default"
-                  className="bg-primary hover:bg-primary/90"
-                  onClick={() => navigate('/rules')}
-                >
-                  <FileText className="h-4 w-4 mr-1" />
-                  Правила
-                </Button>
-              )}
+
             </CardTitle>
           </CardHeader>
           <CardContent>
             {!userData.staff && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-                  <Card className="bg-[#1e99a0]/10 border-0 shadow-none">
+                  <Card className="bg-[#1e99a0]/10 shadow">
                     <CardContent className="flex items-center gap-3 p-3">
                       <Wallet className="h-6 w-6 text-[#1e99a0]" />
                       <div>
-                        <p className="text-sm text-muted-foreground">Баланс</p>
+                        <p className="text-sm text-[#1e99a0]  font-bold">Баланс</p>
                         <p className="text-xl font-bold text-[#1e99a0]">{userData.balance}@</p>
                       </div>
                     </CardContent>
                   </Card>
 
                   {userData.expected_penalty > 0 && (
-                    <Card className="bg-[#d84081]/10 border-0 shadow-none">
+                    <Card className="bg-[#d84081]/10">
                       <CardContent className="flex items-center gap-3 p-3">
                         <AlertTriangle className="h-6 w-6 text-[#d84081]" />
                         <div>
-                          <p className="text-sm text-muted-foreground">Ожидаемый штраф</p>
+                          <p className="text-sm text-[#d84081] font-bold">Ожидаемый штраф</p>
                           <p className="text-xl font-bold text-[#d84081]">{userData.expected_penalty}@</p>
                         </div>
                       </CardContent>
@@ -171,8 +172,8 @@ export default function UserPage() {
                 </div>
 
                 {/* Create transfer button */}
-                <Button 
-                  className="w-full h-12 bg-[#1e99a0] hover:bg-[#1e99a0]/90"
+                <Button
+                  className="w-full h-12 "
                   onClick={() => navigate('/create-transfer')}
                 >
                   <Send className="h-5 w-5 mr-2" />
@@ -195,13 +196,13 @@ export default function UserPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-[#31a4d7]/10 border-0 shadow-none">
+                <Card className="bg-[#31a4d7]/10">
                   <CardContent className="text-center p-4">
                     <p className="text-sm text-muted-foreground mb-1">Средний баланс</p>
                     <p className="text-2xl font-bold text-[#31a4d7]">{statistics.avg_balance}@</p>
                   </CardContent>
                 </Card>
-                <Card className="bg-[#1e99a0]/10 border-0 shadow-none">
+                <Card className="bg-[#1e99a0]/10">
                   <CardContent className="text-center p-4">
                     <p className="text-sm text-muted-foreground mb-1">Общий баланс</p>
                     <p className="text-2xl font-bold text-[#1e99a0]">{statistics.total_balance}@</p>
@@ -222,8 +223,8 @@ export default function UserPage() {
                   <span className="text-xs">Мои транзакции</span>
                 </Button>
 
-                <Button 
-                  variant="neutral" 
+                <Button
+                  variant="neutral"
                   className="h-16 flex-col gap-2"
                   onClick={() => navigate('/create-transfer')}
                 >
@@ -236,7 +237,7 @@ export default function UserPage() {
                   <span className="text-xs">Отштрафовать</span>
                 </Button>
 
-                <Button 
+                <Button
                   variant="noShadow"
                   className="h-16 flex-col gap-2"
                   onClick={() => navigate('/rules')}
@@ -264,8 +265,8 @@ export default function UserPage() {
             </CardContent>
             {transactions.length > 3 && (
               <CardFooter>
-                <Button 
-                  variant="neutral" 
+                <Button
+                  variant="neutral"
                   className="w-full flex items-center justify-center"
                   onClick={() => setShowAllTransactions(!showAllTransactions)}
                 >
@@ -293,12 +294,12 @@ export default function UserPage() {
                         {counter.value}/{counter.max_value}
                       </span>
                     </div>
-                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#31a4d7] rounded-full"
-                        style={{ width: `${(counter.value / counter.max_value) * 100}%` }}
-                      ></div>
-                    </div>
+                    {/*<div className="w-full h-2 bg-muted rounded-full overflow-hidden">*/}
+                      <Progress
+                      value={(counter.value / counter.max_value) * 100}
+                      className="w-full"
+                    />
+                    {/*</div>*/}
                   </div>
                 ))}
               </div>

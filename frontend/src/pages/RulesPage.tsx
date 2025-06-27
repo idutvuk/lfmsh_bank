@@ -17,17 +17,16 @@ export default function RulesPage() {
       {/* Header */}
       <header className="w-full bg-background/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
         <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center">
-          <Button 
-            variant="neutral" 
-            size="sm" 
-            className="mr-4"
+          <Button
+              variant="noShadow"
+            size="sm"
+            className="bg-primary hover:main mr-4 border-0"
             onClick={() => navigate(-1)}
           >
-            <ChevronLeft className="h-5 w-5" />
-            Назад
+            <ChevronLeft className="h-6 w-6" />
           </Button>
           <h1 className="text-xl font-bold">
-            Правила Банка ЛФМШ
+            Правила
           </h1>
         </div>
       </header>
