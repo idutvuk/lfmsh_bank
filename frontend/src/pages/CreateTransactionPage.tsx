@@ -3,6 +3,7 @@ import {Button} from "@/components/ui/button"
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
 import {Input} from "@/components/ui/input"
 import {Textarea} from "@/components/ui/textarea"
+import {Background} from "@/components/Background"
 import {Label} from "@/components/ui/label"
 import {
     Select,
@@ -11,15 +12,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import {Checkbox} from "@/components/ui/checkbox"
 import {Search} from "lucide-react"
-import {useNavigate} from "react-router-dom"
-import {getUsers, type UserTransactionListItem} from "@/services/api"
+import {getUsers, type UserListItem} from "@/services/api"
 import {Navbar} from "@/components/Navbar"
+import {TransactionUserItem} from "@/components/TransactionUserItem"
 
+interface UserTransactionListItem extends UserListItem {
+    isSelected: boolean;
+    bucks: number;
+}
 
 export default function CreateTransactionPage() {
-    const navigate = useNavigate()
     const [loading, setLoading] = useState(true)
     const [userTransactions, setUserTransactions] = useState<UserTransactionListItem[]>([])
 
@@ -109,22 +112,18 @@ export default function CreateTransactionPage() {
     function onAmountChanged(e: React.ChangeEvent<HTMLInputElement>) {
         const prevAmount = amount
         const newAmount = e.target.value ? Number(e.target.value) : 0
-        if (typeof newAmount === 'number') {
-            setAmount(newAmount)
-
-            setUserTransactions(prev =>
-                prev.map(u =>
-                    u.bucks === prevAmount
-                        ? {...u, bucks: newAmount}
-                        : u
-                )
+        setAmount(newAmount)
+        setUserTransactions(prev =>
+            prev.map(u =>
+                u.bucks === prevAmount
+                    ? {...u, bucks: newAmount}
+                    : u
             )
-
-        }
+        )
     }
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100">
+        <Background>
             {/* Header */}
             <Navbar
                 showBackButton={true}
@@ -216,48 +215,16 @@ export default function CreateTransactionPage() {
                                             <p className="mt-2 text-muted-foreground">Загрузка списка пионеров...</p>
                                         </div>
                                     ) : filteredUsers.length > 0 ? (
-                                        filteredUsers.map((user) => {
-                                            // const selectedUser = selectedUsers.find(selected => selected.id === user.id);
-                                            return (
-                                                <div
-                                                    key={user.id}
-                                                    className={`flex items-center px-4 py-3 hover:bg-muted cursor-pointer ${user.isSelected ? 'bg-muted/50' : ''}`}
-                                                >
-                                                    <div className="flex-1 flex items-center">
-                                                        <Checkbox
-                                                            className="mr-3"
-                                                            checked={user.isSelected}
-                                                            onClick={() => handleSelectUser(user)}
-                                                        />
-                                                        <div>
-                                                            <p className="font-medium">{user.name}</p>
-                                                            <p className="text-sm text-muted-foreground">Баланс: {user.balance}@</p>
-                                                        </div>
-                                                    </div>
-
-                                                    {user.isSelected && amount !== 0 && (
-                                                        <div className="flex items-center">
-                                                            {user.bucks !== amount && (
-                                                                <Button
-                                                                    variant="text"
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    onClick={() => handleCustomAmountChange(user.id)}
-                                                                    className="text-xl mr-2"
-                                                                >
-                                                                    ⟳
-                                                                </Button>
-                                                            )}
-                                                            <Input
-                                                                value={user.bucks}
-                                                                className="bg-transparent w-20"
-                                                                onChange={(e) => userAmountChanged(user.id, Number(e.target.value))}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })
+                                        filteredUsers.map((user) => (
+                                            <TransactionUserItem
+                                                key={user.id}
+                                                user={user}
+                                                onSelect={handleSelectUser}
+                                                onAmountChange={userAmountChanged}
+                                                onResetAmount={handleCustomAmountChange}
+                                                defaultAmount={amount}
+                                            />
+                                        ))
                                     ) : (
                                         <div className="p-4 text-center text-muted-foreground">
                                             {searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
@@ -271,6 +238,6 @@ export default function CreateTransactionPage() {
                     </div>
                 </form>
             </div>
-        </div>
+        </Background>
     )
 } 

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { Background } from "@/components/Background"
 import {
   Accordion,
   AccordionContent,
@@ -14,7 +15,7 @@ export default function RulesPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100">
+    <Background>
       {/* Header */}
       <Navbar 
         showBackButton={true}
@@ -101,6 +102,6 @@ export default function RulesPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Background>
   )
 } 

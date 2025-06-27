@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar, Check, X, AlertCircle } from "lucide-react"
 import {
@@ -27,7 +26,7 @@ type TransactionProps = {
   receivers: Receiver[];
 }
 
-export function TransactionItem({ id, description, author, date_created, status, receivers }: TransactionProps) {
+export function TransactionItem({description, author, date_created, status, receivers }: TransactionProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("ru-RU", {
       day: "2-digit",

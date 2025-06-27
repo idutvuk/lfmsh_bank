@@ -4,6 +4,7 @@ import { getMe, getTransactions, getStatistics, type UserData, type Statistics, 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Background } from "@/components/Background"
 
 import {
   User,
@@ -91,9 +92,8 @@ export default function UserPage() {
   const displayedTransactions = showAllTransactions ? transactions : transactions.slice(0, 3)
 
   return (
-      <div className="min-h-screen w-full items-center justify-center bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px]">
-      {/* Header */}
-      <Navbar 
+      <Background>
+      <Navbar
         showRulesButton={true}
         isStaff={userData.staff}
         onLogout={handleLogout}
@@ -284,6 +284,7 @@ export default function UserPage() {
           </Card>
         )}
       </div>
-    </div>
+    {/*</div>*/}
+    </Background>
   )
 }
