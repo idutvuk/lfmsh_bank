@@ -1,12 +1,14 @@
 // src/pages/LoginPage.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const API_URL = import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:8000/api/";
 
-const LoginPage: React.FC = () => {
+export default function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -17,12 +19,14 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    
     try {
       const res = await fetch(`${API_URL}auth/jwt/create/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
+      
       if (!res.ok) {
         if (res.status === 401) {
           setError("Неверный логин или пароль");
@@ -31,12 +35,12 @@ const LoginPage: React.FC = () => {
         }
         return;
       }
+      
       const data = await res.json() as { access: string; refresh: string };
       localStorage.setItem("accessToken", data.access);
       localStorage.setItem("refreshToken", data.refresh);
-      // после успешного логина — на страницу пользователя
       navigate("/user", { replace: true });
-    } catch (err: any) {
+    } catch (err) {
       setError("Не удалось подключиться к серверу");
       console.error(err);
     } finally {
@@ -52,27 +56,30 @@ const LoginPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <div>
-              <label className="block text-sm mb-1">Логин</label>
-              <input
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            
+            <div className="space-y-2">
+              <Label htmlFor="username">Логин</Label>
+              <Input
+                id="username"
                 type="text"
                 value={username}
-                onChange={e => setUsername(e.target.value)}
-                className="w-full border rounded px-3 py-2"
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm mb-1">Пароль</label>
-              <input
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">Пароль</Label>
+              <Input
+                id="password"
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full border rounded px-3 py-2"
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
+            
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Входим..." : "Войти"}
             </Button>
@@ -81,6 +88,4 @@ const LoginPage: React.FC = () => {
       </Card>
     </div>
   );
-};
-
-export default LoginPage;
+}

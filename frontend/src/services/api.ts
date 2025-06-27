@@ -37,6 +37,14 @@ export interface UserData {
     counters: Counter[];
 }
 
+export interface UserListItem {
+    id: number;
+    username: string;
+    name: string;
+    staff: boolean;
+    balance: number;
+}
+
 export interface Statistics {
     avg_balance: number;
     total_balance: number;
@@ -72,3 +80,4 @@ async function request<T>(endpoint: string): Promise<T> {
 export const getMe = (): Promise<UserData> => request<UserData>("users/me/");
 export const getTransactions = (): Promise<Transaction[]> => request<Transaction[]>("transactions/");
 export const getStatistics = (): Promise<Statistics> => request<Statistics>("statistics/");
+export const getUsers = (): Promise<UserListItem[]> => request<UserListItem[]>("users/");

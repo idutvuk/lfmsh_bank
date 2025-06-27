@@ -1,31 +1,35 @@
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import UserPage from "./pages/UserPage";
 import LoginPage from "./pages/LoginPage";
+import RulesPage from "./pages/RulesPage";
+import CreateTransactionPage from "./pages/CreateTransactionPage";
 
 const isAuthenticated = () => {
   return !!localStorage.getItem("accessToken");
 };
 
-const PrivateRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
   return isAuthenticated() ? children : <Navigate to="/login" replace />;
 };
 
-const App: React.FC = () => {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* если не аутентифицированы — сразу на /login */}
-        <Route path="/" element={
-          isAuthenticated()
-            ? <Navigate to="/user" replace />
-            : <Navigate to="/login" replace />
-        }/>
+        {/* Redirect to user page or login based on authentication status */}
+        <Route 
+          path="/" 
+          element={
+            isAuthenticated() 
+              ? <Navigate to="/user" replace /> 
+              : <Navigate to="/login" replace />
+          }
+        />
 
-        {/* публичная страница входа */}
+        {/* Public login page */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* приватный маршрут */}
+        {/* Private routes */}
         <Route
           path="/user"
           element={
@@ -35,7 +39,25 @@ const App: React.FC = () => {
           }
         />
 
-        {/* 404 */}
+        <Route
+          path="/rules"
+          element={
+            <PrivateRoute>
+              <RulesPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/create-transfer"
+          element={
+            <PrivateRoute>
+              <CreateTransactionPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* 404 page */}
         <Route
           path="*"
           element={
@@ -47,6 +69,4 @@ const App: React.FC = () => {
       </Routes>
     </BrowserRouter>
   );
-};
-
-export default App;
+}
