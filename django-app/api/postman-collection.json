@@ -238,6 +238,66 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "GET users list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Returns array of users\", () => {",
+									"    pm.expect(json).to.be.an('array');",
+									"    pm.expect(json.length).to.be.greaterThan(0);",
+									"});",
+									"pm.test(\"Each user has required properties\", () => {",
+									"    json.forEach(user => {",
+									"        pm.expect(user).to.have.all.keys('id', 'name', 'balance', 'staff');",
+									"        pm.expect(user.id).to.be.a('number');",
+									"        pm.expect(user.name).to.be.a('string');",
+									"        pm.expect(user.balance).to.be.a('number');",
+									"        pm.expect(user.staff).to.be.a('boolean');",
+									"    });",
+									"});",
+									"pm.test(\"Contains both student and staff users\", () => {",
+									"    const hasStaff = json.some(user => user.staff === true);",
+									"    const hasStudents = json.some(user => user.staff === false);",
+									"    pm.expect(hasStaff || hasStudents).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{studentAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								""
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},

@@ -22,6 +22,37 @@ function getCommonOpts(): CommonOpts {
     };
 }
 
+// Check if token needs refresh
+async function refreshTokenIfNeeded() {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) {
+        throw new Error("Нет refresh-токена");
+    }
+
+    try {
+        const res = await fetch(`${API_URL}auth/jwt/refresh/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh: refreshToken }),
+        });
+
+        if (!res.ok) {
+            throw new Error(`Refresh token error: ${res.status}`);
+        }
+
+        const data = await res.json() as { access: string };
+        localStorage.setItem("accessToken", data.access);
+        return data.access;
+    } catch (error) {
+        console.error("Failed to refresh token:", error);
+        // Clear tokens and redirect to login
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        window.location.href = "/login";
+        throw error;
+    }
+}
+
 export interface Counter {
     counter_name: string;
     value: number;
@@ -43,6 +74,11 @@ export interface UserListItem {
     name: string;
     staff: boolean;
     balance: number;
+}
+
+export interface UserTransactionListItem extends UserListItem{
+    isSelected: boolean;
+    bucks: number;
 }
 
 export interface Statistics {
@@ -69,12 +105,40 @@ export interface Transaction {
 }
 
 async function request<T>(endpoint: string): Promise<T> {
-    const opts = getCommonOpts();
-    const res = await fetch(`${API_URL}${endpoint}`, opts);
-    if (!res.ok) {
-        throw new Error(`API error ${endpoint}: ${res.status}`);
+    try {
+        const opts = getCommonOpts();
+        const res = await fetch(`${API_URL}${endpoint}`, opts);
+        
+        if (res.status === 401) {
+            // Token expired, attempt to refresh
+            await refreshTokenIfNeeded();
+            // Retry with new token
+            const newOpts = getCommonOpts();
+            const newRes = await fetch(`${API_URL}${endpoint}`, newOpts);
+            
+            if (!newRes.ok) {
+                throw new Error(`API error ${endpoint}: ${newRes.status}`);
+            }
+            return newRes.json();
+        }
+        
+        if (!res.ok) {
+            throw new Error(`API error ${endpoint}: ${res.status}`);
+        }
+        
+        return res.json();
+    } catch (error) {
+        console.error(`Error in API request to ${endpoint}:`, error);
+        
+        // If we have auth errors that weren't resolved by refresh, redirect to login
+        if (error instanceof Error && error.message.includes("JWT")) {
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            window.location.href = "/login";
+        }
+        
+        throw error;
     }
-    return res.json();
 }
 
 export const getMe = (): Promise<UserData> => request<UserData>("users/me/");

@@ -24,9 +24,35 @@ function Tooltip({
 }
 
 function TooltipTrigger({
+  onClick,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}: React.ComponentProps<typeof TooltipPrimitive.Trigger> & {
+  onClick?: React.MouseEventHandler<HTMLButtonElement>
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  
+  // Get closest tooltip component
+  const handleClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    setIsOpen(!isOpen);
+    onClick?.(e);
+    
+    // Find and update open state
+    const tooltip = e.currentTarget.closest('[data-slot="tooltip"]');
+    if (tooltip) {
+      const openAttr = tooltip.getAttribute('data-state');
+      if (openAttr === 'closed') {
+        (tooltip as any).dispatchEvent(new Event('mouseenter', { bubbles: true }));
+      }
+    }
+  };
+
+  return (
+    <TooltipPrimitive.Trigger 
+      data-slot="tooltip-trigger" 
+      onClick={handleClick}
+      {...props} 
+    />
+  );
 }
 
 function TooltipContent({

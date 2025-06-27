@@ -1,226 +1,274 @@
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import {useState, useEffect} from "react"
+import {Button} from "@/components/ui/button"
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
+import {Input} from "@/components/ui/input"
+import {Textarea} from "@/components/ui/textarea"
+import {Label} from "@/components/ui/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, Search, X } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { getUsers, type UserListItem } from "@/services/api"
+import {Checkbox} from "@/components/ui/checkbox"
+import {Search} from "lucide-react"
+import {useNavigate} from "react-router-dom"
+import {getUsers, type UserTransactionListItem} from "@/services/api"
+import {Navbar} from "@/components/Navbar"
+
 
 export default function CreateTransactionPage() {
-  const navigate = useNavigate()
-  const [users, setUsers] = useState<UserListItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedUsers, setSelectedUsers] = useState<UserListItem[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [description, setDescription] = useState("")
-  const [transactionType, setTransactionType] = useState("")
-  const [amount, setAmount] = useState<number | "">("")
+    const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
+    const [userTransactions, setUserTransactions] = useState<UserTransactionListItem[]>([])
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setLoading(true)
-      try {
-        const fetchedUsers = await getUsers()
-        setUsers(fetchedUsers.filter(user => !user.staff)) // Filter out staff members
-      } catch (err) {
-        console.error("Error fetching users:", err)
-      } finally {
-        setLoading(false)
-      }
+    const [searchQuery, setSearchQuery] = useState("")
+    const [description, setDescription] = useState("")
+    const [transactionType, setTransactionType] = useState("")
+    const [amount, setAmount] = useState<number | "">("")
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            setLoading(true)
+            try {
+                const fetchedUsers = await getUsers()
+                setUserTransactions(fetchedUsers
+                    .filter(user => !user.staff)
+                    .map(user => {
+                        return {
+                            ...user, isSelected: false, bucks: 0
+                        }
+                    }));
+            } catch (err) {
+                console.error("Error fetching users:", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchUsers()
+    }, [])
+
+    const filteredUsers = userTransactions.filter(user =>
+            user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        // Remove filter to keep users in the list even after selection
+    )
+
+    const handleSelectUser = (user: UserTransactionListItem) => {
+        setUserTransactions(prev =>
+            prev.map(u =>
+                u.id === user.id
+                    ? {...u, isSelected: !u.isSelected, bucks: Number(amount)}
+                    : u
+            )
+        )
     }
-    
-    fetchUsers()
-  }, [])
 
-  const filteredUsers = users.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    !selectedUsers.some(selected => selected.id === user.id)
-  )
+    function userAmountChanged(uid: number, newAmount: number) {
+        setUserTransactions(prev =>
+            prev.map(u =>
+                u.id === uid
+                    ? {...u, bucks: newAmount}
+                    : u
+            )
+        )
+    }
 
-  const handleSelectUser = (user: UserListItem) => {
-    setSelectedUsers([...selectedUsers, user])
-  }
-  
-  const handleRemoveUser = (userId: number) => {
-    setSelectedUsers(selectedUsers.filter(user => user.id !== userId))
-  }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Here would be the API call to create a transaction
-    console.log({
-      type: transactionType,
-      description,
-      amount,
-      recipients: selectedUsers.map(user => user.id),
-    })
-    
-    // Navigate back to home after successful submission
-    // navigate('/')
-  }
+    const handleCustomAmountChange = (uid: number) => {
+        setUserTransactions(prev =>
+            prev.map(u =>
+                u.id === uid
+                    ? {...u, bucks: Number(amount)}
+                    : u
+            )
+        )
+    }
 
-  return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="w-full bg-background/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-        <div className="max-w-screen-xl mx-auto px-4 py-3 flex items-center">
-          <Button 
-            variant="neutral" 
-            size="sm" 
-            className="mr-4"
-            onClick={() => navigate(-1)}
-          >
-            <ChevronLeft className="h-5 w-5" />
-            Назад
-          </Button>
-          <h1 className="text-xl font-bold">
-            Создание перевода
-          </h1>
-        </div>
-      </header>
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
 
-      <div className="max-w-screen-xl mx-auto px-4 py-6">
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Детали перевода</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Select
-                    value={transactionType}
-                    onValueChange={setTransactionType}
-                    required
-                  >
-                    <SelectTrigger id="type">
-                      <SelectValue placeholder="Выберите тип перевода" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="p2p">Перевод между пионерами</SelectItem>
-                      <SelectItem value="fine">Штраф</SelectItem>
-                      <SelectItem value="reward">Награда</SelectItem>
-                      <SelectItem value="lecture">За лекцию</SelectItem>
-                      <SelectItem value="seminar">За семинар</SelectItem>
-                      <SelectItem value="lab">За лабораторную</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Textarea
-                    id="description"
-                    placeholder="Введите описание перевода"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                </div>
+        // Here would be the API call to create a transaction
+        console.log({
+            type: transactionType,
+            description,
+            amount,
+            recipients: userTransactions.map(user => ({
+                id: user.id,
+                amount: user.bucks || amount
+            })),
+        })
 
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Сумма</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="Введите сумму"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value ? Number(e.target.value) : "")}
-                    required
-                  />
-                </div>
-              </CardContent>
-            </Card>
+        // Navigate back to home after successful submission
+        // navigate('/')
+    }
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Получатели</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Selected users */}
-                {selectedUsers.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm text-muted-foreground mb-2">Выбранные пионеры:</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedUsers.map((user) => (
-                        <Badge key={user.id} variant="neutral" className="pl-3 pr-2 py-1.5">
-                          {user.name}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveUser(user.id)}
-                            className="ml-1 rounded-full hover:bg-muted p-0.5 transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Search */}
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Поиск пионера..."
-                    className="pl-10"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                
-                {/* User list */}
-                <div className="rounded-md divide-y max-h-80 overflow-y-auto">
-                  {loading ? (
-                    <div className="p-4 text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                      <p className="mt-2 text-muted-foreground">Загрузка списка пионеров...</p>
-                    </div>
-                  ) : filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center px-4 py-3 hover:bg-muted cursor-pointer"
-                        onClick={() => handleSelectUser(user)}
-                      >
-                        <Checkbox className="mr-3" />
-                        <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-sm text-muted-foreground">Баланс: {user.balance}@</p>
+    function onAmountChanged(e: React.ChangeEvent<HTMLInputElement>) {
+        const prevAmount = amount
+        const newAmount = e.target.value ? Number(e.target.value) : ""
+        if (typeof newAmount === 'number') {
+            setAmount(newAmount)
+
+
+            setUserTransactions(prev =>
+                prev.map(u =>
+                    u.bucks === prevAmount
+                        ? {...u, bucks: newAmount}
+                        : u
+                )
+            )
+
+        }
+    }
+
+    return (
+        <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100">
+            {/* Header */}
+            <Navbar
+                showBackButton={true}
+                title="Создание перевода"
+            />
+
+            <div className="max-w-screen-xl mx-auto px-4 py-6">
+                <form onSubmit={handleSubmit}>
+                    <div className="grid gap-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Детали перевода</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Select
+                                        value={transactionType}
+                                        onValueChange={setTransactionType}
+                                        required
+                                    >
+                                        <SelectTrigger id="type">
+                                            <SelectValue placeholder="Выберите тип перевода"/>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="p2p">Перевод между пионерами</SelectItem>
+                                            <SelectItem value="fine">Штраф</SelectItem>
+                                            <SelectItem value="reward">Награда</SelectItem>
+                                            <SelectItem value="lecture">За лекцию</SelectItem>
+                                            <SelectItem value="seminar">За семинар</SelectItem>
+                                            <SelectItem value="lab">За лабораторную</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Textarea
+                                        id="description"
+                                        placeholder="Введите описание перевода"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="amount">Сумма</Label>
+                                    <Input
+                                        id="amount"
+                                        type="number"
+                                        placeholder="Введите сумму"
+                                        value={amount}
+                                        onChange={(e) => onAmountChanged(e)}
+                                        required
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <div className="flex justify-center">
+                            <Button
+                                type="submit"
+                                disabled={!description || !transactionType || amount === "" || userTransactions.length === 0}
+                            >
+                                Создать перевод
+                            </Button>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-muted-foreground">
-                      {searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Получатели</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="relative mb-4">
+                                    <Search
+                                        className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                                    <Input
+                                        placeholder="Поиск пионера..."
+                                        className="pl-10"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
 
-            <div className="flex justify-center">
-              <Button
-                type="submit"
-                disabled={!description || !transactionType || amount === "" || selectedUsers.length === 0}
-              >
-                Создать перевод
-              </Button>
+                                {/* User list with custom amount inputs */}
+                                <div className="rounded-md divide-y max-h-80 overflow-y-auto">
+                                    {loading ? (
+                                        <div className="p-4 text-center">
+                                            <div
+                                                className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                                            <p className="mt-2 text-muted-foreground">Загрузка списка пионеров...</p>
+                                        </div>
+                                    ) : filteredUsers.length > 0 ? (
+                                        filteredUsers.map((user) => {
+                                            // const selectedUser = selectedUsers.find(selected => selected.id === user.id);
+                                            return (
+                                                <div
+                                                    key={user.id}
+                                                    className={`flex items-center px-4 py-3 hover:bg-muted cursor-pointer ${user.isSelected ? 'bg-muted/50' : ''}`}
+                                                >
+                                                    <div className="flex-1 flex items-center">
+                                                        <Checkbox
+                                                            className="mr-3"
+                                                            onClick={() => handleSelectUser(user)}
+                                                            checked={user.isSelected}
+                                                        />
+                                                        <div>
+                                                            <p className="font-medium">{user.name}</p>
+                                                            <p className="text-sm text-muted-foreground">Баланс: {user.balance}@</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {user.isSelected && amount !== "" && (
+                                                        <div className="flex items-center">
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                onClick={() => handleCustomAmountChange(user.id)}
+                                                                className="text-xs mr-2"
+                                                            >
+                                                                reset
+                                                            </Button>
+                                                            <Input
+                                                                type="number"
+                                                                placeholder="{}"
+                                                                value={user.bucks}
+                                                                onChange={(e) =>
+                                                                    userAmountChanged(user.id, Number(e.target.value))}
+                                                            />
+
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="p-4 text-center text-muted-foreground">
+                                            {searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+
+                    </div>
+                </form>
             </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
+        </div>
+    )
 } 

@@ -73,17 +73,12 @@ class UserCountersView(APIView):
             {
                 "counter_name": AttendanceTypeEnum.lecture_attend.value,
                 "value": user.get_counter(AttendanceTypeEnum.lecture_attend.value),
-                "max_value": 10
-            },
-            {
-                "counter_name": AttendanceTypeEnum.seminar_attend.value,
-                "value": user.get_counter(AttendanceTypeEnum.seminar_attend.value),
-                "max_value": 10
+                "max_value": 15
             },
             {
                 "counter_name": AttendanceTypeEnum.fac_attend.value,
                 "value": user.get_counter(AttendanceTypeEnum.fac_attend.value),
-                "max_value": 10
+                "max_value": 1
             },
             {
                 "counter_name": AttendanceTypeEnum.fac_pass.value,
@@ -247,6 +242,27 @@ class PioneersList(APIView):
             {"username": user.username, "name": f"{user.first_name} {user.last_name}"}
             for user in pioneers
         ])
+
+class UsersListView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # Get all users, both students and staff
+        users = User.objects.all()
+        
+        # Format the response to match what the frontend expects
+        users_data = [
+            {
+                "id": user.id,
+                "name": f"{user.first_name} {user.last_name}",
+                "balance": user.balance,
+                "staff": user.is_staff,
+                "party":user.party,
+            }
+            for user in users
+        ]
+        
+        return Response(users_data)
 
 class StatisticsView(APIView):
     permission_classes = [IsAuthenticated]

@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { TransactionItem } from "@/components/TransactionItem";
+import { Navbar } from "@/components/Navbar";
 
 
 export default function UserPage() {
@@ -93,34 +94,13 @@ export default function UserPage() {
   return (
       <div className="min-h-screen w-full items-center justify-center bg-[linear-gradient(to_right,#80808033_1px,transparent_1px),linear-gradient(to_bottom,#80808033_1px,transparent_1px)] bg-[size:70px_70px]">
       {/* Header */}
-      <header className="w-full bg-background/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
-  <div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
-    {/* Левый блок — название */}
-    <div className="text-l font-bold">
-      Банк ЛФМШ {new Date().getFullYear() - 1987}
-    </div>
+      <Navbar 
+        showRulesButton={true}
+        isStaff={userData.staff}
+        onLogout={handleLogout}
+      />
 
-    {/* Правый блок — две кнопки */}
-    <div className="flex items-center gap-2">
-      {!userData.staff && (
-        <Button
-          variant="default"
-          className="bg-primary hover:bg-primary/90 flex justify-end"
-          onClick={() => navigate('/rules')}
-        >
-          <FileText className="h-4 w-4 mr-1" />
-          Правила
-        </Button>
-      )}
-      <Button onClick={handleLogout} size="sm">
-        Выйти
-      </Button>
-    </div>
-  </div>
-</header>
-
-
-      <div className="w-full max-w-screen-xl mx-auto py-6 space-y-4 min-h-[100dvh]">
+      <div className="w-full max-w-250 mx-auto py-6 space-y-4 min-h-[100dvh]">
         {/* User info */}
         <Card>
           <CardHeader>
@@ -287,19 +267,17 @@ export default function UserPage() {
             <CardContent>
               <div className="space-y-3">
                 {userData.counters.map((counter, idx) => (
-                  <div key={idx} className="space-y-1">
+                  <div key={idx} className="space-y-1 max-w-md mx-auto">
                     <div className="flex justify-between items-center">
                       <span className="text-sm">{getCounterLabel(counter.counter_name)}</span>
                       <span className="text-sm font-medium">
                         {counter.value}/{counter.max_value}
                       </span>
                     </div>
-                    {/*<div className="w-full h-2 bg-muted rounded-full overflow-hidden">*/}
-                      <Progress
+                    <Progress
                       value={(counter.value / counter.max_value) * 100}
                       className="w-full"
                     />
-                    {/*</div>*/}
                   </div>
                 ))}
               </div>

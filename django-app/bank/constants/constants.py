@@ -11,7 +11,7 @@ PERMISSION_RESPONSIBLE_GROUPS = [
     UserGroups.staff.value, UserGroups.student.value, UserGroups.admin.value
 ]
 
-FIRST_DAY_DATE = datetime.datetime(2024, 8, 8, 0, 0).date() # TODO: replace
+FIRST_DAY_DATE = datetime.datetime(2025, 8, 8, 0, 0).date() # TODO: replace
 
 BOOK_CERTIFICATE_VALUE = 50
 INITIAL_MONEY = 120

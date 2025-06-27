@@ -10,6 +10,7 @@ urlpatterns = [
     # path('auth/jwt/refresh/', RefreshJWT.as_view()),
     path('users/me/', UserProfileView.as_view()),
     path('users/me/counters/', UserCountersView.as_view()),
+    path('users/', UsersListView.as_view()),
     path('transactions/', TransactionListCreate.as_view()),
     path('transactions/pending/', PendingTransactions.as_view()),
     path('transactions/<int:transaction_id>/', TransactionDetail.as_view()),
