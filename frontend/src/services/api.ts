@@ -72,6 +72,7 @@ export interface UserListItem {
     id: number;
     username: string;
     name: string;
+    party: number,
     staff: boolean;
     balance: number;
 }

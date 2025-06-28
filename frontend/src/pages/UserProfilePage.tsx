@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Background } from "@/components/Background"
 import { Navbar } from "@/components/Navbar"
+import { Loading } from "@/components/loading"
 import { User, Wallet, AlertTriangle, ArrowLeft } from "lucide-react"
 
 export default function UserProfilePage() {
@@ -42,10 +43,7 @@ export default function UserProfilePage() {
     return (
       <Background>
         <div className="min-h-screen w-full flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Загрузка профиля...</p>
-          </div>
+          <Loading text="Загрузка профиля..." />
         </div>
       </Background>
     )

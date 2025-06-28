@@ -41,7 +41,7 @@ export function TransactionUserItem({
             </div>
 
             {/* User info column */}
-            <div 
+            <div
                 className="col-span-3 flex items-center justify-between"
             >
                 <Link to={`/user/${user.id}`}>
@@ -49,6 +49,7 @@ export function TransactionUserItem({
                         {user.name}
                      </Button>
                 </Link>
+                <p className="col-span-2">{user.party} отряд</p>
                 <span className="text-sm text-muted-foreground">{user.balance}@</span>
             </div>
 

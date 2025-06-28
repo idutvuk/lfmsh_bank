@@ -16,9 +16,9 @@ from django.contrib.auth.models import Group
 from bank.constants import UserGroups
 
 User = get_user_model()
-_staff_group = Group.objects.get(name=UserGroups.staff.value)
+_staff_group = Group.objects.get(name=UserGroups.student.value) # staff us equivalent to not student
 def is_staff(user): #todo remove - this overlaps the permission functionality
-    return _staff_group.user_set.filter(id=user.id).exists()
+    return not _staff_group.user_set.filter(id=user.id).exists()
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]

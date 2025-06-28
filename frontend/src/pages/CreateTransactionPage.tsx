@@ -13,9 +13,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import {Search} from "lucide-react"
+import {Search, X} from "lucide-react"
 import {getUsers, type UserListItem} from "@/services/api"
 import {Navbar} from "@/components/Navbar"
+import {Loading} from "@/components/loading"
 import {TransactionUserItem} from "@/components/TransactionUserItem"
 
 interface UserTransactionListItem extends UserListItem {
@@ -197,22 +198,27 @@ export default function CreateTransactionPage() {
                             <CardContent>
                                 <div className="relative mb-4">
                                     <Search
-                                        className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"/>
+                                        className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                                    />
                                     <Input
-                                        placeholder="Поиск пионера..."
-                                        className="pl-10"
+                                        placeholder="Найти жертву..."
+                                        className="pl-10 pr-10"  // добавляем отступ справа
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
+                                    {searchQuery && (
+                                        <X
+                                            onClick={() => setSearchQuery("")}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary"
+                                        />
+                                    )}
                                 </div>
 
                                 {/* User list with custom amount inputs */}
                                 <div className="rounded-md divide-y max-h-80 overflow-y-auto">
                                     {loading ? (
                                         <div className="p-4 text-center">
-                                            <div
-                                                className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                                            <p className="mt-2 text-muted-foreground">Загрузка списка пионеров...</p>
+                                            <Loading text="Загрузка списка пионеров..." />
                                         </div>
                                     ) : filteredUsers.length > 0 ? (
                                         filteredUsers.map((user) => (

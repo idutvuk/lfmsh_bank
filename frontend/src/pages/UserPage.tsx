@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Background } from "@/components/Background"
+import { Navbar } from "@/components/Navbar"
+import { Loading } from "@/components/loading"
+import { TransactionItem } from "@/components/TransactionItem"
 
 import {
   User,
@@ -17,8 +20,6 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom";
-import { TransactionItem } from "@/components/TransactionItem";
-import { Navbar } from "@/components/Navbar";
 
 
 export default function UserPage() {
@@ -69,11 +70,8 @@ export default function UserPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Загрузка...</p>
-        </div>
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <Loading />
       </div>
     )
   }
