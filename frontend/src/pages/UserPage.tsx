@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Send,
   AlertTriangle,
-  BookOpen,
   Users,
   FileText,
   ChevronDown,
@@ -166,7 +165,28 @@ export default function UserPage() {
                 <Users className="h-5 w-5 mr-2" />
                 Пионеры
               </Button>
+
             )}
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Button variant="neutral" className="h-16 flex-col gap-2">
+                  <FileText className="h-5 w-5" />
+                  <span className="text-xs">Мои транзакции</span>
+                </Button>
+
+                <Button
+                  variant="neutral"
+                  className="h-16 flex-col gap-2"
+                  onClick={() => navigate('/create-transfer')}
+                >
+                  <Send className="h-5 w-5" />
+                  <span className="text-xs">Создать перевод</span>
+                </Button>
+
+                <Button variant="neutral" className="h-16 flex-col gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  <span className="text-xs">Отштрафовать</span>
+                </Button>
+              </div>
           </CardContent>
         </Card>
 
@@ -192,42 +212,6 @@ export default function UserPage() {
           </Card>
         )}
 
-        {/* Staff actions */}
-        {userData.staff && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="neutral" className="h-16 flex-col gap-2">
-                  <FileText className="h-5 w-5" />
-                  <span className="text-xs">Мои транзакции</span>
-                </Button>
-
-                <Button
-                  variant="neutral"
-                  className="h-16 flex-col gap-2"
-                  onClick={() => navigate('/create-transfer')}
-                >
-                  <Send className="h-5 w-5" />
-                  <span className="text-xs">Создать перевод</span>
-                </Button>
-
-                <Button variant="neutral" className="h-16 flex-col gap-2">
-                  <AlertTriangle className="h-5 w-5" />
-                  <span className="text-xs">Отштрафовать</span>
-                </Button>
-
-                <Button
-                  variant="noShadow"
-                  className="h-16 flex-col gap-2"
-                  onClick={() => navigate('/rules')}
-                >
-                  <BookOpen className="h-5 w-5" />
-                  <span className="text-xs">Правила</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Transactions */}
         {transactions.length > 0 && (

@@ -145,3 +145,4 @@ export const getMe = (): Promise<UserData> => request<UserData>("users/me/");
 export const getTransactions = (): Promise<Transaction[]> => request<Transaction[]>("transactions/");
 export const getStatistics = (): Promise<Statistics> => request<Statistics>("statistics/");
 export const getUsers = (): Promise<UserListItem[]> => request<UserListItem[]>("users/");
+export const getUserById = (id: number): Promise<UserData> => request<UserData>(`users/${id}/`);

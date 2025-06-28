@@ -2,7 +2,8 @@ import type { UserListItem } from "@/services/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import {Label} from "@/components/ui/label";
+import { Link } from "react-router-dom"
 interface UserTransactionListItem extends UserListItem {
     isSelected: boolean;
     bucks: number;
@@ -21,45 +22,59 @@ export function TransactionUserItem({
     onSelect,
     onAmountChange,
     onResetAmount,
-    defaultAmount
+    defaultAmount,
 }: TransactionUserItemProps) {
     return (
-        <div
+        <Label
+            htmlFor={user.id.toString()}
             key={user.id}
-            className={`flex items-center px-4 py-3 hover:bg-muted cursor-pointer ${user.isSelected ? 'bg-muted/50' : ''}`}
+            className="grid grid-cols-7 items-center px-4 py-3 hover:bg-gray-600/10 border-b border-gray-200/20"
         >
-            <div className="flex-1 flex items-center">
+            {/* Checkbox column */}
+            <div className="col-span-1">
                 <Checkbox
-                    className="mr-3"
+                    id={user.id.toString()}
+                    className="rounded-xs border-none"
                     checked={user.isSelected}
                     onClick={() => onSelect(user)}
                 />
-                <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">Баланс: {user.balance}@</p>
-                </div>
             </div>
 
-            {user.isSelected && defaultAmount !== 0 && (
-                <div className="flex items-center">
-                    {user.bucks !== defaultAmount && (
-                        <Button
-                            variant="text"
-                            type="button"
-                            size="sm"
-                            onClick={() => onResetAmount(user.id)}
-                            className="text-xl mr-2"
-                        >
-                            ⟳
-                        </Button>
-                    )}
-                    <Input
-                        value={user.bucks}
-                        className="bg-transparent w-20"
-                        onChange={(e) => onAmountChange(user.id, Number(e.target.value))}
-                    />
-                </div>
-            )}
-        </div>
+            {/* User info column */}
+            <div 
+                className="col-span-3 flex items-center justify-between"
+            >
+                <Link to={`/user/${user.id}`}>
+                     <Button variant="link" className="font-medium">
+                        {user.name}
+                     </Button>
+                </Link>
+                <span className="text-sm text-muted-foreground">{user.balance}@</span>
+            </div>
+
+            {/* Amount input column */}
+            <div className="col-span-3 flex items-center justify-end">
+                {user.isSelected && defaultAmount !== 0 && (
+                    <div className="flex items-center">
+                        {user.bucks !== defaultAmount && (
+                            <Button
+                                variant="text"
+                                type="button"
+                                size="sm"
+                                onClick={() => onResetAmount(user.id)}
+                                className="text-xl mr-2"
+                            >
+                                ⟳
+                            </Button>
+                        )}
+                        <Input
+                            value={user.bucks}
+                            className="bg-transparent w-16 border-0 text-right"
+                            onChange={(e) => onAmountChange(user.id, Number(e.target.value))}
+                        />
+                    </div>
+                )}
+            </div>
+        </Label>
     );
 } 

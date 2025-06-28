@@ -18,6 +18,7 @@ const buttonVariants = cva(
         reverse:
           "text-main-foreground bg-main border-2 border-border hover:translate-x-reverseBoxShadowX hover:translate-y-reverseBoxShadowY hover:shadow-shadow",
         text: "text-main-foreground bg-transparent border-none shadow-none hover:shadow-none hover:translate-x-0 hover:translate-y-0",
+        link: "text-primary underline bg-transparent border-none shadow-none hover:shadow-none cursor-pointer hover:translate-x-0 hover:translate-y-0 p-0",
       },
       size: {
         default: "h-10 px-4 py-2",

@@ -1,3 +1,4 @@
+"use client"
 import {useState, useEffect} from "react"
 import {Button} from "@/components/ui/button"
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
@@ -25,7 +26,6 @@ interface UserTransactionListItem extends UserListItem {
 export default function CreateTransactionPage() {
     const [loading, setLoading] = useState(true)
     const [userTransactions, setUserTransactions] = useState<UserTransactionListItem[]>([])
-
     const [searchQuery, setSearchQuery] = useState("")
     const [description, setDescription] = useState("")
     const [transactionType, setTransactionType] = useState("")
@@ -130,7 +130,7 @@ export default function CreateTransactionPage() {
                 title="Создание перевода"
             />
 
-            <div className="max-w-screen-xl mx-auto px-4 py-6">
+            <div className="max-w-4xl mx-auto px-4 py-6">
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-6">
                         <Card>

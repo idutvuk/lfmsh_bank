@@ -7,6 +7,7 @@ urlpatterns = [
     path('auth/', include('djoser.urls.jwt')),
     path('users/me/', UserProfileView.as_view()),
     path('users/me/counters/', UserCountersView.as_view()),
+    path('users/<int:user_id>/', UserDetailView.as_view()),
     path('users/', UsersListView.as_view()),
     path('transactions/', TransactionListCreate.as_view()),
     path('transactions/pending/', PendingTransactions.as_view()),

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import UserPage from "./pages/UserPage";
+import UserProfilePage from "./pages/UserProfilePage";
 import LoginPage from "./pages/LoginPage";
 import RulesPage from "./pages/RulesPage";
 import CreateTransactionPage from "./pages/CreateTransactionPage";
@@ -53,6 +54,15 @@ export default function App() {
           element={
             <PrivateRoute>
               <CreateTransactionPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/user/:userId"
+          element={
+            <PrivateRoute>
+              <UserProfilePage />
             </PrivateRoute>
           }
         />

@@ -108,13 +108,12 @@ class TransactionListCreate(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        if user.is_staff:
+        if is_staff(request.user):
             transactions = Transaction.objects.all().order_by('-creation_timestamp')[:20]
         else:
             # Get transactions where the user is a receiver
             transactions = Transaction.objects.filter(
-                related_money_atomics__receiver=user
+                related_money_atomics__receiver=request.user
             ).distinct().order_by('-creation_timestamp')[:20]
 
         return Response([self._format_transaction(tx) for tx in transactions])
@@ -272,7 +271,7 @@ class UsersListView(APIView):
                 "id": user.id,
                 "name": f"{user.first_name} {user.last_name}",
                 "balance": user.balance,
-                "staff": user.is_staff,
+                "staff": is_staff(user),
                 "party":user.party,
             }
             for user in users
@@ -293,3 +292,57 @@ class StatisticsView(APIView):
             "avg_balance": stats.get("avg_balance", 0),
             "total_balance": stats.get("total_balance", 0)
         })
+
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        # Get the target user
+        target_user = get_object_or_404(User, id=user_id)
+        
+        # Check permissions - staff can view any user, regular users can only view themselves
+        if not is_staff(request.user) and request.user.id != user_id:
+            return Response({"detail": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        profile_data = {
+            "username": target_user.username,
+            "name": f"{target_user.first_name} {target_user.last_name}",
+            "staff": is_staff(target_user),
+            "balance": 0,
+            "expected_penalty": 0,
+            "counters": []
+        }
+
+        # Only calculate counters and penalties for students (non-staff)
+        if not is_staff(target_user):
+            profile_data["balance"] = target_user.balance
+            profile_data["expected_penalty"] = target_user.get_final_study_fine()
+            profile_data["counters"] = [
+                {
+                    "counter_name": AttendanceTypeEnum.lab_pass.value,
+                    "value": target_user.get_counter(AttendanceTypeEnum.lab_pass.value),
+                    "max_value": target_user.lab_needed()
+                },
+                {
+                    "counter_name": AttendanceTypeEnum.lecture_attend.value,
+                    "value": target_user.get_counter(AttendanceTypeEnum.lecture_attend.value),
+                    "max_value": 10
+                },
+                {
+                    "counter_name": AttendanceTypeEnum.seminar_attend.value,
+                    "value": target_user.get_counter(AttendanceTypeEnum.seminar_attend.value),
+                    "max_value": 10
+                },
+                {
+                    "counter_name": AttendanceTypeEnum.fac_attend.value,
+                    "value": target_user.get_counter(AttendanceTypeEnum.fac_attend.value),
+                    "max_value": 10
+                },
+                {
+                    "counter_name": AttendanceTypeEnum.fac_pass.value,
+                    "value": target_user.get_counter(AttendanceTypeEnum.fac_pass.value),
+                    "max_value": target_user.fac_needed()
+                }
+            ]
+
+        return Response(profile_data)
