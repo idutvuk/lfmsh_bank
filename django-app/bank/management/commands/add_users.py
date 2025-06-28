@@ -178,7 +178,6 @@ class Command(BaseCommand):
 		Group.objects.get(name=UserGroups.staff.value).user_set.add(new_staff)
 		group, _ = Group.objects.get_or_create(name='admin')
 		group.user_set.add(new_u)
-
 		out = open(BASE_DIR + Command.STATIC_DATA_PATH + 'bankir.txt', 'w')
 		out.write(' Банкир ЛФМШ \n')
 		out.write('Login: ' + login + ' Password: ' + password)

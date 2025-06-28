@@ -110,14 +110,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
-# todo comment mock
-# REST_FRAMEWORK = {
-#     # Полностью отключаем аутентификацию и требование авторизации
-#     'DEFAULT_AUTHENTICATION_CLASSES': [],
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.AllowAny',
-#     ],
-# }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -150,7 +142,7 @@ if os.environ.get('BANK_MODE', '') == 'docker-prod':
 			'PORT': '5432',
 		}
 	}
-DEBUG = False
+# DEBUG = False
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
