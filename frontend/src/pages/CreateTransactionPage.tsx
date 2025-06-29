@@ -1,4 +1,3 @@
-"use client"
 import {useState, useEffect} from "react"
 import {Button} from "@/components/ui/button"
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
@@ -13,12 +12,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import {Search, X} from "lucide-react"
-import {getUsers, type UserListItem} from "@/services/api"
+import {Search, X, AlertTriangle} from "lucide-react"
+import {getUsers, type UserListItem, createTransaction} from "@/services/api"
 import {Navbar} from "@/components/Navbar"
 import {Loading} from "@/components/loading"
 import {TransactionUserItem} from "@/components/TransactionUserItem"
-
+import {useNavigate} from "react-router-dom"
 interface UserTransactionListItem extends UserListItem {
     isSelected: boolean;
     bucks: number;
@@ -26,11 +25,17 @@ interface UserTransactionListItem extends UserListItem {
 
 export default function CreateTransactionPage() {
     const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
     const [userTransactions, setUserTransactions] = useState<UserTransactionListItem[]>([])
+    const navigate = useNavigate()
     const [searchQuery, setSearchQuery] = useState("")
     const [description, setDescription] = useState("")
     const [transactionType, setTransactionType] = useState("")
     const [amount, setAmount] = useState<number>(0)
+
+    // Check if too many recipients are selected for P2P
+    const selectedUsers = userTransactions.filter(user => user.isSelected)
+    const tooManyP2PRecipients = transactionType === "p2p" && selectedUsers.length > 1
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -54,19 +59,35 @@ export default function CreateTransactionPage() {
         fetchUsers()
     }, [])
 
+    // Reset selection when transaction type changes
+    useEffect(() => {
+        setUserTransactions(prev =>
+            prev.map(u => ({...u, isSelected: false, bucks: 0}))
+        )
+    }, [transactionType])
+
     const filteredUsers = userTransactions.filter(user =>
-            user.name.toLowerCase().includes(searchQuery.toLowerCase())
-        // Remove filter to keep users in the list even after selection
+        user.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     const handleSelectUser = (user: UserTransactionListItem) => {
-        setUserTransactions(prev =>
-            prev.map(u =>
-                u.id === user.id
-                    ? {...u, isSelected: !u.isSelected, bucks: amount}
-                    : u
-            )
-        )
+        setUserTransactions(prev => {
+            // For P2P transactions, only allow one user to be selected
+            if (transactionType === "p2p") {
+                return prev.map(u => ({
+                    ...u,
+                    isSelected: u.id === user.id ? !u.isSelected : false,
+                    bucks: u.id === user.id && !u.isSelected ? amount : u.bucks
+                }))
+            } else {
+                // For other transaction types, allow multiple selections
+                return prev.map(u =>
+                    u.id === user.id
+                        ? {...u, isSelected: !u.isSelected, bucks: !u.isSelected ? amount : 0}
+                        : u
+                )
+            }
+        })
     }
 
     function userAmountChanged(uid: number, newAmount: number) {
@@ -82,7 +103,6 @@ export default function CreateTransactionPage() {
         );
     }
 
-
     const handleCustomAmountChange = (uid: number) => {
         setUserTransactions(prev =>
             prev.map(u =>
@@ -93,21 +113,43 @@ export default function CreateTransactionPage() {
         )
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setSubmitting(true)
 
-        // Here would be the API call to create a transaction
-        console.log({
-            type: transactionType,
-            description,
-            recipients: userTransactions.map(user => ({
-                id: user.id,
-                amount: user.bucks
-            })),
-        })
+        try {
+            const selectedUsers = userTransactions.filter(user => user.isSelected)
+            if (selectedUsers.length === 0) {
+                alert("Выберите хотя бы одного получателя")
+                setSubmitting(false)
+                return
+            }
 
-        // Navigate back to home after successful submission
-        // navigate('/')
+            if (transactionType === "p2p" && selectedUsers.length > 1) {
+                alert("Для перевода между пионерами можно выбрать только одного получателя")
+                setSubmitting(false)
+                return
+            }
+
+            const transactionData = {
+                type: transactionType,
+                description: description,
+                recipients: selectedUsers.map(user => ({
+                    id: user.id,
+                    amount: user.bucks
+                }))
+            }
+
+            await createTransaction(transactionData)
+
+            // Navigate back after successful submission
+            navigate('/')
+        } catch (error) {
+            console.error("Error creating transaction:", error)
+            alert("Ошибка при создании транзакции: " + (error instanceof Error ? error.message : "неизвестная ошибка"))
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     function onAmountChanged(e: React.ChangeEvent<HTMLInputElement>) {
@@ -181,14 +223,33 @@ export default function CreateTransactionPage() {
                                         required
                                     />
                                 </div>
+
+                                {transactionType === "p2p" && (
+                                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                                        <p className="text-amber-800 text-sm flex items-center gap-2">
+                                            <AlertTriangle size={16} />
+                                            Для перевода между пионерами можно выбрать только одного получателя
+                                        </p>
+                                    </div>
+                                )}
+
+                                {tooManyP2PRecipients && (
+                                    <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                                        <p className="text-red-800 text-sm flex items-center gap-2">
+                                            <AlertTriangle size={16} />
+                                            <strong>Внимание!</strong> Выбрано слишком много получателей для перевода между пионерами.
+                                            Пожалуйста, выберите только одного получателя.
+                                        </p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                disabled={!description || !transactionType || amount === 0 || userTransactions.length === 0}
+                                disabled={submitting || !description || !transactionType || amount === 0 || !userTransactions.some(u => u.isSelected) || tooManyP2PRecipients}
                             >
-                                Создать перевод
+                                {submitting ? "Создание..." : "Создать перевод"}
                             </Button>
                         </div>
                         <Card>

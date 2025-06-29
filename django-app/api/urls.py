@@ -14,6 +14,7 @@ urlpatterns = [
     path('transactions/<int:transaction_id>/', TransactionDetail.as_view()),
     path('transactions/<int:transaction_id>/approve/', TransactionApprove.as_view()),
     path('transactions/<int:transaction_id>/reject/', TransactionReject.as_view()),
+    path('transactions/create/', CreateTransactionView.as_view()),
     path('pioneers/', PioneersList.as_view()),
     path('statistics/', StatisticsView.as_view()),
 ]

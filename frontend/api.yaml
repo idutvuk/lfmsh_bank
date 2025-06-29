@@ -90,7 +90,7 @@ components:
           type: integer
           description: Максимальное значение
 
-    # Получатель транзакции в запросе/ответе
+    # Получатель транзакции в ответе
     TransactionReceiver:
       type: object
       required:
@@ -117,6 +117,20 @@ components:
         fac:
           type: integer
           description: Изменение счётчика факультативов
+
+    # Получатель транзакции в запросе
+    TransactionRecipient:
+      type: object
+      required:
+        - id
+        - amount
+      properties:
+        id:
+          type: integer
+          description: ID получателя
+        amount:
+          type: integer
+          description: Сумма перевода
 
     # Полная модель транзакции
     Transaction:
@@ -150,28 +164,28 @@ components:
       required:
         - description
         - type
-        - receivers
+        - recipients
       properties:
         description:
           type: string
         type:
           $ref: '#/components/schemas/TransactionType'
-        receivers:
+        recipients:
           type: array
           items:
-            $ref: '#/components/schemas/TransactionReceiver'
+            $ref: '#/components/schemas/TransactionRecipient'
 
     # Перечисление типов транзакций
     TransactionType:
       type: string
       description: Тип транзакции
       enum:
-        - exam       # экзамен
-        - elective   # факультатив
-        - laboratory # лабораторная работа
-        - penalty    # штраф
-        - general    # общее начисление
-        - sport      # спорт/физкультура
+        - p2p       # перевод между пионерами
+        - fine      # штраф
+        - reward    # награда/бонус
+        - lecture   # лекция
+        - seminar   # семинар
+        - lab       # лабораторная работа
 
     # Статусы транзакций
     TransactionStatus:
@@ -191,6 +205,26 @@ components:
           type: string
         name:
           type: string
+
+    # Информация о пользователе для списка
+    UserListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID пользователя
+        username:
+          type: string
+          description: Никнейм пользователя
+        name:
+          type: string
+          description: Полное имя пользователя
+        staff:
+          type: boolean
+          description: Является ли сотрудником
+        balance:
+          type: number
+          description: Текущий баланс
 
     # Статистика балансов
     Statistics:
@@ -259,36 +293,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
 
-  paths:
-    /users/me/:
-      get:
-        summary: Профиль текущего пользователя (счётчики включены)
-        tags: [ Users ]
-        responses:
-          '200':
-            description: Данные пользователя и его счётчики
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/UserProfile'
-                example:
-                  username: "petya.ivanov"
-                  name: "Пётр Иванов"
-                  balance: 120.50
-                  expected_penalty: 10
-                  counters:
-                    - counter_name: "lab"
-                      value: 2
-                      max_value: 3
-                    - counter_name: "lec"
-                      value: 5
-                      max_value: 10
-                    - counter_name: "sem"
-                      value: 3
-                      max_value: 5
-                    - counter_name: "fac"
-                      value: 1
-                      max_value: 2
+  /users/me/:
+    get:
+      summary: Профиль текущего пользователя (счётчики включены)
+      tags: [ Users ]
+      responses:
+        '200':
+          description: Данные пользователя и его счётчики
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              example:
+                username: "petya.ivanov"
+                name: "Пётр Иванов"
+                balance: 120.50
+                expected_penalty: 10
+                counters:
+                  - counter_name: "lab"
+                    value: 2
+                    max_value: 3
+                  - counter_name: "lec"
+                    value: 5
+                    max_value: 10
+                  - counter_name: "sem"
+                    value: 3
+                    max_value: 5
+                  - counter_name: "fac"
+                    value: 1
+                    max_value: 2
 
   /users/me/counters/:
     get:
@@ -311,6 +344,32 @@ paths:
                 - counter_name: "lec"
                   value: 5
                   max_value: 10
+
+  /users/:
+    get:
+      summary: Список всех пользователей
+      tags: [Users]
+      description: Получение списка всех пользователей
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserListItem'
+              example:
+                - id: 1
+                  username: "ivan.petrov"
+                  name: "Иван Петров"
+                  staff: false
+                  balance: 150
+                - id: 2
+                  username: "anna.smirnova"
+                  name: "Анна Смирнова"
+                  staff: false
+                  balance: 80
 
   /transactions/:
     get:
@@ -353,7 +412,7 @@ paths:
                 - id: 101
                   author: "staff.member"
                   description: "Штраф за опоздание"
-                  type: penalty
+                  type: fine
                   status: created
                   date_created: "2025-06-20T09:15:00Z"
                   receivers:
@@ -367,7 +426,7 @@ paths:
                 - id: 102
                   author: "staff.member"
                   description: "Лабораторная работа"
-                  type: laboratory
+                  type: lab
                   status: approved
                   date_created: "2025-06-19T14:00:00Z"
                   receivers:
@@ -379,6 +438,7 @@ paths:
                       sem: 0
                       fac: 0
 
+  /transactions/create/:
     post:
       summary: Создать новую транзакцию
       tags: [Transactions]
@@ -388,17 +448,37 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TransactionCreate'
-            example:
-              description: "Бонус за экзамен"
-              type: exam
-              receivers:
-                - username: "ivan.petrov"
-                  bucks: 50
-                  certs: 0
-                  lab: 0
-                  lec: 0
-                  sem: 0
-                  fac: 0
+            examples:
+              p2p:
+                summary: Перевод между пионерами
+                value:
+                  description: "Возврат долга"
+                  type: p2p
+                  recipients:
+                    - id: 123
+                      amount: 50
+              reward:
+                summary: Награда пионерам
+                value:
+                  description: "Бонус за участие"
+                  type: reward
+                  recipients:
+                    - id: 123
+                      amount: 30
+                    - id: 124
+                      amount: 20
+                    - id: 125
+                      amount: 10
+              lecture:
+                summary: Отметка посещения лекции
+                value:
+                  description: "Лекция по физике"
+                  type: lecture
+                  recipients:
+                    - id: 123
+                      amount: 1 
+                    - id: 124
+                      amount: 0
       responses:
         '201':
           description: Транзакция создана
@@ -410,7 +490,7 @@ paths:
                 id: 123
                 author: "staff.member"
                 description: "Бонус за экзамен"
-                type: exam
+                type: reward
                 status: created
                 date_created: "2025-06-21T12:34:56Z"
                 receivers:
@@ -421,6 +501,19 @@ paths:
                     lec: 0
                     sem: 0
                     fac: 0
+        '400':
+          description: Ошибка при создании транзакции
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation:
+                  value:
+                    detail: "Validation error: Description is required"
+                p2pLimit:
+                  value:
+                    detail: "P2P transactions only support one recipient"
 
   /transactions/{transaction_id}/:
     get:

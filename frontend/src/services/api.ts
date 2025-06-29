@@ -105,17 +105,41 @@ export interface Transaction {
     }>;
 }
 
-async function request<T>(endpoint: string): Promise<T> {
+export interface TransactionCreate {
+    type: string;
+    description: string;
+    recipients: Array<{
+        id: number;
+        amount: number;
+    }>;
+}
+
+async function request<T>(endpoint: string, opts?: RequestInit): Promise<T> {
     try {
-        const opts = getCommonOpts();
-        const res = await fetch(`${API_URL}${endpoint}`, opts);
+        const commonOpts = getCommonOpts();
+        const mergedOpts = {
+            ...opts,
+            headers: {
+                ...commonOpts.headers,
+                ...(opts?.headers || {}),
+            },
+        };
+
+        const res = await fetch(`${API_URL}${endpoint}`, mergedOpts);
         
         if (res.status === 401) {
             // Token expired, attempt to refresh
             await refreshTokenIfNeeded();
             // Retry with new token
             const newOpts = getCommonOpts();
-            const newRes = await fetch(`${API_URL}${endpoint}`, newOpts);
+            const newMergedOpts = {
+                ...opts,
+                headers: {
+                    ...newOpts.headers,
+                    ...(opts?.headers || {}),
+                },
+            };
+            const newRes = await fetch(`${API_URL}${endpoint}`, newMergedOpts);
             
             if (!newRes.ok) {
                 throw new Error(`API error ${endpoint}: ${newRes.status}`);
@@ -147,3 +171,8 @@ export const getTransactions = (): Promise<Transaction[]> => request<Transaction
 export const getStatistics = (): Promise<Statistics> => request<Statistics>("statistics/");
 export const getUsers = (): Promise<UserListItem[]> => request<UserListItem[]>("users/");
 export const getUserById = (id: number): Promise<UserData> => request<UserData>(`users/${id}/`);
+export const createTransaction = (data: TransactionCreate): Promise<Transaction> =>
+    request<Transaction>("transactions/create/", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });

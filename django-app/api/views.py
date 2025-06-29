@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Avg, Sum
 from bank.models.Transaction import Transaction
 from bank.models.TransactionState import TransactionState
-from bank.constants import AttendanceTypeEnum, States
+from bank.constants import AttendanceTypeEnum, States, MoneyTypeEnum
 from bank.controls.TransactionService import TransactionService
 from bank.controls.stats_controller import StatsController
 from loguru import logger
@@ -346,3 +346,180 @@ class UserDetailView(APIView):
             ]
 
         return Response(profile_data)
+
+class CreateTransactionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # try:
+            # Map frontend transaction types to backend types
+            transaction_type_mapping = {
+                'p2p': 'p2p',
+                'fine': 'fine',
+                'reward': 'general_money',
+                'lecture': 'lecture',
+                'seminar': 'seminar',
+                'lab': 'lab'
+            }
+
+            # Money type mapping for different transaction types
+            money_type_mapping = {
+                'fine': MoneyTypeEnum.fine_any.value,
+                'reward': MoneyTypeEnum.staff_help.value,
+                'lecture': MoneyTypeEnum.fine_lecture.value,
+                'seminar': MoneyTypeEnum.seminar_pass.value,
+                'lab': MoneyTypeEnum.lab_pass.value
+            }
+
+            # Map frontend data to backend format
+            data = request.data
+            frontend_type = data.get('type')
+            transaction_type = transaction_type_mapping.get(frontend_type)
+
+            if not transaction_type:
+                return Response(
+                    {"detail": f"Unsupported transaction type: {frontend_type}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Format data for the TransactionService based on transaction type
+            description = data.get('description', '')
+            recipients = data.get('recipients', [])
+
+            if not recipients or len(recipients) == 0:
+                return Response(
+                    {"detail": "No recipients specified"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Different controllers expect different formats
+            if transaction_type == 'p2p':
+                # P2P only supports one recipient at a time
+                if len(recipients) > 1:
+                    return Response(
+                        {"detail": "P2P transactions only support one recipient"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                recipient = recipients[0]
+                user_id = recipient.get('id')
+                amount = recipient.get('amount', 0)
+
+                try:
+                    recipient_user = User.objects.get(id=user_id)
+                except User.DoesNotExist:
+                    return Response(
+                        {"detail": f"User with ID {user_id} does not exist"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                backend_data = {
+                    'type': transaction_type,
+                    'creator': request.user.username,
+                    'description': description,
+                    'money': [{
+                        'receiver': recipient_user.username,
+                        'value': amount
+                    }]
+                }
+            elif transaction_type == 'general_money':
+                # Format for GeneralTransactionController
+                receivers = []
+                for recipient in recipients:
+                    user_id = recipient.get('id')
+                    amount = recipient.get('amount', 0)
+
+                    try:
+                        recipient_user = User.objects.get(id=user_id)
+                        receivers.append({
+                            'username': recipient_user.username,
+                            'value': amount
+                        })
+                    except User.DoesNotExist:
+                        return Response(
+                            {"detail": f"User with ID {user_id} does not exist"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                backend_data = {
+                    'type': transaction_type,
+                    'description': description,
+                    'money_type': money_type_mapping.get(frontend_type, MoneyTypeEnum.staff_help.value),
+                    'receivers': receivers
+                }
+            elif transaction_type == 'fine':
+                # Format for FineTransactionController
+                formset_data = []
+                for recipient in recipients:
+                    user_id = recipient.get('id')
+                    amount = recipient.get('amount', 0)
+
+                    try:
+                        recipient_user = User.objects.get(id=user_id)
+                        formset_data.append({
+                            'receiver_username': recipient_user.username,
+                            'creator_username': request.user.username,
+                            'value': amount,
+                            'description': description,
+                            'money_type': money_type_mapping.get(frontend_type)
+                        })
+                    except User.DoesNotExist:
+                        return Response(
+                            {"detail": f"User with ID {user_id} does not exist"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                backend_data = {
+                    'type': transaction_type,
+                    'description': description,
+                    'creator': request.user.username,
+                    'formset_data': formset_data
+                }
+            elif transaction_type in ['lecture', 'seminar', 'lab']:
+                # Format for attendance-based controllers (Lecture, Seminar, Lab)
+                formset_data = []
+                for recipient in recipients:
+                    user_id = recipient.get('id')
+                    amount = recipient.get('amount', 0)
+
+                    try:
+                        recipient_user = User.objects.get(id=user_id)
+                        # For attendance, we use a boolean value
+                        attended = amount > 0
+                        formset_data.append({
+                            'receiver_username': recipient_user.username,
+                            'creator_username': request.user.username,
+                            'attended': attended,
+                            'description': description,
+                            'date': None  # Use current date in controller
+                        })
+                    except User.DoesNotExist:
+                        return Response(
+                            {"detail": f"User with ID {user_id} does not exist"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                backend_data = {
+                    'type': transaction_type,
+                    'description': description,
+                    'creator': request.user.username,
+                    'formset_data': formset_data
+                }
+            else:
+                # Default format for other transaction types
+                backend_data = {
+                    'type': transaction_type,
+                    'description': description,
+                    'creator': request.user.username,
+                }
+            # todo сделать в реквесте username а не id
+            transaction = TransactionService.create_transaction(request.user, backend_data)
+
+            # Return formatted transaction
+            view = TransactionListCreate()
+            return Response(
+                view._format_transaction(transaction),
+                status=status.HTTP_201_CREATED
+            )
+        # except Exception as e:
+        #     return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
