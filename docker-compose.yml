@@ -11,20 +11,11 @@ services:
   backend:
     build:
       context: .
-      dockerfile: docker/django-app/Dockerfile
-    command: >
-      bash -c "
-      /app/entry.sh &&
-      uv run manage.py runserver_plus 0.0.0.0:8000
-      "
-
-    # uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3 # error no module named core
+      dockerfile: docker/backend/Dockerfile
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file: .env
     volumes:
-      - ./docker/socket:/usr/src/django-app/socket
-      - ./docker/django-app/logs:/usr/src/django-app/logs
-      - ./bank/migrations:/usr/src/django-app/bank/migrations
-
+      - ./backend:/app
     depends_on:
       - db
     ports:
