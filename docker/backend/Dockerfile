@@ -1,4 +1,4 @@
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+FROM python:3.13-slim-bookworm
 
 WORKDIR /app
 
@@ -8,14 +8,15 @@ RUN apt-get update && \
       libpq-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# no venv
-ENV UV_SYSTEM_PYTHON=1
-COPY backend/pyproject.toml backend/uv.lock ./
-RUN uv sync
+COPY backend/pyproject.toml ./
+RUN pip install pip --no-cache-dir --upgrade \
+    && pip install --no-cache-dir .[dev] \
+    && pip install --no-cache-dir .[prod] \
+    && pip install --no-cache-dir .[test] \
+    && pip install --no-cache-dir .[docs] \
+    && pip check
 RUN mkdir -p /app/logs
 
 COPY backend/ ./
 
 EXPOSE 8000
-
-CMD ["uv", "run", "--system", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

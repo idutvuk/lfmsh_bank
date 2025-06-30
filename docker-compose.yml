@@ -12,8 +12,10 @@ services:
     build:
       context: .
       dockerfile: docker/backend/Dockerfile
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file: .env
+    environment:
+      POSTGRES_PASSWORD: $BANK_POSTGRES_PASSWORD
     volumes:
       - ./backend:/app
     depends_on:

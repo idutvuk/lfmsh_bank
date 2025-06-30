@@ -7,6 +7,7 @@ class Token(BaseModel):
     Token schema returned from login
     """
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str
 
 

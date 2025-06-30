@@ -27,6 +27,9 @@ FAC_PENALTY = 30
 LECTURE_PENALTY_STEP = 10
 LECTURE_PENALTY_INITIAL = 10
 
+# Daily tax amount
+DAILY_TAX_AMOUNT = 1.0
+
 # Enums for transaction states and types
 class States(Enum):
     created = 'created'
