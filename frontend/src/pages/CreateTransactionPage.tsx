@@ -131,12 +131,15 @@ export default function CreateTransactionPage() {
                 return
             }
 
+            // For attendance transaction types, the amount should be 0
+            const isAttendanceType = ["fac_attend", "lec_attend", "sem_attend", "lab_pass"].includes(transactionType)
+
             const transactionData = {
                 type: transactionType,
                 description: description,
                 recipients: selectedUsers.map(user => ({
                     id: user.id,
-                    amount: user.bucks
+                    amount: isAttendanceType ? 0 : user.bucks
                 }))
             }
 
@@ -194,10 +197,11 @@ export default function CreateTransactionPage() {
                                         <SelectContent className="bg-white">
                                             <SelectItem value="p2p">Перевод между пионерами</SelectItem>
                                             <SelectItem value="fine">Штраф</SelectItem>
-                                            <SelectItem value="reward">Награда</SelectItem>
-                                            <SelectItem value="lecture">За лекцию</SelectItem>
-                                            <SelectItem value="seminar">За семинар</SelectItem>
-                                            <SelectItem value="lab">За лабораторную</SelectItem>
+                                            <SelectItem value="general">Награда</SelectItem>
+                                            <SelectItem value="fac_attend">Посещение факультатива</SelectItem>
+                                            <SelectItem value="lec_attend">Посещение лекции</SelectItem>
+                                            <SelectItem value="sem_attend">Посещение семинара</SelectItem>
+                                            <SelectItem value="lab_pass">Лабораторная работа</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

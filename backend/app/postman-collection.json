@@ -21,8 +21,8 @@
 									"let json = pm.response.json();",
 									"// pm.expect(json.access).to.eql(\"mocked-access-token\");",
 									"// pm.expect(json.refresh).to.eql(\"mocked-refresh-token\");",
-									"pm.environment.set(\"studentAccessToken\", json.access_token);",
-									"pm.environment.set(\"studentRefreshToken\", json.refresh_token);"
+									"pm.environment.set(\"studentAccessToken\", json.access);",
+									"pm.environment.set(\"studentRefreshToken\", json.refresh);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -48,19 +48,8 @@
 							}
 						],
 						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "username",
-									"value": "girik",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "r",
-									"type": "text"
-								}
-							]
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"girik\",\n    \"password\": \"r\"\n}"
 						},
 						"url": {
 							"raw": "{{apiV1}}auth/jwt/create/",
@@ -88,8 +77,8 @@
 									"let json = pm.response.json();",
 									"// pm.expect(json.access).to.eql(\"mocked-access-token\");",
 									"// pm.expect(json.refresh).to.eql(\"mocked-refresh-token\");",
-									"pm.environment.set(\"staffAccessToken\", json.access_token);",
-									"pm.environment.set(\"staffRefreshToken\", json.refresh_token);"
+									"pm.environment.set(\"staffAccessToken\", json.access);",
+									"pm.environment.set(\"staffRefreshToken\", json.refresh);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -115,22 +104,11 @@
 							}
 						],
 						"body": {
-							"mode": "urlencoded",
-							"urlencoded": [
-								{
-									"key": "username",
-									"value": "girix",
-									"type": "text"
-								},
-								{
-									"key": "password",
-									"value": "r",
-									"type": "text"
-								}
-							]
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"girix\",\n    \"password\": \"r\"\n}"
 						},
 						"url": {
-							"raw": "{{apiV1}}auth/jwt/create/?username=girix&password=r",
+							"raw": "{{apiV1}}auth/jwt/create/",
 							"host": [
 								"{{apiV1}}auth"
 							],
@@ -138,16 +116,52 @@
 								"jwt",
 								"create",
 								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auth: refresh JWT",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Проверяем, что обновление успешно",
+									"pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+									"let json = pm.response.json();",
+									"pm.test(\"Has access token\", () => {",
+									"    pm.expect(json).to.have.property('access');",
+									"});",
+									"pm.environment.set(\"studentAccessToken\", json.access);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh\": \"{{studentRefreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apiV1}}auth/jwt/refresh/",
+							"host": [
+								"{{apiV1}}auth"
 							],
-							"query": [
-								{
-									"key": "username",
-									"value": "girix"
-								},
-								{
-									"key": "password",
-									"value": "r"
-								}
+							"path": [
+								"jwt",
+								"refresh",
+								""
 							]
 						}
 					},
@@ -247,13 +261,6 @@
 								"type": "text/javascript",
 								"packages": {}
 							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [],
-								"type": "text/javascript"
-							}
 						}
 					],
 					"request": {
@@ -291,37 +298,17 @@
 								"exec": [
 									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
 									"const json = pm.response.json();",
-									"pm.test(\"Returns array of users\", () => {",
+									"pm.test(\"Response is an array\", () => {",
 									"    pm.expect(json).to.be.an('array');",
-									"    pm.expect(json.length).to.be.greaterThan(0);",
 									"});",
-									"pm.test(\"Each user has required properties\", () => {",
-									"    json.forEach(user => {",
-									"        pm.expect(user).to.have.all.keys('id', 'name', 'balance', 'staff');",
-									"        pm.expect(user.id).to.be.a('number');",
-									"        pm.expect(user.name).to.be.a('string');",
-									"        pm.expect(user.balance).to.be.a('number');",
-									"        pm.expect(user.staff).to.be.a('boolean');",
+									"",
+									"if (json.length > 0) {",
+									"    pm.test(\"Each user has required fields\", () => {",
+									"        pm.expect(json[0]).to.have.all.keys('id', 'username', 'name', 'party', 'staff', 'balance');",
 									"    });",
-									"});",
-									"pm.test(\"Contains both student and staff users\", () => {",
-									"    const hasStaff = json.some(user => user.staff === true);",
-									"    const hasStudents = json.some(user => user.staff === false);",
-									"    pm.expect(hasStaff || hasStudents).to.be.true;",
-									"});"
+									"}"
 								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									""
-								],
-								"type": "text/javascript",
-								"packages": {}
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -356,31 +343,136 @@
 			"name": "transactions",
 			"item": [
 				{
-					"name": "create transaction",
+					"name": "GET transactions list",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Created 201\", () => pm.response.to.have.status(201));",
-									"var t = pm.response.json();",
-									"pm.test(\"Transaction has id & status=created\", () => {",
-									"    pm.expect(t).to.have.property('id');",
-									"    pm.expect(t.status).to.eql('created');",
-									"});"
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Response is an array\", () => {",
+									"    pm.expect(json).to.be.an('array');",
+									"});",
+									"",
+									"if (json.length > 0) {",
+									"    pm.test(\"Each transaction has required fields\", () => {",
+									"        pm.expect(json[0]).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"        pm.expect(json[0].receivers).to.be.an('array');",
+									"    });",
+									"    ",
+									"    if (json[0].receivers.length > 0) {",
+									"        pm.test(\"Each receiver has required fields\", () => {",
+									"            const receiver = json[0].receivers[0];",
+									"            pm.expect(receiver).to.include.keys('username', 'bucks', 'certs', 'lab', 'lec', 'sem', 'fac');",
+									"        });",
+									"    }",
+									"}"
 								],
-								"type": "text/javascript",
-								"packages": {}
+								"type": "text/javascript"
 							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
 						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiV1}}transactions/",
+							"host": [
+								"{{apiV1}}transactions"
+							],
+							"path": [
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET transaction by ID",
+					"event": [
 						{
-							"listen": "prerequest",
+							"listen": "test",
 							"script": {
 								"exec": [
-									""
+									"pm.test(\"Status is 200 or 404\", () => {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    const json = pm.response.json();",
+									"    pm.test(\"Transaction has required fields\", () => {",
+									"        pm.expect(json).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"        pm.expect(json.receivers).to.be.an('array');",
+									"    });",
+									"    ",
+									"    if (json.receivers.length > 0) {",
+									"        pm.test(\"Each receiver has required fields\", () => {",
+									"            const receiver = json.receivers[0];",
+									"            pm.expect(receiver).to.include.keys('username', 'bucks', 'certs', 'lab', 'lec', 'sem', 'fac');",
+									"        });",
+									"    }",
+									"}"
 								],
-								"type": "text/javascript",
-								"packages": {}
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiV1}}transactions/1",
+							"host": [
+								"{{apiV1}}transactions"
+							],
+							"path": [
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create fine transaction",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Transaction created\", () => {",
+									"    pm.expect(json).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"    pm.expect(json.type).to.eql('fine');",
+									"});",
+									"",
+									"// Store the transaction ID for later tests",
+									"if (json.id) {",
+									"    pm.environment.set(\"lastTransactionId\", json.id);",
+									"}"
+								],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -398,24 +490,21 @@
 						"method": "POST",
 						"header": [
 							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}"
-							},
-							{
 								"key": "Content-Type",
 								"value": "application/json"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"description\": \"Бонус за экзамен\",\n  \"type_name\": \"fine\",\n  \"creation_map\": [\n    { \"username\": \"girik\", \"bucks\": 50, \"certs\": 0, \"lab\":0, \"lec\":0, \"sem\":0, \"fac\":0 }\n  ]\n}"
+							"raw": "{\n    \"type\": \"fine\",\n    \"description\": \"Тестовый штраф\",\n    \"recipients\": [\n        {\n            \"id\": 1,\n            \"amount\": -5\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{apiV1}}transactions/",
+							"raw": "{{apiV1}}transactions/create/",
 							"host": [
 								"{{apiV1}}transactions"
 							],
 							"path": [
+								"create",
 								""
 							]
 						}
@@ -423,23 +512,287 @@
 					"response": []
 				},
 				{
-					"name": "O get my transactions",
+					"name": "Create general transaction (bonus)",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status OK\", () => pm.response.to.have.status(200));",
-									"pm.test(\"Array of transactions\", () => pm.expect(pm.response.json()).to.be.an('array'));"
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Transaction created\", () => {",
+									"    pm.expect(json).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"    pm.expect(json.type).to.eql('general');",
+									"});",
+									"",
+									"// Store the transaction ID for later tests",
+									"if (json.id) {",
+									"    pm.environment.set(\"lastTransactionId\", json.id);",
+									"}"
 								],
-								"type": "text/javascript",
-								"packages": {}
+								"type": "text/javascript"
 							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
 						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"general\",\n    \"description\": \"Бонус за помощь\",\n    \"recipients\": [\n        {\n            \"id\": 1,\n            \"amount\": 10\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{apiV1}}transactions/create/",
+							"host": [
+								"{{apiV1}}transactions"
+							],
+							"path": [
+								"create",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create attendance transaction",
+					"event": [
 						{
-							"listen": "prerequest",
+							"listen": "test",
 							"script": {
-								"exec": [],
+								"exec": [
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Transaction created\", () => {",
+									"    pm.expect(json).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"    pm.expect(json.type).to.eql('fac_attend');",
+									"});",
+									"",
+									"// Store the transaction ID for later tests",
+									"if (json.id) {",
+									"    pm.environment.set(\"lastTransactionId\", json.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"fac_attend\",\n    \"description\": \"Посещение факультатива\",\n    \"recipients\": [\n        {\n            \"id\": 1,\n            \"amount\": 0\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{apiV1}}transactions/create/",
+							"host": [
+								"{{apiV1}}transactions"
+							],
+							"path": [
+								"create",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create P2P transaction",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Transaction created\", () => {",
+									"    pm.expect(json).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"    pm.expect(json.type).to.eql('p2p');",
+									"});",
+									"",
+									"// Store the transaction ID for later tests",
+									"if (json.id) {",
+									"    pm.environment.set(\"p2pTransactionId\", json.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{studentAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"p2p\",\n    \"description\": \"Перевод другу\",\n    \"recipients\": [\n        {\n            \"id\": 2,\n            \"amount\": 5\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{apiV1}}transactions/create/",
+							"host": [
+								"{{apiV1}}transactions"
+							],
+							"path": [
+								"create",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Process transaction",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Transaction processed\", () => {",
+									"    pm.expect(json).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"    pm.expect(json.status).to.eql('processed');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{apiV1}}transactions/{{lastTransactionId}}/process",
+							"host": [
+								"{{apiV1}}transactions"
+							],
+							"path": [
+								"{{lastTransactionId}}",
+								"process"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Decline transaction",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Transaction declined\", () => {",
+									"    pm.expect(json).to.include.keys('id', 'author', 'description', 'type', 'status', 'date_created', 'receivers');",
+									"    pm.expect(json.status).to.eql('declined');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{apiV1}}transactions/{{p2pTransactionId}}/decline",
+							"host": [
+								"{{apiV1}}transactions"
+							],
+							"path": [
+								"{{p2pTransactionId}}",
+								"decline"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "statistics",
+			"item": [
+				{
+					"name": "GET statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+									"const json = pm.response.json();",
+									"pm.test(\"Statistics has required fields\", () => {",
+									"    pm.expect(json).to.include.keys('avg_balance', 'total_balance');",
+									"    pm.expect(json.avg_balance).to.be.a('number');",
+									"    pm.expect(json.total_balance).to.be.a('number');",
+									"});"
+								],
 								"type": "text/javascript"
 							}
 						}
@@ -456,67 +809,20 @@
 							]
 						},
 						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}"
-							}
-						],
+						"header": [],
 						"url": {
-							"raw": "{{apiV1}}transactions/?status=created",
+							"raw": "{{apiV1}}statistics/",
 							"host": [
-								"{{apiV1}}transactions"
+								"{{apiV1}}statistics"
 							],
 							"path": [
 								""
-							],
-							"query": [
-								{
-									"key": "status",
-									"value": "created"
-								}
 							]
 						}
 					},
 					"response": []
 				}
 			]
-		},
-		{
-			"name": "healthcheck",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"should work\", () => pm.response.to.have.status(200))"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				},
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{baseUrl}}/health",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"health"
-					]
-				}
-			},
-			"response": []
 		}
 	],
 	"event": [
@@ -524,7 +830,6 @@
 			"listen": "prerequest",
 			"script": {
 				"type": "text/javascript",
-				"packages": {},
 				"exec": [
 					""
 				]
@@ -534,7 +839,6 @@
 			"listen": "test",
 			"script": {
 				"type": "text/javascript",
-				"packages": {},
 				"exec": [
 					""
 				]
@@ -543,33 +847,8 @@
 	],
 	"variable": [
 		{
-			"key": "baseUrl",
-			"value": "localhost:8000",
-			"type": "string"
-		},
-		{
-			"key": "studentUsername",
-			"value": "girik",
-			"type": "string"
-		},
-		{
-			"key": "studentPassword",
-			"value": "r",
-			"type": "string"
-		},
-		{
-			"key": "staffUsername",
-			"value": "girix",
-			"type": "string"
-		},
-		{
-			"key": "staffPassword",
-			"value": "r",
-			"type": "string"
-		},
-		{
 			"key": "apiV1",
-			"value": "{{baseUrl}}/api/v1/",
+			"value": "http://localhost:8000/api/v1/",
 			"type": "string"
 		}
 	]

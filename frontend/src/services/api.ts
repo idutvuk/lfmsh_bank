@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:8000/api/";
+const API_URL = import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:8000/api/v1/";
 
 interface CommonOpts {
     headers: {
@@ -175,4 +175,15 @@ export const createTransaction = (data: TransactionCreate): Promise<Transaction>
     request<Transaction>("transactions/create/", {
         method: "POST",
         body: JSON.stringify(data),
+    });
+
+// Additional functions for transaction management
+export const processTransaction = (id: number): Promise<Transaction> =>
+    request<Transaction>(`transactions/${id}/process`, {
+        method: "POST"
+    });
+
+export const declineTransaction = (id: number): Promise<Transaction> =>
+    request<Transaction>(`transactions/${id}/decline`, {
+        method: "POST"
     });

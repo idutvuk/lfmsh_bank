@@ -1,0 +1,826 @@
+openapi: 3.1.0
+info:
+  title: LFMSH Bank API
+  description: API for the LFMSH Bank System
+  version: 0.1.0
+  contact:
+    name: LFMSH Team
+    email: example@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+paths:
+  /:
+    get:
+      summary: Root
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /health:
+    get:
+      summary: Health Check
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/auth/jwt/create/:
+    post:
+      tags:
+      - auth
+      summary: Login Access Token
+      description: OAuth2 compatible token login, get an access token for future requests
+      operationId: login_access_token_api_v1_auth_jwt_create__post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_access_token_api_v1_auth_jwt_create__post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/jwt/refresh/:
+    post:
+      tags:
+      - auth
+      summary: Refresh Access Token
+      description: Refresh access token using refresh token
+      operationId: refresh_access_token_api_v1_auth_jwt_refresh__post
+      parameters:
+      - name: refresh_token
+        in: query
+        required: false
+        schema:
+          type: string
+          title: Refresh Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/jwt/verify/:
+    post:
+      tags:
+      - auth
+      summary: Verify Token
+      description: Verify a token's validity
+      operationId: verify_token_api_v1_auth_jwt_verify__post
+      parameters:
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+          title: Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                title: Response Verify Token Api V1 Auth Jwt Verify  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/users/:
+    get:
+      tags:
+      - users
+      summary: Read Users
+      description: Retrieve users. Regular users can only access their own info and
+        their party.
+      operationId: read_users_api_v1_users__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserListItem'
+                title: Response Read Users Api V1 Users  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - users
+      summary: Create User
+      description: Create new user. Only accessible to superusers.
+      operationId: create_user_api_v1_users__post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/users/me:
+    get:
+      tags:
+      - users
+      summary: Read User Me
+      description: Get current user.
+      operationId: read_user_me_api_v1_users_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/users/{user_id}:
+    get:
+      tags:
+      - users
+      summary: Read User By Id
+      description: Get a specific user by id.
+      operationId: read_user_by_id_api_v1_users__user_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - users
+      summary: Update User
+      description: Update a user. Only accessible to superusers.
+      operationId: update_user_api_v1_users__user_id__put
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: User Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/transactions/:
+    get:
+      tags:
+      - transactions
+      summary: Read Transactions
+      description: Retrieve transactions.
+      operationId: read_transactions_api_v1_transactions__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                title: Response Read Transactions Api V1 Transactions  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - transactions
+      summary: Create Transaction
+      description: Create new transaction.
+      operationId: create_transaction_api_v1_transactions__post
+      security:
+      - OAuth2PasswordBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              title: Transaction Data
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/transactions/create/:
+    post:
+      tags:
+      - transactions
+      summary: Create Transaction Frontend
+      description: 'Create new transaction via frontend endpoint.
+
+        This endpoint matches the frontend API expectations.'
+      operationId: create_transaction_frontend_api_v1_transactions_create__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              type: object
+              title: Transaction Data
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/transactions/{transaction_id}:
+    get:
+      tags:
+      - transactions
+      summary: Read Transaction
+      description: Get transaction by ID.
+      operationId: read_transaction_api_v1_transactions__transaction_id__get
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Transaction Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/transactions/{transaction_id}/process:
+    post:
+      tags:
+      - transactions
+      summary: Process Transaction
+      description: Process a transaction (apply it).
+      operationId: process_transaction_api_v1_transactions__transaction_id__process_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Transaction Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/transactions/{transaction_id}/decline:
+    post:
+      tags:
+      - transactions
+      summary: Decline Transaction
+      description: Decline a transaction.
+      operationId: decline_transaction_api_v1_transactions__transaction_id__decline_post
+      security:
+      - OAuth2PasswordBearer: []
+      parameters:
+      - name: transaction_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Transaction Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/statistics/:
+    get:
+      tags:
+      - statistics
+      summary: Get Statistics
+      description: 'Get system statistics like average and total balance.
+
+        Only staff and superusers can access this endpoint.'
+      operationId: get_statistics_api_v1_statistics__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: number
+                type: object
+                title: Response Get Statistics Api V1 Statistics  Get
+      security:
+      - OAuth2PasswordBearer: []
+components:
+  schemas:
+    Body_login_access_token_api_v1_auth_jwt_create__post:
+      properties:
+        grant_type:
+          anyOf:
+          - type: string
+            pattern: ^password$
+          - type: 'null'
+          title: Grant Type
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          format: password
+          title: Password
+        scope:
+          type: string
+          title: Scope
+          default: ''
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          format: password
+          title: Client Secret
+      type: object
+      required:
+      - username
+      - password
+      title: Body_login_access_token_api_v1_auth_jwt_create__post
+    CounterSchema:
+      properties:
+        counter_name:
+          type: string
+          title: Counter Name
+        value:
+          type: integer
+          title: Value
+        max_value:
+          type: integer
+          title: Max Value
+      type: object
+      required:
+      - counter_name
+      - value
+      - max_value
+      title: CounterSchema
+      description: Schema for user counters
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Token:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Refresh Token
+        token_type:
+          type: string
+          title: Token Type
+      type: object
+      required:
+      - access_token
+      - token_type
+      title: Token
+      description: Token schema returned from login
+    User:
+      properties:
+        username:
+          type: string
+          title: Username
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+          default: true
+        id:
+          type: integer
+          title: Id
+        first_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Name
+        last_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Name
+        middle_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Middle Name
+        party:
+          type: integer
+          title: Party
+          default: 0
+        grade:
+          type: integer
+          title: Grade
+          default: 0
+        is_staff:
+          type: boolean
+          title: Is Staff
+          default: false
+        is_superuser:
+          type: boolean
+          title: Is Superuser
+          default: false
+        balance:
+          type: number
+          title: Balance
+          default: 0
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Updated At
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        staff:
+          type: boolean
+          title: Staff
+          default: false
+        expected_penalty:
+          type: number
+          title: Expected Penalty
+          default: 0
+        counters:
+          items:
+            $ref: '#/components/schemas/CounterSchema'
+          type: array
+          title: Counters
+          default: []
+        avatar:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Avatar
+      type: object
+      required:
+      - username
+      - id
+      - created_at
+      title: User
+    UserCreate:
+      properties:
+        username:
+          type: string
+          title: Username
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+          default: true
+        password:
+          type: string
+          title: Password
+        first_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Name
+        last_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Name
+        middle_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Middle Name
+        party:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Party
+          default: 0
+        grade:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Grade
+          default: 0
+        is_staff:
+          type: boolean
+          title: Is Staff
+          default: false
+        is_superuser:
+          type: boolean
+          title: Is Superuser
+          default: false
+      type: object
+      required:
+      - username
+      - password
+      title: UserCreate
+    UserListItem:
+      properties:
+        id:
+          type: integer
+          title: Id
+        username:
+          type: string
+          title: Username
+        name:
+          type: string
+          title: Name
+        party:
+          type: integer
+          title: Party
+        staff:
+          type: boolean
+          title: Staff
+        balance:
+          type: number
+          title: Balance
+      type: object
+      required:
+      - id
+      - username
+      - name
+      - party
+      - staff
+      - balance
+      title: UserListItem
+    UserUpdate:
+      properties:
+        username:
+          type: string
+          title: Username
+        email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+          title: Email
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+          default: true
+        password:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Password
+        first_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Name
+        last_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Name
+        middle_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Middle Name
+        party:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Party
+        grade:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Grade
+        is_staff:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Staff
+        is_superuser:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Superuser
+      type: object
+      required:
+      - username
+      title: UserUpdate
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/v1/auth/jwt/create/
+servers:
+- url: http://localhost:8000
+  description: Development server
+- url: https://api.lfmsh-bank.com
+  description: Production server
+security:
+- bearerAuth: []

@@ -1,0 +1,944 @@
+openapi: 3.0.3
+info:
+  title: LFMSH Bank API
+  description: |
+    API for the LFMSH Bank System - a comprehensive banking and transaction management system.
+    
+    ## Features
+    - User authentication and authorization with JWT tokens
+    - Transaction management (create, view, process, decline)
+    - User management and profiles
+    - Statistics and reporting
+    - Attendance tracking and counters
+    
+    ## Authentication
+    This API uses JWT Bearer token authentication. To authenticate:
+    1. Obtain a token by calling `/api/v1/auth/jwt/create/` with your credentials
+    2. Include the token in the Authorization header: `Authorization: Bearer <token>`
+    
+    ## User Roles
+    - **Students**: Can view their own profile and transactions
+    - **Staff**: Can view all users and transactions, create transactions
+    - **Superusers**: Full administrative access
+    
+    ## Transaction Types
+    - Lecture attendance
+    - Seminar attendance  
+    - Lab completion
+    - Faculty attendance
+    - P2P transfers
+    - Purchases
+    - Fines
+    - And more...
+  version: 0.1.0
+  contact:
+    name: LFMSH Team
+    email: example@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.lfmsh-bank.com
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /:
+    get:
+      summary: Root endpoint
+      description: Welcome message for the API
+      tags:
+        - General
+      responses:
+        '200':
+          description: Welcome message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Welcome to LFMSH Bank API"
+
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API is running
+      tags:
+        - General
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  /api/v1/auth/jwt/create/:
+    post:
+      summary: Login to get access token
+      description: Authenticate user and get JWT access token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: User's username
+                  example: "student1"
+                password:
+                  type: string
+                  description: User's password
+                  example: "password123"
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Incorrect username or password"
+
+  /api/v1/auth/jwt/refresh/:
+    post:
+      summary: Refresh access token
+      description: Get a new access token using a refresh token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  description: Refresh token from login
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Invalid refresh token
+
+  /api/v1/auth/jwt/verify/:
+    post:
+      summary: Verify token
+      description: Verify if a JWT token is valid
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: JWT token to verify
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Token verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+
+  /api/v1/users/:
+    get:
+      summary: Get users list
+      description: Retrieve list of users (staff and superusers only)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: skip
+          in: query
+          description: Number of records to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: Maximum number of records to return
+          required: false
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserListItem'
+        '403':
+          description: Insufficient permissions
+
+    post:
+      summary: Create new user
+      description: Create a new user (superusers only)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: User already exists
+        '403':
+          description: Insufficient permissions
+
+  /api/v1/users/me:
+    get:
+      summary: Get current user
+      description: Get the current authenticated user's profile
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /api/v1/users/{user_id}:
+    get:
+      summary: Get user by ID
+      description: Get a specific user's profile by ID
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+        '403':
+          description: Insufficient permissions
+
+    put:
+      summary: Update user
+      description: Update a user's profile (superusers only)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+        '403':
+          description: Insufficient permissions
+
+  /api/v1/transactions/:
+    get:
+      summary: Get transactions
+      description: Retrieve list of transactions
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: skip
+          in: query
+          description: Number of records to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: Maximum number of records to return
+          required: false
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+
+    post:
+      summary: Create transaction
+      description: Create a new transaction
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreate'
+      responses:
+        '200':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid transaction data
+
+  /api/v1/transactions/create/:
+    post:
+      summary: Create transaction (frontend)
+      description: Create a new transaction via frontend endpoint
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreateFrontend'
+      responses:
+        '200':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Invalid transaction data
+
+  /api/v1/transactions/{transaction_id}:
+    get:
+      summary: Get transaction by ID
+      description: Get a specific transaction by ID
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+
+  /api/v1/transactions/{transaction_id}/process:
+    post:
+      summary: Process transaction
+      description: Process/approve a pending transaction
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transaction processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+        '400':
+          description: Transaction cannot be processed
+
+  /api/v1/transactions/{transaction_id}/decline:
+    post:
+      summary: Decline transaction
+      description: Decline/reject a pending transaction
+      tags:
+        - Transactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transaction declined successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found
+        '400':
+          description: Transaction cannot be declined
+
+  /api/v1/statistics/:
+    get:
+      summary: Get system statistics
+      description: Get system-wide statistics (staff and superusers only)
+      tags:
+        - Statistics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: System statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Statistics'
+        '403':
+          description: Insufficient permissions
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/v1/auth/jwt/create/
+
+  schemas:
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          description: JWT refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          example: "bearer"
+      required:
+        - access_token
+        - token_type
+
+    CounterSchema:
+      type: object
+      properties:
+        counter_name:
+          type: string
+          description: Name of the counter
+          example: "lec"
+        value:
+          type: integer
+          description: Current value
+          example: 5
+        max_value:
+          type: integer
+          description: Maximum value
+          example: 8
+      required:
+        - counter_name
+        - value
+        - max_value
+
+    UserBase:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Unique username
+          example: "student1"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "student1@example.com"
+        is_active:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+      required:
+        - username
+
+    UserCreate:
+      allOf:
+        - $ref: '#/components/schemas/UserBase'
+        - type: object
+          properties:
+            password:
+              type: string
+              description: User's password
+              example: "password123"
+            first_name:
+              type: string
+              description: User's first name
+              example: "John"
+            last_name:
+              type: string
+              description: User's last name
+              example: "Doe"
+            middle_name:
+              type: string
+              description: User's middle name
+              example: "Smith"
+            party:
+              type: integer
+              description: User's party number
+              example: 1
+            grade:
+              type: integer
+              description: User's grade
+              example: 10
+            is_staff:
+              type: boolean
+              description: Whether user has staff privileges
+              example: false
+            is_superuser:
+              type: boolean
+              description: Whether user has superuser privileges
+              example: false
+          required:
+            - password
+
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Unique username
+          example: "student1"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "student1@example.com"
+        password:
+          type: string
+          description: User's new password
+          example: "newpassword123"
+        first_name:
+          type: string
+          description: User's first name
+          example: "John"
+        last_name:
+          type: string
+          description: User's last name
+          example: "Doe"
+        middle_name:
+          type: string
+          description: User's middle name
+          example: "Smith"
+        party:
+          type: integer
+          description: User's party number
+          example: 1
+        grade:
+          type: integer
+          description: User's grade
+          example: 10
+        is_active:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        is_staff:
+          type: boolean
+          description: Whether user has staff privileges
+          example: false
+        is_superuser:
+          type: boolean
+          description: Whether user has superuser privileges
+          example: false
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Unique username
+          example: "student1"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "student1@example.com"
+        first_name:
+          type: string
+          description: User's first name
+          example: "John"
+        last_name:
+          type: string
+          description: User's last name
+          example: "Doe"
+        middle_name:
+          type: string
+          description: User's middle name
+          example: "Smith"
+        party:
+          type: integer
+          description: User's party number
+          example: 1
+        grade:
+          type: integer
+          description: User's grade
+          example: 10
+        is_active:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        is_staff:
+          type: boolean
+          description: Whether user has staff privileges
+          example: false
+        is_superuser:
+          type: boolean
+          description: Whether user has superuser privileges
+          example: false
+        balance:
+          type: number
+          format: float
+          description: User's current balance
+          example: 150.50
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-20T14:45:00Z"
+        name:
+          type: string
+          description: Full name (computed)
+          example: "John Doe"
+        staff:
+          type: boolean
+          description: Whether user is staff (computed)
+          example: false
+        expected_penalty:
+          type: number
+          format: float
+          description: Expected penalty amount
+          example: 0.0
+        counters:
+          type: array
+          description: User's attendance counters
+          items:
+            $ref: '#/components/schemas/CounterSchema'
+        avatar:
+          type: string
+          description: Avatar image URL
+          example: "/static/bank/avatars/default.jpg"
+      required:
+        - id
+        - username
+        - is_active
+        - party
+        - grade
+        - is_staff
+        - is_superuser
+        - balance
+        - created_at
+
+    UserListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Unique username
+          example: "student1"
+        name:
+          type: string
+          description: Full name
+          example: "John Doe"
+        party:
+          type: integer
+          description: User's party number
+          example: 1
+        staff:
+          type: boolean
+          description: Whether user is staff
+          example: false
+        balance:
+          type: number
+          format: float
+          description: User's current balance
+          example: 150.50
+      required:
+        - id
+        - username
+        - name
+        - party
+        - staff
+        - balance
+
+    TransactionReceiver:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Receiver's username
+          example: "student2"
+        bucks:
+          type: number
+          format: float
+          description: Amount of bucks received
+          example: 10.0
+        certs:
+          type: number
+          format: float
+          description: Amount of certificates received
+          example: 0.0
+        lab:
+          type: integer
+          description: Lab attendance count
+          example: 1
+        lec:
+          type: integer
+          description: Lecture attendance count
+          example: 0
+        sem:
+          type: integer
+          description: Seminar attendance count
+          example: 0
+        fac:
+          type: integer
+          description: Faculty attendance count
+          example: 0
+      required:
+        - username
+        - bucks
+        - certs
+        - lab
+        - lec
+        - sem
+        - fac
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Transaction ID
+          example: 123
+        author:
+          type: string
+          description: Username of transaction creator
+          example: "staff1"
+        description:
+          type: object
+          description: Transaction description/creation map
+          example:
+            description: "Lecture attendance for Math 101"
+            recipients: ["student1", "student2"]
+        type:
+          type: string
+          description: Transaction type
+          example: "lecture_attend"
+        status:
+          type: string
+          description: Transaction status
+          example: "pending"
+        date_created:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        receivers:
+          type: array
+          description: List of transaction receivers
+          items:
+            $ref: '#/components/schemas/TransactionReceiver'
+      required:
+        - id
+        - author
+        - description
+        - type
+        - status
+        - date_created
+        - receivers
+
+    TransactionCreate:
+      type: object
+      properties:
+        type_name:
+          type: string
+          description: Transaction type name
+          example: "lecture_attend"
+        creation_map:
+          type: object
+          description: Transaction creation data
+          example:
+            description: "Lecture attendance for Math 101"
+            recipients: ["student1", "student2"]
+        update_of_id:
+          type: integer
+          description: ID of transaction being updated (optional)
+          example: 100
+      required:
+        - type_name
+        - creation_map
+
+    TransactionCreateFrontend:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Transaction type
+          example: "lecture_attend"
+        description:
+          type: string
+          description: Transaction description
+          example: "Lecture attendance for Math 101"
+        recipients:
+          type: array
+          description: List of recipient usernames
+          items:
+            type: string
+          example: ["student1", "student2"]
+      required:
+        - type
+        - description
+        - recipients
+
+    Statistics:
+      type: object
+      properties:
+        avg_balance:
+          type: number
+          format: float
+          description: Average balance across all students
+          example: 125.75
+        total_balance:
+          type: number
+          format: float
+          description: Total balance across all students
+          example: 12575.00
+      required:
+        - avg_balance
+        - total_balance
+
+tags:
+  - name: General
+    description: General API endpoints
+  - name: Authentication
+    description: Authentication and authorization endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Transactions
+    description: Transaction management endpoints
+  - name: Statistics
+    description: Statistics and reporting endpoints 
