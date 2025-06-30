@@ -1,15 +1,12 @@
 import json
-import logging
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table, Boolean
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
+from loguru import logger
 
 from app.db.session import Base, SessionLocal
 from app.models.base import AbstractTypeBase
-
-# Add logger
-logger = logging.getLogger(__name__)
 
 # Association table for transaction state possible transitions
 transaction_state_transitions = Table(
@@ -46,7 +43,7 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    creation_map = Column(String(262143))  # Stores JSON data of transaction creation
+    description = Column(String(1000), nullable=True)
     creation_timestamp = Column(DateTime(timezone=True), server_default=func.now())
     type_id = Column(Integer, ForeignKey("transactiontype.id"), nullable=False)
     state_id = Column(Integer, ForeignKey("transactionstate.id"), nullable=False)
@@ -61,8 +58,11 @@ class Transaction(Base):
     # Atomics relations added via back_populates in their respective models
 
     @classmethod
-    def new_transaction(cls, creator, transaction_type, creation_map, update_of=None, db=None):
+    def new_transaction(cls, creator, transaction_type, description="", recipients=None, update_of=None, db=None):
         """Create a new transaction"""
+        if recipients is None:
+            recipients = []
+            
         # Use the provided session or create a new one if none provided
         close_session = False
         if db is None:
@@ -98,7 +98,7 @@ class Transaction(Base):
             new_transaction = cls(
                 creator_id=creator.id,
                 type_id=transaction_type.id,
-                creation_map=json.dumps(creation_map),
+                description=description,
                 update_of_id=updated.id if update_of else None,
                 state_id=create_state.id
             )
@@ -244,6 +244,7 @@ class Transaction(Base):
             'creation_timestamp': self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
             'state': self.state.readable_name,
             'type': self.type.readable_name,
+            'description': self.description,
             'money': [t.to_python() for t in money_atomics],
             'counters': [t.to_python() for t in attendance_atomics],
         }
@@ -257,9 +258,5 @@ class Transaction(Base):
         ] + self.type.full_info_as_list()
 
     def full_info_headers_as_list(self):
-        """Get header names for info list"""
-        return [
-            'creator_' + x for x in self.creator.full_info_headers_as_list()
-        ] + [
-            'creation_timestamp', 'state_name', 'counted'
-        ] + self.type.full_info_headers_as_list()
+        """Return headers for full info representation"""
+        return ['Создатель', 'Время', 'Статус', 'Тип', 'Получателей', 'Количество']

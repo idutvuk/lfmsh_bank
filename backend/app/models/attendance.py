@@ -60,8 +60,9 @@ class Attendance(Base):
     receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     type_id = Column(Integer, ForeignKey("attendancetype.id"), nullable=False)
     attendance_block_id = Column(Integer, ForeignKey("attendanceblock.id"), nullable=True)
-    date = Column(Date, nullable=False)
+    date = Column(Date, nullable=False, server_default=func.current_date())
     related_transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
+    count = Column(Integer, default=1)  # Number of attendance records (e.g., multiple lectures)
     
     # Inherit base atomic transaction fields
     value = Column(Float, default=0)
@@ -77,7 +78,7 @@ class Attendance(Base):
     related_transaction = relationship("Transaction")
     
     @classmethod
-    def new_attendance(cls, receiver, value, attendance_type, description, date, transaction, attendance_block_name=None):
+    def new_attendance(cls, receiver, value, attendance_type, description, date, transaction, attendance_block_name=None, count=1):
         """Create a new attendance record"""
         from sqlalchemy.orm import Session
         from app.db.session import SessionLocal
@@ -100,7 +101,8 @@ class Attendance(Base):
                 counted=False,
                 update_timestamp=func.now(),
                 date=date,
-                attendance_block=attendance_block
+                attendance_block=attendance_block,
+                count=count
             )
             
             db.add(new_attendance)
@@ -185,6 +187,7 @@ class Attendance(Base):
             'creation_timestamp': self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
             'attendance_block': self.attendance_block.readable_name if self.attendance_block else 'null',
             'date': self.date.strftime('%d.%m'),
+            'count': self.count,
         }
     
     def full_info_as_list(self):
@@ -197,6 +200,7 @@ class Attendance(Base):
             self.value, 
             self.description, 
             self.counted,
+            self.count,
             self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
             self.update_timestamp.strftime('%d.%m.%Y %H:%M')
         ] + self.receiver.full_info_as_list() + self.related_transaction.full_info_as_list()
@@ -206,7 +210,7 @@ class Attendance(Base):
         return self.type.full_info_headers_as_list() + [
             'date'
         ] + ['attendance_block_' + x for x in self.attendance_block.full_info_headers_as_list()] + [
-            'value', 'description', 'counted', 'creation_timestamp', 'update_timestamp'
+            'value', 'description', 'counted', 'count', 'creation_timestamp', 'update_timestamp'
         ] + ['receiver_' + x for x in self.receiver.full_info_headers_as_list()] + [
             'transaction_' + x for x in self.related_transaction.full_info_headers_as_list()
         ] 

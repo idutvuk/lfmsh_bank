@@ -1,9 +1,10 @@
 from typing import Any, List, Optional
-import logging
 from datetime import datetime
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from loguru import logger
 
 from app.api.v1.deps import get_current_active_user, get_db
 from app.models.user import User
@@ -12,7 +13,6 @@ from app.models.money import Money
 from app.models.attendance import Attendance
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 
 def format_transaction_for_frontend(transaction: Transaction, db: Session) -> dict:
@@ -83,7 +83,7 @@ def format_transaction_for_frontend(transaction: Transaction, db: Session) -> di
     return {
         "id": transaction.id,
         "author": transaction.creator.username,
-        "description": transaction.creation_map,
+        "description": transaction.description,
         "type": transaction.type.name,
         "status": transaction.state.name,
         "date_created": transaction.creation_timestamp.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -140,7 +140,8 @@ def create_transaction(
     transaction = Transaction.new_transaction(
         creator=current_user,
         transaction_type=transaction_type,
-        creation_map=transaction_data["creation_map"],
+        description=transaction_data.get("description", ""),
+        recipients=transaction_data.get("recipients", []),
         update_of=update_of_id,
         db=db  # Pass the existing session
     )
@@ -163,9 +164,11 @@ def create_transaction_frontend(
     logger.info(f"Transaction data: {transaction_data}")
     
     # Map frontend transaction data to our backend format
-    type_name = transaction_data.get("type")
+    type_name = transaction_data.get("type") or transaction_data.get("type_name")
     description = transaction_data.get("description")
-    recipients = transaction_data.get("recipients", [])
+    
+    # Use recipients if available, fall back to receivers if not
+    recipients = transaction_data.get("recipients", []) or transaction_data.get("receivers", [])
     
     logger.info(f"Processing transaction of type: {type_name}")
     
@@ -187,12 +190,6 @@ def create_transaction_frontend(
     
     logger.info(f"Found transaction type: {transaction_type.name}")
     
-    # Format the creation map
-    creation_map = {
-        "description": description,
-        "recipients": recipients
-    }
-    
     # Create the transaction
     try:
         logger.info("Attempting to create transaction")
@@ -203,7 +200,7 @@ def create_transaction_frontend(
         
         # Check specifically for 'created' state
         created_state = db.query(TransactionState).filter(
-            TransactionState.name == 'created'
+            TransactionState.name.ilike('created')
         ).first()
         logger.info(f"Created state found: {created_state is not None}")
         
@@ -211,77 +208,160 @@ def create_transaction_frontend(
         transaction = Transaction.new_transaction(
             creator=current_user,
             transaction_type=transaction_type,
-            creation_map=creation_map,
+            description=description,
+            recipients=recipients,
             db=db  # Pass the existing session
         )
         
         # Process atomic transactions for each recipient
         for recipient_data in recipients:
             recipient_id = recipient_data.get("id")
-            amount = recipient_data.get("amount", 0)
+            username = recipient_data.get("username")
+            bucks_amount = recipient_data.get("bucks", 0)
             
-            recipient = db.query(User).filter(User.id == recipient_id).first()
+            logger.info(f"Processing recipient: {username} (id: {recipient_id}), bucks: {bucks_amount}")
+            
+            # Find recipient by ID first, then by username if ID not available
+            recipient = None
+            if recipient_id:
+                recipient = db.query(User).filter(User.id == recipient_id).first()
+            elif username:
+                recipient = db.query(User).filter(User.username == username).first()
+                
             if not recipient:
-                logger.warning(f"Recipient with ID {recipient_id} not found")
+                logger.warning(f"Recipient with ID {recipient_id} or username {username} not found")
                 continue
                 
-            # Create money atomic transaction if amount is non-zero
-            if amount != 0:
-                # Find appropriate money type
-                from app.core.constants import MoneyTypeEnum
-                money_type_name = MoneyTypeEnum[type_name].value if type_name in MoneyTypeEnum.__members__ else MoneyTypeEnum.general.value
-                money_type = db.query(TransactionType).filter(TransactionType.name == money_type_name).first()
+            logger.info(f"Found recipient: {recipient.username} (id: {recipient.id})")
                 
+            # Create money atomic transaction for bucks if non-zero
+            if bucks_amount != 0:
+                logger.info(f"Creating money atomic with value: {bucks_amount}")
+                
+                # Find or create a default money type
+                from app.models.money import MoneyType
+                money_type = db.query(MoneyType).filter(MoneyType.name == "general").first()
                 if not money_type:
-                    logger.warning(f"Money type {money_type_name} not found")
-                    continue
+                    # Create a default money type if it doesn't exist
+                    money_type = MoneyType(
+                        name="general",
+                        readable_name="General money transfer"
+                    )
+                    db.add(money_type)
+                    db.flush()  # Get the ID without committing
                 
                 # Create money atomic
                 from app.models.money import Money
                 money = Money(
-                    receiver_id=recipient_id,
-                    related_transaction_id=transaction.id,
+                    receiver_id=recipient.id,
                     type_id=money_type.id,
-                    value=amount,
+                    value=bucks_amount,
+                    related_transaction_id=transaction.id,
+                    description=description or f"Money from transaction {transaction.id}",
                     counted=False
                 )
                 db.add(money)
+                logger.info(f"Added money atomic: {bucks_amount} bucks to {recipient.username}")
                 
-            # Handle attendance counters based on transaction type
-            if type_name in ["fac_attend", "sem_attend", "lab_pass", "lecture_attend"]:
-                # Find corresponding attendance type
-                from app.core.constants import AttendanceTypeEnum
-                attendance_type_name = AttendanceTypeEnum[type_name].value if type_name in AttendanceTypeEnum.__members__ else None
-                
-                if attendance_type_name:
-                    attendance_type = db.query(TransactionType).filter(TransactionType.name == attendance_type_name).first()
-                    if attendance_type:
-                        # Create attendance atomic
-                        from app.models.attendance import Attendance
-                        attendance = Attendance(
-                            receiver_id=recipient_id,
-                            related_transaction_id=transaction.id,
-                            type_id=attendance_type.id,
-                            counted=False
-                        )
-                        db.add(attendance)
+            # Handle attendance data if present
+            lab_count = recipient_data.get("lab", 0)
+            lec_count = recipient_data.get("lec", 0)
+            sem_count = recipient_data.get("sem", 0)
+            fac_count = recipient_data.get("fac", 0)
+            
+            logger.info(f"Attendance counts - lab: {lab_count}, lec: {lec_count}, sem: {sem_count}, fac: {fac_count}")
+            
+            from app.core.constants import AttendanceTypeEnum
+            
+            # Create attendance atomics as needed
+            if lab_count > 0:
+                from app.models.attendance import Attendance, AttendanceType
+                from datetime import date
+                lab_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.lab_pass.value).first()
+                if lab_type:
+                    attendance = Attendance(
+                        receiver_id=recipient.id,
+                        type_id=lab_type.id,
+                        related_transaction_id=transaction.id,
+                        count=lab_count,
+                        date=date.today(),
+                        description=description or f"Lab attendance from transaction {transaction.id}",
+                        counted=False
+                    )
+                    db.add(attendance)
+                    logger.info(f"Added lab attendance: {lab_count} to {recipient.username}")
+                else:
+                    logger.warning(f"Lab attendance type not found: {AttendanceTypeEnum.lab_pass.value}")
+            
+            if lec_count > 0:
+                from app.models.attendance import Attendance, AttendanceType
+                from datetime import date
+                lec_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.lecture_attend.value).first()
+                if lec_type:
+                    attendance = Attendance(
+                        receiver_id=recipient.id,
+                        type_id=lec_type.id,
+                        related_transaction_id=transaction.id,
+                        count=lec_count,
+                        date=date.today(),
+                        description=description or f"Lecture attendance from transaction {transaction.id}",
+                        counted=False
+                    )
+                    db.add(attendance)
+                    logger.info(f"Added lecture attendance: {lec_count} to {recipient.username}")
+                else:
+                    logger.warning(f"Lecture attendance type not found: {AttendanceTypeEnum.lecture_attend.value}")
+                    
+            if sem_count > 0:
+                from app.models.attendance import Attendance, AttendanceType
+                from datetime import date
+                sem_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.seminar_pass.value).first()
+                if sem_type:
+                    attendance = Attendance(
+                        receiver_id=recipient.id,
+                        type_id=sem_type.id,
+                        related_transaction_id=transaction.id,
+                        count=sem_count,
+                        date=date.today(),
+                        description=description or f"Seminar attendance from transaction {transaction.id}",
+                        counted=False
+                    )
+                    db.add(attendance)
+                    logger.info(f"Added seminar attendance: {sem_count} to {recipient.username}")
+                else:
+                    logger.warning(f"Seminar attendance type not found: {AttendanceTypeEnum.seminar_pass.value}")
+                    
+            if fac_count > 0:
+                from app.models.attendance import Attendance, AttendanceType
+                from datetime import date
+                fac_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.fac_pass.value).first()
+                if fac_type:
+                    attendance = Attendance(
+                        receiver_id=recipient.id,
+                        type_id=fac_type.id,
+                        related_transaction_id=transaction.id,
+                        count=fac_count,
+                        date=date.today(),
+                        description=description or f"Faculty attendance from transaction {transaction.id}",
+                        counted=False
+                    )
+                    db.add(attendance)
+                    logger.info(f"Added faculty attendance: {fac_count} to {recipient.username}")
+                else:
+                    logger.warning(f"Faculty attendance type not found: {AttendanceTypeEnum.fac_pass.value}")
         
-        # Commit all changes
+        logger.info("Committing transaction...")
         db.commit()
+        logger.info("Transaction committed successfully")
         
-        logger.info(f"Transaction created successfully with ID: {transaction.id}")
         return format_transaction_for_frontend(transaction, db)
-    except ValueError as e:
-        logger.error(f"Error creating transaction: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+        
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        logger.error(f"Error creating transaction: {str(e)}")
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Unexpected error: {str(e)}",
+            detail=f"Failed to create transaction: {str(e)}"
         )
 
 

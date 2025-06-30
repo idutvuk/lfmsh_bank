@@ -1,16 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import logging
+from loguru import logger
 
 from app.api.v1 import router as api_router
 from app.core.config import settings
+from app.core.logging import configure_logging
 from app.db.session import SessionLocal
 from app.db.init_db import init_db
 
-# Configure root logger
-logging.basicConfig(level=logging.INFO, 
-                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# Configure loguru
+configure_logging()
 
 app = FastAPI(
     title="LFMSH Bank API",

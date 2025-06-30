@@ -1,11 +1,7 @@
 from sqlalchemy.orm import Session
 from app.core.constants import States, TransactionTypeEnum
 from app.models.transaction import TransactionState, TransactionType
-import logging
-
-# Configure the logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 def init_transaction_states(db: Session) -> None:
     """Initialize transaction states in the database if they don't exist."""
