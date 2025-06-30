@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-import traceback
 
 from app.api.v1 import router as api_router
 from app.core.config import settings
-from app.db.init_db import run_initialization
+from app.db.session import SessionLocal
+from app.db.init_db import init_db
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure root logger
+logging.basicConfig(level=logging.INFO, 
+                   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -26,19 +27,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def startup_db_client():
-    logger.info("Initializing database on startup...")
-    try:
-        run_initialization()
-        logger.info("Database initialization completed!")
-    except Exception as e:
-        error_details = traceback.format_exc()
-        logger.error(f"Error during database initialization: {str(e)}")
-        logger.error(f"Traceback: {error_details}")
-        # Don't raise the exception to prevent the app from failing to start
-        # This allows us to debug the issue while the API is still running
-
 @app.get("/")
 async def root():
     return {"message": "Welcome to LFMSH Bank API"}
@@ -46,6 +34,19 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+# Initialize database with required data
+@app.on_event("startup")
+def initialize_data():
+    logger.info("=== APPLICATION STARTUP - INITIALIZING DATABASE ===")
+    db = SessionLocal()
+    try:
+        init_db(db)
+        logger.info("=== DATABASE INITIALIZATION COMPLETED SUCCESSFULLY ===")
+    except Exception as e:
+        logger.error(f"=== DATABASE INITIALIZATION FAILED: {str(e)} ===")
+    finally:
+        db.close()
 
 # Include API routers
 app.include_router(api_router, prefix=settings.API_V1_STR) 

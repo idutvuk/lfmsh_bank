@@ -1,10 +1,9 @@
 {
 	"info": {
-		"_postman_id": "4f94b8c7-b4bb-4a06-a2f0-8b2a3f0e97c5",
-		"name": "Summer School Bank API",
+		"_postman_id": "851c87c4-229e-412a-ae53-f33e7f838b08",
+		"name": "lfmsh bank",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "46225845",
-		"_collection_link": "https://no-9175345.postman.co/workspace/no's-Workspace~4f28bc6d-b5cb-4727-81bd-3e0a6eebefd6/collection/46225845-4f94b8c7-b4bb-4a06-a2f0-8b2a3f0e97c5?action=share&source=collection_link&creator=46225845"
+		"_exporter_id": "38672000"
 	},
 	"item": [
 		{
@@ -22,8 +21,8 @@
 									"let json = pm.response.json();",
 									"// pm.expect(json.access).to.eql(\"mocked-access-token\");",
 									"// pm.expect(json.refresh).to.eql(\"mocked-refresh-token\");",
-									"pm.environment.set(\"studentAccessToken\", json.access);",
-									"pm.environment.set(\"studentRefreshToken\", json.refresh);"
+									"pm.environment.set(\"studentAccessToken\", json.access_token);",
+									"pm.environment.set(\"studentRefreshToken\", json.refresh_token);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -32,8 +31,11 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"exec": [],
-								"type": "text/javascript"
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -46,17 +48,26 @@
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"{{studentUsername}}\",\n  \"password\": \"{{studentPassword}}\"\n}"
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "girik",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "r",
+									"type": "text"
+								}
+							]
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/auth/jwt/create/",
+							"raw": "{{apiV1}}auth/jwt/create/",
 							"host": [
-								"{{baseUrl}}"
+								"{{apiV1}}auth"
 							],
 							"path": [
-								"api",
-								"auth",
 								"jwt",
 								"create",
 								""
@@ -77,8 +88,8 @@
 									"let json = pm.response.json();",
 									"// pm.expect(json.access).to.eql(\"mocked-access-token\");",
 									"// pm.expect(json.refresh).to.eql(\"mocked-refresh-token\");",
-									"pm.environment.set(\"staffAccessToken\", json.access);",
-									"pm.environment.set(\"staffRefreshToken\", json.refresh);"
+									"pm.environment.set(\"staffAccessToken\", json.access_token);",
+									"pm.environment.set(\"staffRefreshToken\", json.refresh_token);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -87,8 +98,11 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"exec": [],
-								"type": "text/javascript"
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -101,20 +115,39 @@
 							}
 						],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"username\": \"{{staffUsername}}\",\n  \"password\": \"{{staffPassword}}\"\n}"
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "girix",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "r",
+									"type": "text"
+								}
+							]
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/auth/jwt/create/",
+							"raw": "{{apiV1}}auth/jwt/create/?username=girix&password=r",
 							"host": [
-								"{{baseUrl}}"
+								"{{apiV1}}auth"
 							],
 							"path": [
-								"api",
-								"auth",
 								"jwt",
 								"create",
 								""
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "girix"
+								},
+								{
+									"key": "password",
+									"value": "r"
+								}
 							]
 						}
 					},
@@ -152,6 +185,13 @@
 								"type": "text/javascript",
 								"packages": {}
 							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
 						}
 					],
 					"request": {
@@ -168,13 +208,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/users/me/",
+							"raw": "{{apiV1}}users/me/",
 							"host": [
-								"{{baseUrl}}"
+								"{{apiV1}}users"
 							],
 							"path": [
-								"api",
-								"users",
 								"me",
 								""
 							]
@@ -209,6 +247,13 @@
 								"type": "text/javascript",
 								"packages": {}
 							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
 						}
 					],
 					"request": {
@@ -225,13 +270,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/users/me/",
+							"raw": "{{apiV1}}users/me/",
 							"host": [
-								"{{baseUrl}}"
+								"{{apiV1}}users"
 							],
 							"path": [
-								"api",
-								"users",
 								"me",
 								""
 							]
@@ -270,6 +313,16 @@
 								"type": "text/javascript",
 								"packages": {}
 							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
 						}
 					],
 					"request": {
@@ -278,7 +331,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{studentAccessToken}}",
+									"value": "{{staffAccessToken}}",
 									"type": "string"
 								}
 							]
@@ -286,13 +339,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/users/",
+							"raw": "{{apiV1}}users/",
 							"host": [
-								"{{baseUrl}}"
+								"{{apiV1}}users"
 							],
 							"path": [
-								"api",
-								"users",
 								""
 							]
 						}
@@ -321,6 +372,16 @@
 								"type": "text/javascript",
 								"packages": {}
 							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
 						}
 					],
 					"request": {
@@ -329,7 +390,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{studentAccessToken}}",
+									"value": "{{staffAccessToken}}",
 									"type": "string"
 								}
 							]
@@ -347,16 +408,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"description\": \"Бонус за экзамен\",\n  \"type\": \"exam\",\n  \"receivers\": [\n    { \"username\": \"ivan.petrov\", \"bucks\": 50, \"certs\": 0, \"lab\":0, \"lec\":0, \"sem\":0, \"fac\":0 }\n  ]\n}"
+							"raw": "{\n  \"description\": \"Бонус за экзамен\",\n  \"type_name\": \"fine\",\n  \"creation_map\": [\n    { \"username\": \"girik\", \"bucks\": 50, \"certs\": 0, \"lab\":0, \"lec\":0, \"sem\":0, \"fac\":0 }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/transactions/",
+							"raw": "{{apiV1}}transactions/",
 							"host": [
-								"{{baseUrl}}"
+								"{{apiV1}}transactions"
 							],
 							"path": [
-								"api",
-								"transactions",
 								""
 							]
 						}
@@ -375,6 +434,13 @@
 								],
 								"type": "text/javascript",
 								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
 							}
 						}
 					],
@@ -397,13 +463,11 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/transactions/?status=created",
+							"raw": "{{apiV1}}transactions/?status=created",
 							"host": [
-								"{{baseUrl}}"
+								"{{apiV1}}transactions"
 							],
 							"path": [
-								"api",
-								"transactions",
 								""
 							],
 							"query": [
@@ -417,6 +481,42 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "healthcheck",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"should work\", () => pm.response.to.have.status(200))"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -465,6 +565,11 @@
 		{
 			"key": "staffPassword",
 			"value": "r",
+			"type": "string"
+		},
+		{
+			"key": "apiV1",
+			"value": "{{baseUrl}}/api/v1/",
 			"type": "string"
 		}
 	]

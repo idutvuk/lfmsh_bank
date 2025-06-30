@@ -1,11 +1,15 @@
 import json
+import logging
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table, Boolean
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
 
-from app.db.session import Base
+from app.db.session import Base, SessionLocal
 from app.models.base import AbstractTypeBase
+
+# Add logger
+logger = logging.getLogger(__name__)
 
 # Association table for transaction state possible transitions
 transaction_state_transitions = Table(
@@ -57,43 +61,59 @@ class Transaction(Base):
     # Atomics relations added via back_populates in their respective models
 
     @classmethod
-    def new_transaction(cls, creator, transaction_type, creation_map, update_of=None):
+    def new_transaction(cls, creator, transaction_type, creation_map, update_of=None, db=None):
         """Create a new transaction"""
-        from app.db.session import SessionLocal
+        # Use the provided session or create a new one if none provided
+        close_session = False
+        if db is None:
+            db = SessionLocal()
+            close_session = True
 
-        db = SessionLocal()
         try:
             # If updating an existing transaction, validate it
             if update_of:
                 updated = db.query(Transaction).filter(Transaction.id == update_of).first()
                 if not updated:
                     raise ValueError("Transaction to update not found")
-                if updated.creator != creator or updated.type != transaction_type:
+                if updated.creator_id != creator.id or updated.type_id != transaction_type.id:
                     raise ValueError("Cannot change transaction creator or type on update")
 
             from app.core.constants import States
-            # Get the created state
+            
+            logger.info("Looking for 'created' transaction state")
+            # Try to find the state with case-insensitive comparison
             create_state = db.query(TransactionState).filter(
-                TransactionState.name == States.created.value
+                TransactionState.name.ilike('created')
             ).first()
-
-            if not create_state:
+            
+            if create_state:
+                logger.info(f"Found create state with name: {create_state.name}")
+            else:
+                # List all available states for debugging
+                all_states = db.query(TransactionState.name).all()
+                state_names = [s[0] for s in all_states]
+                logger.error(f"Create state not found. Available states: {state_names}")
                 raise ValueError("Created transaction state not found")
 
             new_transaction = cls(
-                creator=creator,
-                type=transaction_type,
+                creator_id=creator.id,
+                type_id=transaction_type.id,
                 creation_map=json.dumps(creation_map),
-                update_of=updated if update_of else None,
-                state=create_state
+                update_of_id=updated.id if update_of else None,
+                state_id=create_state.id
             )
 
             db.add(new_transaction)
             db.commit()
             db.refresh(new_transaction)
             return new_transaction
+        except Exception as e:
+            logger.error(f"Error in new_transaction: {str(e)}")
+            db.rollback()
+            raise
         finally:
-            db.close()
+            if close_session:
+                db.close()
 
     def process(self):
         """Process the transaction - change state to processed and apply all atomics"""
@@ -109,7 +129,7 @@ class Transaction(Base):
                         atomic.apply()
 
                 processed_state = db.query(TransactionState).filter(
-                    TransactionState.name == States.processed.value
+                    TransactionState.name.ilike(States.processed.value)
                 ).first()
 
                 self.state = processed_state
@@ -127,7 +147,7 @@ class Transaction(Base):
         if self.can_be_transitioned_to(States.declined.value, db):
             self._undo(db)
             declined_state = db.query(TransactionState).filter(
-                TransactionState.name == States.declined.value
+                TransactionState.name.ilike(States.declined.value)
             ).first()
             self.state = declined_state
             db.add(self)
@@ -142,7 +162,7 @@ class Transaction(Base):
         if self.can_be_transitioned_to(States.substituted.value, db):
             self._undo(db)
             substituted_state = db.query(TransactionState).filter(
-                TransactionState.name == States.substituted.value
+                TransactionState.name.ilike(States.substituted.value)
             ).first()
             self.state = substituted_state
             db.add(self)
@@ -182,7 +202,7 @@ class Transaction(Base):
             TransactionState.id == transaction_state_transitions.c.to_state_id
         ).filter(
             transaction_state_transitions.c.from_state_id == self.state_id,
-            TransactionState.name == state_name
+            TransactionState.name.ilike(state_name)
         ).all()
 
         return len(possible_states) > 0
@@ -213,6 +233,9 @@ class Transaction(Base):
 
     def to_python(self, db: Session):
         """Convert transaction to a Python dictionary"""
+        from app.models.money import Money
+        from app.models.attendance import Attendance
+        
         money_atomics = db.query(Money).filter(Money.related_transaction_id == self.id).all()
         attendance_atomics = db.query(Attendance).filter(Attendance.related_transaction_id == self.id).all()
 
