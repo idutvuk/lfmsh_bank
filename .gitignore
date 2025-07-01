@@ -1,32 +1,23 @@
 __pycache__/
 *.sqlite3
 .DS_Store
-#django-app/bank/migrations
 *.pyc
 *.log
-django-app/meta_files/users_data/staff_out.txt
-django-app/meta_files/users_data/student_out.txt
-django-app/meta_files/users_data/staff.csv
-django-app/meta_files/users_data/student.csv
-bankir.txt
 *.history
 .Rhistory
 report30.html
 .idea/
 main/error_log.log
-django-app/static/
 /docker/postgres/volumes
 .vscode/
 .venv/
 venv/
 .env
 media/
-gasha_scripts/
 
 # frontend
 # Logs
 logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -42,7 +33,6 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
