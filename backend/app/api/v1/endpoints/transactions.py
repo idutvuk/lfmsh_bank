@@ -8,9 +8,10 @@ from loguru import logger
 
 from app.api.v1.deps import get_current_active_user, get_db
 from app.models.user import User
-from app.models.transaction import Transaction, TransactionType, TransactionState
+from app.models.transaction import Transaction
 from app.models.money import Money
 from app.models.attendance import Attendance
+from app.core.constants import TransactionTypeEnum, States
 
 router = APIRouter()
 
@@ -69,7 +70,7 @@ def format_transaction_for_frontend(transaction: Transaction, db: Session) -> di
             }
         
         # Update the appropriate counter based on attendance type
-        attendance_type = atomic.type.name
+        attendance_type = atomic.type.value
         if "lab" in attendance_type:
             receivers[username]["lab"] += 1
         elif "lec" in attendance_type or "lecture" in attendance_type:
@@ -84,8 +85,8 @@ def format_transaction_for_frontend(transaction: Transaction, db: Session) -> di
         "id": transaction.id,
         "author": transaction.creator.username,
         "description": transaction.description,
-        "type": transaction.type.name,
-        "status": transaction.state.name,
+        "type": transaction.type.value,
+        "status": transaction.state.value,
         "date_created": transaction.creation_timestamp.strftime("%Y-%m-%dT%H:%M:%S"),
         "receivers": list(receivers.values())
     }
@@ -123,12 +124,10 @@ def create_transaction(
     """
     Create new transaction.
     """
-    # Get the transaction type
-    transaction_type = db.query(TransactionType).filter(
-        TransactionType.name == transaction_data["type_name"]
-    ).first()
-    
-    if not transaction_type:
+    # Get the transaction type from enum
+    try:
+        transaction_type = TransactionTypeEnum(transaction_data["type_name"])
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Transaction type {transaction_data['type_name']} not found",
@@ -172,197 +171,66 @@ def create_transaction_frontend(
     
     logger.info(f"Processing transaction of type: {type_name}")
     
-    # Get the transaction type
-    transaction_type = db.query(TransactionType).filter(
-        TransactionType.name == type_name
-    ).first()
-    
-    if not transaction_type:
+    # Get the transaction type from enum
+    try:
+        transaction_type = TransactionTypeEnum(type_name)
+    except ValueError:
         logger.error(f"Transaction type {type_name} not found")
         # Check what types are available
-        available_types = db.query(TransactionType).all()
-        logger.info(f"Available types: {[t.name for t in available_types]}")
+        available_types = [t.value for t in TransactionTypeEnum]
+        logger.info(f"Available types: {available_types}")
         
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Transaction type {type_name} not found",
         )
     
-    logger.info(f"Found transaction type: {transaction_type.name}")
+    logger.info(f"Found transaction type: {transaction_type.value}")
     
     # Create the transaction
     try:
         logger.info("Attempting to create transaction")
         
         # Check if transaction states exist
-        states = db.query(TransactionState).all()
-        logger.info(f"Available states: {[s.name for s in states]}")
+        available_states = [s.value for s in States]
+        logger.info(f"Available states: {available_states}")
         
-        # Check specifically for 'created' state
-        created_state = db.query(TransactionState).filter(
-            TransactionState.name.ilike('created')
-        ).first()
-        logger.info(f"Created state found: {created_state is not None}")
-        
-        # Create the transaction
         transaction = Transaction.new_transaction(
             creator=current_user,
             transaction_type=transaction_type,
-            description=description,
+            description=description or "",
             recipients=recipients,
-            db=db  # Pass the existing session
+            update_of=None,
+            db=db
         )
         
-        # Process atomic transactions for each recipient
-        for recipient_data in recipients:
-            recipient_id = recipient_data.get("id")
-            username = recipient_data.get("username")
-            bucks_amount = recipient_data.get("bucks", 0)
-            
-            logger.info(f"Processing recipient: {username} (id: {recipient_id}), bucks: {bucks_amount}")
-            
-            # Find recipient by ID first, then by username if ID not available
-            recipient = None
-            if recipient_id:
-                recipient = db.query(User).filter(User.id == recipient_id).first()
-            elif username:
-                recipient = db.query(User).filter(User.username == username).first()
-                
-            if not recipient:
-                logger.warning(f"Recipient with ID {recipient_id} or username {username} not found")
-                continue
-                
-            logger.info(f"Found recipient: {recipient.username} (id: {recipient.id})")
-                
-            # Create money atomic transaction for bucks if non-zero
-            if bucks_amount != 0:
-                logger.info(f"Creating money atomic with value: {bucks_amount}")
-                
-                # Find or create a default money type
-                from app.models.money import MoneyType
-                money_type = db.query(MoneyType).filter(MoneyType.name == "general").first()
-                if not money_type:
-                    # Create a default money type if it doesn't exist
-                    money_type = MoneyType(
-                        name="general",
-                        readable_name="General money transfer"
-                    )
-                    db.add(money_type)
-                    db.flush()  # Get the ID without committing
-                
-                # Create money atomic
-                from app.models.money import Money
-                money = Money(
-                    receiver_id=recipient.id,
-                    type_id=money_type.id,
-                    value=bucks_amount,
-                    related_transaction_id=transaction.id,
-                    description=description or f"Money from transaction {transaction.id}",
-                    counted=False
-                )
-                db.add(money)
-                logger.info(f"Added money atomic: {bucks_amount} bucks to {recipient.username}")
-                
-            # Handle attendance data if present
-            lab_count = recipient_data.get("lab", 0)
-            lec_count = recipient_data.get("lec", 0)
-            sem_count = recipient_data.get("sem", 0)
-            fac_count = recipient_data.get("fac", 0)
-            
-            logger.info(f"Attendance counts - lab: {lab_count}, lec: {lec_count}, sem: {sem_count}, fac: {fac_count}")
-            
-            from app.core.constants import AttendanceTypeEnum
-            
-            # Create attendance atomics as needed
-            if lab_count > 0:
-                from app.models.attendance import Attendance, AttendanceType
-                from datetime import date
-                lab_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.lab_pass.value).first()
-                if lab_type:
-                    attendance = Attendance(
-                        receiver_id=recipient.id,
-                        type_id=lab_type.id,
-                        related_transaction_id=transaction.id,
-                        count=lab_count,
-                        date=date.today(),
-                        description=description or f"Lab attendance from transaction {transaction.id}",
-                        counted=False
-                    )
-                    db.add(attendance)
-                    logger.info(f"Added lab attendance: {lab_count} to {recipient.username}")
-                else:
-                    logger.warning(f"Lab attendance type not found: {AttendanceTypeEnum.lab_pass.value}")
-            
-            if lec_count > 0:
-                from app.models.attendance import Attendance, AttendanceType
-                from datetime import date
-                lec_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.lecture_attend.value).first()
-                if lec_type:
-                    attendance = Attendance(
-                        receiver_id=recipient.id,
-                        type_id=lec_type.id,
-                        related_transaction_id=transaction.id,
-                        count=lec_count,
-                        date=date.today(),
-                        description=description or f"Lecture attendance from transaction {transaction.id}",
-                        counted=False
-                    )
-                    db.add(attendance)
-                    logger.info(f"Added lecture attendance: {lec_count} to {recipient.username}")
-                else:
-                    logger.warning(f"Lecture attendance type not found: {AttendanceTypeEnum.lecture_attend.value}")
-                    
-            if sem_count > 0:
-                from app.models.attendance import Attendance, AttendanceType
-                from datetime import date
-                sem_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.seminar_pass.value).first()
-                if sem_type:
-                    attendance = Attendance(
-                        receiver_id=recipient.id,
-                        type_id=sem_type.id,
-                        related_transaction_id=transaction.id,
-                        count=sem_count,
-                        date=date.today(),
-                        description=description or f"Seminar attendance from transaction {transaction.id}",
-                        counted=False
-                    )
-                    db.add(attendance)
-                    logger.info(f"Added seminar attendance: {sem_count} to {recipient.username}")
-                else:
-                    logger.warning(f"Seminar attendance type not found: {AttendanceTypeEnum.seminar_pass.value}")
-                    
-            if fac_count > 0:
-                from app.models.attendance import Attendance, AttendanceType
-                from datetime import date
-                fac_type = db.query(AttendanceType).filter(AttendanceType.name == AttendanceTypeEnum.fac_pass.value).first()
-                if fac_type:
-                    attendance = Attendance(
-                        receiver_id=recipient.id,
-                        type_id=fac_type.id,
-                        related_transaction_id=transaction.id,
-                        count=fac_count,
-                        date=date.today(),
-                        description=description or f"Faculty attendance from transaction {transaction.id}",
-                        counted=False
-                    )
-                    db.add(attendance)
-                    logger.info(f"Added faculty attendance: {fac_count} to {recipient.username}")
-                else:
-                    logger.warning(f"Faculty attendance type not found: {AttendanceTypeEnum.fac_pass.value}")
-        
-        logger.info("Committing transaction...")
-        db.commit()
-        logger.info("Transaction committed successfully")
-        
+        logger.info(f"Successfully created transaction with ID: {transaction.id}")
         return format_transaction_for_frontend(transaction, db)
         
     except Exception as e:
         logger.error(f"Error creating transaction: {str(e)}")
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create transaction: {str(e)}"
+            detail=f"Error creating transaction: {str(e)}",
         )
+
+
+@router.get("/types/")
+def get_transaction_types():
+    """
+    Get available transaction types.
+    """
+    return [{"name": t.value, "readable_name": t.value.replace('_', ' ').capitalize()} 
+            for t in TransactionTypeEnum]
+
+
+@router.get("/states/")
+def get_transaction_states():
+    """
+    Get available transaction states.
+    """
+    return [{"name": s.value, "readable_name": s.value.capitalize()} 
+            for s in States]
 
 
 @router.get("/{transaction_id}")

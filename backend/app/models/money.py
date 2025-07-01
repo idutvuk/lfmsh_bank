@@ -1,18 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, Boolean, DateTime, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.db.session import Base
-from app.models.base import AbstractTypeBase
-from app.core.constants import SIGN
+from app.core.constants import SIGN, MoneyTypeEnum
 from app.models.atomic_transaction import AtomicTransaction
-
-
-class MoneyType(AbstractTypeBase, Base):
-    """Money type model"""
-    id = Column(Integer, primary_key=True, index=True)
-    readable_group_general = Column(String, nullable=True)
-    readable_group_local = Column(String, nullable=True)
 
 
 class Money(Base):
@@ -21,7 +13,7 @@ class Money(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    type_id = Column(Integer, ForeignKey("moneytype.id"), nullable=False)
+    type = Column(SQLEnum(MoneyTypeEnum), nullable=False)
     related_transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
     
     # Inherit base atomic transaction fields
@@ -33,8 +25,7 @@ class Money(Base):
     
     # Relationships
     receiver = relationship("User", foreign_keys=[receiver_id])
-    type = relationship("MoneyType")
-    related_transaction = relationship("Transaction")
+    related_transaction = relationship("Transaction", back_populates="money_records")
     
     @classmethod
     def new_money(cls, receiver, value, money_type, description, transaction):
@@ -52,7 +43,7 @@ class Money(Base):
     
     def __str__(self):
         """String representation of the money transaction"""
-        return f'{self.value}{SIGN} за {self.type}'
+        return f'{self.value}{SIGN} за {self.type.value}'
     
     def apply(self):
         """Apply the money transaction"""
@@ -96,22 +87,59 @@ class Money(Base):
     def to_python(self):
         """Convert to a dictionary for API responses"""
         return {
-            'general_group': self.type.readable_group_general,
-            'local_group': self.type.readable_group_local,
-            'type': self.type.readable_name,
+            'general_group': self._get_general_group(),
+            'local_group': self._get_local_group(),
+            'type': self.type.value,
             'value': self.value,
             'receiver': self.receiver.long_name(),
             'creator': self.related_transaction.creator.long_name(),
             'counted': self.counted,
-            'state': self.related_transaction.state.readable_name,
+            'state': self.related_transaction.state.value,
             'description': self.description,
             'update_timestamp': self.update_timestamp.strftime('%d.%m.%Y %H:%M'),
             'creation_timestamp': self.creation_timestamp.strftime('%d.%m.%Y %H:%M')
         }
     
+    def _get_general_group(self):
+        """Get general group for money type"""
+        general_groups = {
+            MoneyTypeEnum.fine: 'Штрафы',
+            MoneyTypeEnum.activity: 'Деятельность',
+            MoneyTypeEnum.seminar: 'Учёба',
+            MoneyTypeEnum.lecture: 'Учёба',
+            MoneyTypeEnum.fac_pass: 'Факультативы',
+            MoneyTypeEnum.lab: 'Лабораторные',
+            MoneyTypeEnum.ds: 'Дежурства',
+            MoneyTypeEnum.exam: 'Экзамены',
+            MoneyTypeEnum.general: 'Общие',
+            MoneyTypeEnum.purchase: 'Покупки',
+            MoneyTypeEnum.p2p: 'Переводы'
+        }
+        return general_groups.get(self.type, 'Другое')
+    
+    def _get_local_group(self):
+        """Get local group for money type"""
+        local_groups = {
+            MoneyTypeEnum.fine: 'Штрафы',
+            MoneyTypeEnum.activity: 'Деятельность',
+            MoneyTypeEnum.seminar: 'Семинары',
+            MoneyTypeEnum.lecture: 'Лекции',
+            MoneyTypeEnum.fac_pass: 'Факультативы',
+            MoneyTypeEnum.lab: 'Лабораторные',
+            MoneyTypeEnum.ds: 'Дежурства',
+            MoneyTypeEnum.exam: 'Экзамены',
+            MoneyTypeEnum.general: 'Общие',
+            MoneyTypeEnum.purchase: 'Покупки',
+            MoneyTypeEnum.p2p: 'Переводы'
+        }
+        return local_groups.get(self.type, 'Другое')
+    
     def full_info_as_list(self):
         """Get full info as a list for export"""
-        return self.type.full_info_as_list() + [
+        return [
+            self.type.value,
+            self._get_general_group(),
+            self._get_local_group(),
             self.value, 
             self.description, 
             self.counted,
@@ -121,8 +149,9 @@ class Money(Base):
     
     def full_info_headers_as_list(self):
         """Get header names for export"""
-        return self.type.full_info_headers_as_list() + [
-            'value', 'description', 'counted', 'creation_timestamp', 'update_timestamp'
+        return [
+            'type', 'general_group', 'local_group', 'value', 'description', 'counted', 
+            'creation_timestamp', 'update_timestamp'
         ] + ['receiver_' + x for x in self.receiver.full_info_headers_as_list()] + [
             'transaction_' + x for x in self.related_transaction.full_info_headers_as_list()
         ] 

@@ -41,15 +41,17 @@ class User(Base):
     # Count attendance by type
     def get_counter(self, counter_name, db):
         """Get the count of a specific attendance type"""
-        from app.models.attendance import Attendance, AttendanceType
+        from app.models.attendance import Attendance
+        from app.core.constants import AttendanceTypeEnum
         
-        attendance_type = db.query(AttendanceType).filter(AttendanceType.name == counter_name).first()
-        if not attendance_type:
+        try:
+            attendance_type = AttendanceTypeEnum(counter_name)
+        except ValueError:
             return 0
             
         attendances = db.query(Attendance).filter(
             Attendance.receiver_id == self.id,
-            Attendance.type_id == attendance_type.id,
+            Attendance.type == attendance_type,
             Attendance.counted == True
         ).all()
         

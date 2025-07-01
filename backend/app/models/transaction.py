@@ -1,40 +1,15 @@
 import json
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
 from loguru import logger
 
 from app.db.session import Base, SessionLocal
-from app.models.base import AbstractTypeBase
+from app.core.constants import States, TransactionTypeEnum
 
-# Association table for transaction state possible transitions
-transaction_state_transitions = Table(
-    'transaction_state_transitions',
-    Base.metadata,
-    Column('from_state_id', Integer, ForeignKey('transactionstate.id'), primary_key=True),
-    Column('to_state_id', Integer, ForeignKey('transactionstate.id'), primary_key=True)
-)
-
-
-class TransactionState(AbstractTypeBase, Base):
-    """Transaction state model"""
-    id = Column(Integer, primary_key=True, index=True)
-    counted = Column(Boolean, default=False)
-
-    # Many-to-many relationship for possible state transitions
-    possible_transitions = relationship(
-        "TransactionState",
-        secondary=transaction_state_transitions,
-        primaryjoin=id == transaction_state_transitions.c.from_state_id,
-        secondaryjoin=id == transaction_state_transitions.c.to_state_id,
-        backref="previous_states"
-    )
-
-
-class TransactionType(AbstractTypeBase, Base):
-    """Transaction type model"""
-    id = Column(Integer, primary_key=True, index=True)
+# Import enum classes for validation
+from app.core.constants import States, TransactionTypeEnum
 
 
 class Transaction(Base):
@@ -45,17 +20,17 @@ class Transaction(Base):
     creator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     description = Column(String(1000), nullable=True)
     creation_timestamp = Column(DateTime(timezone=True), server_default=func.now())
-    type_id = Column(Integer, ForeignKey("transactiontype.id"), nullable=False)
-    state_id = Column(Integer, ForeignKey("transactionstate.id"), nullable=False)
+    type = Column(SQLEnum(TransactionTypeEnum), nullable=False)
+    state = Column(SQLEnum(States), nullable=False, default=States.created)
     update_of_id = Column(Integer, ForeignKey("transactions.id"), nullable=True)
 
     # Relationships
     creator = relationship("User", back_populates="created_transactions")
-    type = relationship("TransactionType")
-    state = relationship("TransactionState")
     update_of = relationship("Transaction", remote_side=[id])
-
-    # Atomics relations added via back_populates in their respective models
+    
+    # New relationships for money and attendance
+    money_records = relationship("Money", back_populates="related_transaction", cascade="all, delete-orphan")
+    attendance_records = relationship("Attendance", back_populates="related_transaction", cascade="all, delete-orphan")
 
     @classmethod
     def new_transaction(cls, creator, transaction_type, description="", recipients=None, update_of=None, db=None):
@@ -75,32 +50,15 @@ class Transaction(Base):
                 updated = db.query(Transaction).filter(Transaction.id == update_of).first()
                 if not updated:
                     raise ValueError("Transaction to update not found")
-                if updated.creator_id != creator.id or updated.type_id != transaction_type.id:
+                if updated.creator_id != creator.id or updated.type != transaction_type:
                     raise ValueError("Cannot change transaction creator or type on update")
-
-            from app.core.constants import States
-            
-            logger.info("Looking for 'created' transaction state")
-            # Try to find the state with case-insensitive comparison
-            create_state = db.query(TransactionState).filter(
-                TransactionState.name.ilike('created')
-            ).first()
-            
-            if create_state:
-                logger.info(f"Found create state with name: {create_state.name}")
-            else:
-                # List all available states for debugging
-                all_states = db.query(TransactionState.name).all()
-                state_names = [s[0] for s in all_states]
-                logger.error(f"Create state not found. Available states: {state_names}")
-                raise ValueError("Created transaction state not found")
 
             new_transaction = cls(
                 creator_id=creator.id,
-                type_id=transaction_type.id,
+                type=transaction_type,
                 description=description,
                 update_of_id=updated.id if update_of else None,
-                state_id=create_state.id
+                state=States.created
             )
 
             db.add(new_transaction)
@@ -117,22 +75,17 @@ class Transaction(Base):
 
     def process(self):
         """Process the transaction - change state to processed and apply all atomics"""
-        from app.core.constants import States
         from sqlalchemy.orm import Session
         from app.db.session import SessionLocal
 
         db = SessionLocal()
         try:
-            if self.can_be_transitioned_to(States.processed.value, db):
-                if not self.state.counted:
+            if self.can_be_transitioned_to(States.processed, db):
+                if not self._is_counted():
                     for atomic in self.get_all_atomics(db):
                         atomic.apply()
 
-                processed_state = db.query(TransactionState).filter(
-                    TransactionState.name.ilike(States.processed.value)
-                ).first()
-
-                self.state = processed_state
+                self.state = States.processed
                 db.add(self)
                 db.commit()
             else:
@@ -142,14 +95,9 @@ class Transaction(Base):
 
     def decline(self, db: Session):
         """Decline the transaction"""
-        from app.core.constants import States
-
-        if self.can_be_transitioned_to(States.declined.value, db):
+        if self.can_be_transitioned_to(States.declined, db):
             self._undo(db)
-            declined_state = db.query(TransactionState).filter(
-                TransactionState.name.ilike(States.declined.value)
-            ).first()
-            self.state = declined_state
+            self.state = States.declined
             db.add(self)
             db.commit()
         else:
@@ -157,14 +105,9 @@ class Transaction(Base):
 
     def substitute(self, db: Session):
         """Mark the transaction as substituted"""
-        from app.core.constants import States
-
-        if self.can_be_transitioned_to(States.substituted.value, db):
+        if self.can_be_transitioned_to(States.substituted, db):
             self._undo(db)
-            substituted_state = db.query(TransactionState).filter(
-                TransactionState.name.ilike(States.substituted.value)
-            ).first()
-            self.state = substituted_state
+            self.state = States.substituted
             db.add(self)
             db.commit()
         else:
@@ -172,9 +115,13 @@ class Transaction(Base):
 
     def _undo(self, db: Session):
         """Undo the effects of the transaction"""
-        if self.state.counted:
+        if self._is_counted():
             for atomic in self.get_all_atomics(db):
                 atomic.undo()
+
+    def _is_counted(self):
+        """Check if transaction is counted based on state"""
+        return self.state in [States.processed]
 
     def get_all_atomics(self, db: Session):
         """Get all atomic transactions (money and attendance) related to this transaction"""
@@ -186,77 +133,88 @@ class Transaction(Base):
 
         return money_atomics + attendance_atomics
 
-    def can_be_transitioned_to(self, state_name: str, db: Session):
+    def can_be_transitioned_to(self, new_state, db: Session):
         """Check if the transaction can be transitioned to the given state"""
         from app.models.money import Money
 
         # Check that all money atomics are in the correct counted state
         money_atomics = db.query(Money).filter(Money.related_transaction_id == self.id).all()
         for atomic in money_atomics:
-            if atomic.counted != self.state.counted:
+            if atomic.counted != self._is_counted():
                 return False
 
         # Check if the transition is allowed
-        possible_states = db.query(TransactionState).join(
-            transaction_state_transitions,
-            TransactionState.id == transaction_state_transitions.c.to_state_id
-        ).filter(
-            transaction_state_transitions.c.from_state_id == self.state_id,
-            TransactionState.name.ilike(state_name)
-        ).all()
-
-        return len(possible_states) > 0
+        allowed_transitions = {
+            States.created: [States.processed, States.declined],
+            States.processed: [States.substituted],
+            States.declined: [],
+            States.substituted: []
+        }
+        
+        return new_state in allowed_transitions.get(self.state, [])
 
     def receivers_count(self, db: Session):
-        """Count unique receivers of this transaction"""
-        atomics = self.get_all_atomics(db)
-        return len(set([at.receiver_id for at in atomics]))
-
-    def money_count(self, db: Session):
-        """Calculate the total money amount in the transaction"""
-        from app.models.money import Money
-
-        money_atomics = db.query(Money).filter(Money.related_transaction_id == self.id).all()
-        money_sum = sum([a.value for a in money_atomics])
-        if money_sum > 9.99:
-            return int(money_sum)
-        return money_sum
-
-    def money_count_string(self, db: Session):
-        """Format the money count as a string with currency sign"""
-        from app.core.constants import SIGN
-        return f"{self.money_count(db)} {SIGN}"
-
-    def get_creation_timestamp(self):
-        """Format creation timestamp"""
-        return self.creation_timestamp.strftime('%d.%m, %H:%M')
-
-    def to_python(self, db: Session):
-        """Convert transaction to a Python dictionary"""
+        """Get count of unique receivers"""
         from app.models.money import Money
         from app.models.attendance import Attendance
-        
-        money_atomics = db.query(Money).filter(Money.related_transaction_id == self.id).all()
-        attendance_atomics = db.query(Attendance).filter(Attendance.related_transaction_id == self.id).all()
 
+        money_receivers = db.query(Money.receiver_id).filter(Money.related_transaction_id == self.id).distinct().count()
+        attendance_receivers = db.query(Attendance.receiver_id).filter(Attendance.related_transaction_id == self.id).distinct().count()
+        
+        return money_receivers + attendance_receivers
+
+    def money_count(self, db: Session):
+        """Get total money value"""
+        from app.models.money import Money
+
+        money_records = db.query(Money).filter(Money.related_transaction_id == self.id).all()
+        return sum(money.value for money in money_records)
+
+    def money_count_string(self, db: Session):
+        """Get formatted money count string"""
+        total = self.money_count(db)
+        if total > 0:
+            return f"+{total}"
+        return str(total)
+
+    def get_creation_timestamp(self):
+        """Get formatted creation timestamp"""
+        return self.creation_timestamp.strftime('%d.%m.%Y %H:%M')
+
+    def to_python(self, db: Session):
+        """Convert to a dictionary for API responses"""
         return {
+            'id': self.id,
             'creator': self.creator.long_name(),
-            'creation_timestamp': self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
-            'state': self.state.readable_name,
-            'type': self.type.readable_name,
+            'type': self.type.value,
+            'state': self.state.value,
             'description': self.description,
-            'money': [t.to_python() for t in money_atomics],
-            'counters': [t.to_python() for t in attendance_atomics],
+            'creation_timestamp': self.get_creation_timestamp(),
+            'receivers_count': self.receivers_count(db),
+            'money_count': self.money_count_string(db),
+            'update_of_id': self.update_of_id
         }
 
     def full_info_as_list(self):
-        """Get full transaction info as a list"""
-        return self.creator.full_info_as_list() + [
-            self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
-            self.state.readable_name,
-            self.state.counted
-        ] + self.type.full_info_as_list()
+        """Get full info as a list for export"""
+        return [
+            self.id,
+            self.creator.long_name(),
+            self.type.value,
+            self.state.value,
+            self.description,
+            self.get_creation_timestamp(),
+            self.update_of_id or 'NA'
+        ]
 
     def full_info_headers_as_list(self):
-        """Return headers for full info representation"""
-        return ['Создатель', 'Время', 'Статус', 'Тип', 'Получателей', 'Количество']
+        """Get header names for export"""
+        return [
+            'transaction_id',
+            'creator',
+            'type',
+            'state',
+            'description',
+            'creation_timestamp',
+            'update_of_id'
+        ]

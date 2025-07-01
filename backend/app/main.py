@@ -6,7 +6,6 @@ from app.api.v1 import router as api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.db.session import SessionLocal
-from app.db.init_db import init_db
 
 # Configure loguru
 configure_logging()
@@ -40,7 +39,6 @@ def initialize_data():
     logger.info("=== APPLICATION STARTUP - INITIALIZING DATABASE ===")
     db = SessionLocal()
     try:
-        init_db(db)
         logger.info("=== DATABASE INITIALIZATION COMPLETED SUCCESSFULLY ===")
     except Exception as e:
         logger.error(f"=== DATABASE INITIALIZATION FAILED: {str(e)} ===")

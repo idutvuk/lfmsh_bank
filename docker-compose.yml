@@ -1,9 +1,7 @@
 services:
   db:
     image: postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: $BANK_POSTGRES_PASSWORD
+    env_file: .env
     volumes:
       - pg-data:/var/lib/postgresql/data
     ports:
@@ -14,8 +12,6 @@ services:
       dockerfile: docker/backend/Dockerfile
     command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     env_file: .env
-    environment:
-      POSTGRES_PASSWORD: $BANK_POSTGRES_PASSWORD
     volumes:
       - ./backend:/app
     depends_on:

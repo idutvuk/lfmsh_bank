@@ -1,55 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, Boolean, DateTime, Date, Time, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, Float, Boolean, DateTime, Date, Time, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.db.session import Base
-from app.models.base import AbstractTypeBase
+from app.core.constants import AttendanceTypeEnum, AttendanceBlockEnum
 from app.models.atomic_transaction import AtomicTransaction
-
-
-# Association table for attendance types and blocks
-attendance_type_blocks = Table(
-    'attendance_type_blocks',
-    Base.metadata,
-    Column('attendance_type_id', Integer, ForeignKey('attendancetype.id'), primary_key=True),
-    Column('attendance_block_id', Integer, ForeignKey('attendanceblock.id'), primary_key=True)
-)
-
-
-class AttendanceType(AbstractTypeBase, Base):
-    """Attendance type model"""
-    id = Column(Integer, primary_key=True, index=True)
-    
-    # Many-to-many relationship with attendance blocks
-    related_attendance_blocks = relationship(
-        "AttendanceBlock",
-        secondary=attendance_type_blocks,
-        back_populates="related_attendance_types"
-    )
-
-
-class AttendanceBlock(AbstractTypeBase, Base):
-    """Attendance block model (time slots)"""
-    id = Column(Integer, primary_key=True, index=True)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
-    
-    # Many-to-many relationship with attendance types
-    related_attendance_types = relationship(
-        "AttendanceType",
-        secondary=attendance_type_blocks,
-        back_populates="related_attendance_blocks"
-    )
-    
-    def clashes_with(self, other_block):
-        """Check if this block clashes with another block"""
-        if other_block:
-            # If this block starts during the other block
-            starts_during = (other_block.start_time <= self.start_time < other_block.end_time)
-            # If this block ends during the other block
-            ends_during = (other_block.start_time < self.end_time <= other_block.end_time)
-            return starts_during or ends_during
-        return False
 
 
 class Attendance(Base):
@@ -58,8 +13,8 @@ class Attendance(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    type_id = Column(Integer, ForeignKey("attendancetype.id"), nullable=False)
-    attendance_block_id = Column(Integer, ForeignKey("attendanceblock.id"), nullable=True)
+    type = Column(SQLEnum(AttendanceTypeEnum), nullable=False)
+    attendance_block = Column(SQLEnum(AttendanceBlockEnum), nullable=True)
     date = Column(Date, nullable=False, server_default=func.current_date())
     related_transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
     count = Column(Integer, default=1)  # Number of attendance records (e.g., multiple lectures)
@@ -73,9 +28,7 @@ class Attendance(Base):
     
     # Relationships
     receiver = relationship("User", foreign_keys=[receiver_id])
-    type = relationship("AttendanceType")
-    attendance_block = relationship("AttendanceBlock")
-    related_transaction = relationship("Transaction")
+    related_transaction = relationship("Transaction", back_populates="attendance_records")
     
     @classmethod
     def new_attendance(cls, receiver, value, attendance_type, description, date, transaction, attendance_block_name=None, count=1):
@@ -88,9 +41,11 @@ class Attendance(Base):
             # Get the attendance block if provided
             attendance_block = None
             if attendance_block_name:
-                attendance_block = db.query(AttendanceBlock).filter(
-                    AttendanceBlock.name == attendance_block_name
-                ).first()
+                try:
+                    attendance_block = AttendanceBlockEnum(attendance_block_name)
+                except ValueError:
+                    # If the block name is not valid, ignore it
+                    pass
                 
             new_attendance = cls(
                 related_transaction=transaction,
@@ -130,6 +85,47 @@ class Attendance(Base):
         self.counted = value
         self.update_timestamp = func.now()
     
+    def _get_block_time_range(self):
+        """Get time range for attendance block"""
+        if not self.attendance_block:
+            return None, None
+            
+        time_ranges = {
+            AttendanceBlockEnum.before_breakfast: ('06:00', '08:00'),
+            AttendanceBlockEnum.first: ('08:00', '10:00'),
+            AttendanceBlockEnum.second: ('10:00', '12:00'),
+            AttendanceBlockEnum.third: ('12:00', '14:00'),
+            AttendanceBlockEnum.fourth: ('14:00', '16:00'),
+            AttendanceBlockEnum.fifth: ('16:00', '18:00'),
+            AttendanceBlockEnum.evening: ('18:00', '22:00')
+        }
+        
+        return time_ranges.get(self.attendance_block, (None, None))
+    
+    def _clashes_with(self, other_attendance):
+        """Check if this attendance clashes with another attendance"""
+        if not self.attendance_block or not other_attendance.attendance_block:
+            return False
+            
+        if self.attendance_block == other_attendance.attendance_block:
+            return True
+            
+        # Check for time overlaps
+        start1, end1 = self._get_block_time_range()
+        start2, end2 = other_attendance._get_block_time_range()
+        
+        if start1 and end1 and start2 and end2:
+            # Convert to minutes for comparison
+            start1_min = int(start1.split(':')[0]) * 60 + int(start1.split(':')[1])
+            end1_min = int(end1.split(':')[0]) * 60 + int(end1.split(':')[1])
+            start2_min = int(start2.split(':')[0]) * 60 + int(start2.split(':')[1])
+            end2_min = int(end2.split(':')[0]) * 60 + int(end2.split(':')[1])
+            
+            # Check for overlap
+            return (start1_min < end2_min and start2_min < end1_min)
+            
+        return False
+    
     def is_valid(self):
         """Check if this attendance doesn't clash with other attendances"""
         from sqlalchemy.orm import Session
@@ -150,7 +146,7 @@ class Attendance(Base):
             
             # Check if any of them clash with this one
             for suspicious in suspicious_attendances:
-                if suspicious.attendance_block and self.attendance_block.clashes_with(suspicious.attendance_block):
+                if self._clashes_with(suspicious):
                     return False
                     
             return True
@@ -173,44 +169,49 @@ class Attendance(Base):
     
     def __str__(self):
         """String representation"""
-        return f'{self.attendance_block} {self.receiver} {self.date} {self.counted}'
+        block_name = self.attendance_block.value if self.attendance_block else 'No block'
+        return f'{block_name} {self.receiver} {self.date} {self.counted}'
     
     def to_python(self):
         """Convert to a dictionary for API responses"""
         return {
-            'type': self.type.readable_name,
+            'type': self.type.value,
             'value': self.value,
             'receiver': self.receiver.long_name(),
             'counted': self.counted,
             'description': self.description,
             'update_timestamp': self.update_timestamp.strftime('%d.%m.%Y %H:%M'),
             'creation_timestamp': self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
-            'attendance_block': self.attendance_block.readable_name if self.attendance_block else 'null',
+            'attendance_block': self.attendance_block.value if self.attendance_block else None,
             'date': self.date.strftime('%d.%m'),
             'count': self.count,
         }
     
     def full_info_as_list(self):
         """Get full info as a list for export"""
-        at_block_info = self.attendance_block.full_info_as_list() if self.attendance_block else ['NA']
+        block_info = [
+            self.attendance_block.value if self.attendance_block else 'NA',
+            self._get_block_time_range()[0] or 'NA',
+            self._get_block_time_range()[1] or 'NA'
+        ]
         
-        return self.type.full_info_as_list() + [
+        return [
+            self.type.value,
             self.date.strftime('%d.%m.%Y')
-        ] + at_block_info + [
+        ] + block_info + [
             self.value, 
             self.description, 
             self.counted,
-            self.count,
             self.creation_timestamp.strftime('%d.%m.%Y %H:%M'),
-            self.update_timestamp.strftime('%d.%m.%Y %H:%M')
+            self.update_timestamp.strftime('%d.%m.%Y %H:%M'),
+            self.count
         ] + self.receiver.full_info_as_list() + self.related_transaction.full_info_as_list()
     
     def full_info_headers_as_list(self):
         """Get header names for export"""
-        return self.type.full_info_headers_as_list() + [
-            'date'
-        ] + ['attendance_block_' + x for x in self.attendance_block.full_info_headers_as_list()] + [
-            'value', 'description', 'counted', 'count', 'creation_timestamp', 'update_timestamp'
+        return [
+            'type', 'date', 'attendance_block', 'start_time', 'end_time', 'value', 
+            'description', 'counted', 'creation_timestamp', 'update_timestamp', 'count'
         ] + ['receiver_' + x for x in self.receiver.full_info_headers_as_list()] + [
             'transaction_' + x for x in self.related_transaction.full_info_headers_as_list()
         ] 
