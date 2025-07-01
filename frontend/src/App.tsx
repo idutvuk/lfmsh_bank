@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import UserPage from "./pages/UserPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import PioneersPage from "./pages/PioneersPage";
 import LoginPage from "./pages/LoginPage";
 import RulesPage from "./pages/RulesPage";
 import CreateTransactionPage from "./pages/CreateTransactionPage";
@@ -63,6 +64,15 @@ export default function App() {
           element={
             <PrivateRoute>
               <UserProfilePage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/pioneers"
+          element={
+            <PrivateRoute>
+              <PioneersPage />
             </PrivateRoute>
           }
         />

@@ -41,7 +41,7 @@ export default function UserPage() {
           stats = await getStatistics();
         }
         setUserData(me);
-        setTransactions(tx.reverse);
+        setTransactions(tx);
         setStatistics(stats);
       } catch (err) {
         console.error("Ошибка загрузки:", err);
@@ -159,7 +159,10 @@ export default function UserPage() {
             )}
 
             {userData.staff && (
-              <Button className="h-12 w-full bg-[#f3bb4c] hover:bg-[#f3bb4c]/90">
+              <Button 
+                className="h-12 w-full bg-[#f3bb4c] hover:bg-[#f3bb4c]/90"
+                onClick={() => navigate('/pioneers')}
+              >
                 <Users className="h-5 w-5 mr-2" />
                 Пионеры
               </Button>

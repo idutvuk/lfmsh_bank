@@ -179,11 +179,15 @@ class Transaction(Base):
             if close_session:
                 db.close()
 
-    def process(self):
+    def process(self, db: Session = None):
         """Process the transaction - change state to processed and apply all atomics"""
         from app.db.session import SessionLocal
 
-        db = SessionLocal()
+        close_session = False
+        if db is None:
+            db = SessionLocal()
+            close_session = True
+
         try:
             if self.can_be_transitioned_to(States.processed, db):
                 if not self._is_counted():
@@ -196,7 +200,8 @@ class Transaction(Base):
             else:
                 raise AttributeError("Cannot process the transaction in its current state")
         finally:
-            db.close()
+            if close_session:
+                db.close()
 
     def decline(self, db: Session):
         """Decline the transaction"""

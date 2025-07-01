@@ -1,67 +1,68 @@
 "use client"
 import { useEffect, useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
 import { getUserById, type UserData } from "../services/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
 import { Background } from "@/components/Background"
 import { Navbar } from "@/components/Navbar"
 import { Loading } from "@/components/loading"
-import { User, Wallet, AlertTriangle, ArrowLeft } from "lucide-react"
+import { User, Wallet, AlertTriangle, TrendingUp } from "lucide-react"
+import { useNavigate, useParams } from "react-router-dom"
 
 export default function UserProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { userId } = useParams<{ userId: string }>()
   const navigate = useNavigate()
+  const { userId } = useParams<{ userId: string }>()
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!userId) {
-        setError("ID пользователя не указан")
-        setLoading(false)
-        return
-      }
-
+      if (!userId) return
+      
       setLoading(true)
       try {
         const user = await getUserById(parseInt(userId))
         setUserData(user)
       } catch (err) {
-        console.error("Ошибка загрузки пользователя:", err)
-        setError("Не удалось загрузить данные пользователя")
+        console.error("Ошибка загрузки данных пользователя:", err)
       } finally {
         setLoading(false)
       }
     }
-
     fetchUserData()
   }, [userId])
 
+  const getCounterLabel = (counterName: string) => {
+    const labels: Record<string, string> = {
+      lab: "Лабораторные",
+      lec: "Лекции",
+      sem: "Семинары",
+      fac: "Факультативы",
+    }
+    return labels[counterName] || counterName
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("refreshToken")
+    navigate("/login", { replace: true })
+  }
+
   if (loading) {
     return (
-      <Background>
-        <div className="min-h-screen w-full flex items-center justify-center">
-          <Loading text="Загрузка профиля..." />
-        </div>
-      </Background>
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <Loading />
+      </div>
     )
   }
 
-  if (error || !userData) {
+  if (!userData) {
     return (
-      <Background>
-        <div className="min-h-screen w-full flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-destructive mb-4">{error || "Пользователь не найден"}</p>
-            <Button onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад
-            </Button>
-          </div>
+      <div className="min-h-screen w-full items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive">Ошибка загрузки данных пользователя</p>
         </div>
-      </Background>
+      </div>
     )
   }
 
@@ -69,20 +70,26 @@ export default function UserProfilePage() {
     <Background>
       <Navbar
         showBackButton={true}
-        title={`Профиль ${userData.name}`}
+        showRulesButton={true}
+        isStaff={true}
+        customTitle={`Профиль: ${userData.name}`}
+        onLogout={handleLogout}
       />
 
-      <div className="w-full max-w-250 mx-auto py-6 space-y-4 min-h-[100dvh]">
+      <div className="w-full max-w-4xl mx-auto py-6 space-y-4 min-h-[100dvh]">
+
         {/* User info */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              {userData.name}
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                {userData.name}
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
               <Card className="bg-[#1e99a0]/10 shadow">
                 <CardContent className="flex items-center gap-3 p-3">
                   <Wallet className="h-6 w-6 text-[#1e99a0]" />
@@ -104,39 +111,46 @@ export default function UserProfilePage() {
                   </CardContent>
                 </Card>
               )}
+
+              <Card className="bg-[#31a4d7]/10 border-0 shadow-none">
+                <CardContent className="flex items-center gap-3 p-3">
+                  <TrendingUp className="h-6 w-6 text-[#31a4d7]" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Логин</p>
+                    <p className="text-xl font-bold text-[#31a4d7]">{userData.username}</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-
-            {/* Counters */}
-            {userData.counters && userData.counters.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Счетчики</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {userData.counters.map((counter) => (
-                    <Card key={counter.counter_name} className="bg-gray-50/50">
-                      <CardContent className="p-3">
-                        <p className="text-sm text-muted-foreground mb-1">
-                          {counter.counter_name}
-                        </p>
-                        <p className="text-lg font-bold">
-                          {counter.value}/{counter.max_value}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Staff info */}
-            {userData.staff && (
-              <div className="mt-4 p-3 bg-blue-50/50 rounded-lg">
-                <p className="text-sm text-blue-600 font-medium">
-                  👨‍💼 Сотрудник
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
+
+        {/* Counters */}
+        {userData.counters.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Посещаемость</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {userData.counters.map((counter, idx) => (
+                  <div key={idx} className="space-y-1 max-w-md mx-auto">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">{getCounterLabel(counter.counter_name)}</span>
+                      <span className="text-sm font-medium">
+                        {counter.value}/{counter.max_value}
+                      </span>
+                    </div>
+                    <Progress
+                      value={(counter.value / counter.max_value) * 100}
+                      className="w-full"
+                    />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </Background>
   )

@@ -74,10 +74,24 @@ def read_transactions(
     if current_user.is_superuser or current_user.is_staff:
         transactions = db.query(Transaction).offset(skip).limit(limit).all()
     else:
-        # Regular users can only see their own transactions
-        transactions = db.query(Transaction).filter(
+        # Regular users can see transactions where they are creator OR recipient
+        # Get transactions where user is creator
+        creator_transactions = db.query(Transaction).filter(
             Transaction.creator_id == current_user.id
-        ).offset(skip).limit(limit).all()
+        ).all()
+        
+        # Get transactions where user is recipient
+        recipient_transactions = db.query(Transaction).join(
+            TransactionRecipient, Transaction.id == TransactionRecipient.transaction_id
+        ).filter(
+            TransactionRecipient.user_id == current_user.id
+        ).all()
+        
+        # Combine and remove duplicates
+        all_transactions = list(set(creator_transactions + recipient_transactions))
+        # Sort by creation timestamp (newest first) and apply pagination
+        all_transactions.sort(key=lambda t: t.creation_timestamp, reverse=True)
+        transactions = all_transactions[skip:skip + limit]
     
     return [format_transaction_for_frontend(t, db) for t in transactions]
 
@@ -175,7 +189,7 @@ def create_transaction_frontend(
         # If the creator is staff/superuser, automatically process the transaction
         if current_user.is_staff or current_user.is_superuser:
             logger.info(f"Auto-processing transaction {transaction.id} for staff user {current_user.username}")
-            transaction.process()
+            transaction.process(db)
         
         logger.info(f"Successfully created transaction with ID: {transaction.id}")
         return format_transaction_for_frontend(transaction, db)
@@ -258,7 +272,7 @@ def process_transaction(
         )
     
     try:
-        transaction.process()
+        transaction.process(db)
     except AttributeError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

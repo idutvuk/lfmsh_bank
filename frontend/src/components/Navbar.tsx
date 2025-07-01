@@ -8,6 +8,7 @@ interface NavbarProps {
   showRulesButton?: boolean;
   isStaff?: boolean;
   onLogout?: () => void;
+  customTitle?: string;
 }
 
 export function Navbar({ 
@@ -15,7 +16,8 @@ export function Navbar({
   showBackButton = false, 
   showRulesButton = false, 
   isStaff = false,
-  onLogout 
+  onLogout,
+  customTitle
 }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,11 +42,11 @@ export function Navbar({
               onClick={() => navigate(-1)}
             >
               <ChevronLeft className="h-5 w-5" />
-              {location.pathname === "/rules" ? "Назад" : null}
+              Назад
             </Button>
           )}
           <div className="text-l font-bold">
-            {title}
+            {customTitle || title}
           </div>
         </div>
 
