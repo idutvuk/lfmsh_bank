@@ -8,7 +8,6 @@ from app.core.logging import configure_logging
 from app.core.security import get_password_hash
 from app.db.session import SessionLocal
 from app.models.user import User
-from app.core.constants import UserGroups
 
 # Configure loguru
 configure_logging()

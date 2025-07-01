@@ -1,6 +1,4 @@
-from typing import Any, List, Optional
-from datetime import datetime
-import json
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,7 +6,7 @@ from loguru import logger
 
 from app.api.v1.deps import get_current_active_user, get_db
 from app.models.user import User
-from app.models.transaction import Transaction
+from app.models.transaction import Transaction, TransactionRecipient
 from app.core.constants import TransactionTypeEnum, States
 
 router = APIRouter()
@@ -18,18 +16,15 @@ def format_transaction_for_frontend(transaction: Transaction, db: Session) -> di
     """
     Formats a Transaction object to match the frontend expected schema
     """
-    # Get money atomics for this transaction
-    money_atomics = db.query(Money).filter(Money.related_transaction_id == transaction.id).all()
-    
-    # Get attendance atomics for this transaction
-    attendance_atomics = db.query(Attendance).filter(Attendance.related_transaction_id == transaction.id).all()
+    # Get all recipients for this transaction
+    recipients = db.query(TransactionRecipient).filter(TransactionRecipient.transaction_id == transaction.id).all()
     
     # Group by receiver to create the receivers array
     receivers = {}
     
-    # Process money atomics
-    for atomic in money_atomics:
-        user = db.query(User).filter(User.id == atomic.receiver_id).first()
+    # Process all recipients
+    for recipient in recipients:
+        user = db.query(User).filter(User.id == recipient.user_id).first()
         if not user:
             continue
         
@@ -45,38 +40,13 @@ def format_transaction_for_frontend(transaction: Transaction, db: Session) -> di
                 "fac": 0
             }
         
-        # Determine if this is bucks or certs based on money type
-        # For now we'll assume all are bucks until we implement certs properly
-        receivers[username]["bucks"] += atomic.value
-    
-    # Process attendance atomics
-    for atomic in attendance_atomics:
-        user = db.query(User).filter(User.id == atomic.receiver_id).first()
-        if not user:
-            continue
-        
-        username = user.username
-        if username not in receivers:
-            receivers[username] = {
-                "username": username,
-                "bucks": 0,
-                "certs": 0,
-                "lab": 0,
-                "lec": 0,
-                "sem": 0,
-                "fac": 0
-            }
-        
-        # Update the appropriate counter based on attendance type
-        attendance_type = atomic.type.value
-        if "lab" in attendance_type:
-            receivers[username]["lab"] += 1
-        elif "lec" in attendance_type or "lecture" in attendance_type:
-            receivers[username]["lec"] += 1
-        elif "sem" in attendance_type or "seminar" in attendance_type:
-            receivers[username]["sem"] += 1
-        elif "fac" in attendance_type:
-            receivers[username]["fac"] += 1
+        # Add all changes from this recipient
+        receivers[username]["bucks"] += recipient.bucks
+        receivers[username]["certs"] += recipient.certs
+        receivers[username]["lab"] += recipient.lab
+        receivers[username]["lec"] += recipient.lec
+        receivers[username]["sem"] += recipient.sem
+        receivers[username]["fac"] += recipient.fac
     
     # Format the transaction
     return {

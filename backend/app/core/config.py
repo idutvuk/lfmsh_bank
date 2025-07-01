@@ -1,5 +1,4 @@
 import os
-import socket
 from pydantic_settings import BaseSettings
 from typing import Optional, List
 from dotenv import load_dotenv

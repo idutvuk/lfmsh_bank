@@ -1,7 +1,6 @@
 from sqlalchemy import Column, String
 from sqlalchemy.ext.declarative import declared_attr
 
-from app.db.session import Base
 
 
 class AbstractTypeBase:

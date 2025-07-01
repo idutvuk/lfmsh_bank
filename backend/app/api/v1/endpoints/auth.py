@@ -98,7 +98,7 @@ def verify_token(token: str) -> Any:
     from app.core.security import ALGORITHM
     
     try:
-        payload = jwt.decode(
+        jwt.decode(
             token, settings.SECRET_KEY, algorithms=[ALGORITHM]
         )
         return {"valid": True}

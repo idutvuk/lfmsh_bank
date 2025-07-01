@@ -42,16 +42,13 @@ python_files = "test_*.py"
 
 [dependency-groups]
 dev = [
-    "black>=23.7.0",
-    "isort>=5.12.0",
+    "ruff>=0.12.1",
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
 ]
 
-[tool.black]
-line-length = 88
-target-version = ["py310"]
+[tool.ruff]
+#  E712 Avoid equality comparisons to `True`; use `if TransactionRecipient.counted:` for truth checks
+#  F401 'app.models' imported but unused
+ignore = ["E712", "F401"]
 
-[tool.isort]
-profile = "black"
-line_length = 88 

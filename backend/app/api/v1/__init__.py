@@ -2,8 +2,7 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-# Import and include all endpoint routers
-from app.api.v1.endpoints import users, transactions, auth, statistics
+from app.api.v1.endpoints import users, transactions, auth, statistics #noqa: E402
 
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(users.router, prefix="/users", tags=["users"])

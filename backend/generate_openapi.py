@@ -5,7 +5,6 @@ Script to generate OpenAPI specification for the LFMSH Bank API
 
 import json
 import sys
-import os
 from pathlib import Path
 
 # Add the app directory to the Python path

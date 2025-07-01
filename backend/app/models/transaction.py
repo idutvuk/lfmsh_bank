@@ -1,5 +1,3 @@
-import json
-from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Enum as SQLEnum, Float
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
@@ -9,7 +7,6 @@ from app.db.session import Base, SessionLocal
 from app.core.constants import States, TransactionTypeEnum
 
 # Import enum classes for validation
-from app.core.constants import States, TransactionTypeEnum
 
 
 class TransactionRecipient(Base):
@@ -68,7 +65,7 @@ class Transaction(Base):
     creator = relationship("User", back_populates="created_transactions")
     update_of = relationship("Transaction", remote_side=[id])
     
-    # New relationships for money and attendance
+    # New relationships for recipients
     recipients = relationship("TransactionRecipient", back_populates="transaction", cascade="all, delete-orphan")
 
     @classmethod
@@ -114,7 +111,6 @@ class Transaction(Base):
 
     def process(self):
         """Process the transaction - change state to processed and apply all atomics"""
-        from sqlalchemy.orm import Session
         from app.db.session import SessionLocal
 
         db = SessionLocal()
@@ -163,22 +159,14 @@ class Transaction(Base):
         return self.state in [States.processed]
 
     def get_all_atomics(self, db: Session):
-        """Get all atomic transactions (money and attendance) related to this transaction"""
-        from app.models.money import Money
-        from app.models.attendance import Attendance
-
-        money_atomics = db.query(Money).filter(Money.related_transaction_id == self.id).all()
-        attendance_atomics = db.query(Attendance).filter(Attendance.related_transaction_id == self.id).all()
-
-        return money_atomics + attendance_atomics
+        """Get all atomic transactions (recipients) related to this transaction"""
+        return db.query(TransactionRecipient).filter(TransactionRecipient.transaction_id == self.id).all()
 
     def can_be_transitioned_to(self, new_state, db: Session):
         """Check if the transaction can be transitioned to the given state"""
-        from app.models.money import Money
-
-        # Check that all money atomics are in the correct counted state
-        money_atomics = db.query(Money).filter(Money.related_transaction_id == self.id).all()
-        for atomic in money_atomics:
+        # Check that all recipients are in the correct counted state
+        recipients = db.query(TransactionRecipient).filter(TransactionRecipient.transaction_id == self.id).all()
+        for atomic in recipients:
             if atomic.counted != self._is_counted():
                 return False
 
@@ -194,20 +182,12 @@ class Transaction(Base):
 
     def receivers_count(self, db: Session):
         """Get count of unique receivers"""
-        from app.models.money import Money
-        from app.models.attendance import Attendance
-
-        money_receivers = db.query(Money.receiver_id).filter(Money.related_transaction_id == self.id).distinct().count()
-        attendance_receivers = db.query(Attendance.receiver_id).filter(Attendance.related_transaction_id == self.id).distinct().count()
-        
-        return money_receivers + attendance_receivers
+        return db.query(TransactionRecipient.user_id).filter(TransactionRecipient.transaction_id == self.id).distinct().count()
 
     def money_count(self, db: Session):
         """Get total money value"""
-        from app.models.money import Money
-
-        money_records = db.query(Money).filter(Money.related_transaction_id == self.id).all()
-        return sum(money.value for money in money_records)
+        recipients = db.query(TransactionRecipient).filter(TransactionRecipient.transaction_id == self.id).all()
+        return sum(recipient.bucks for recipient in recipients)
 
     def money_count_string(self, db: Session):
         """Get formatted money count string"""

@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 
@@ -28,7 +28,7 @@ def get_statistics(
     
     # Get active non-staff users (students)
     student_query = db.query(User).filter(
-        User.is_active == True,
+        User.is_active,
         User.is_staff == False,
         User.is_superuser == False
     )
