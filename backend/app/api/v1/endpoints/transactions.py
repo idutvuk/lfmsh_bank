@@ -9,8 +9,6 @@ from loguru import logger
 from app.api.v1.deps import get_current_active_user, get_db
 from app.models.user import User
 from app.models.transaction import Transaction
-from app.models.money import Money
-from app.models.attendance import Attendance
 from app.core.constants import TransactionTypeEnum, States
 
 router = APIRouter()

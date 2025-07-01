@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    
+    # Test mode
+    TEST_MODE: bool = os.environ.get("TEST_MODE", "False").lower() == "true"
 
     class Config:
         case_sensitive = True

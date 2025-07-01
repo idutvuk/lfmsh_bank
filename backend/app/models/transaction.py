@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Enum as SQLEnum, Float
 from sqlalchemy.orm import relationship, Session
 from sqlalchemy.sql import func
 from loguru import logger
@@ -10,6 +10,46 @@ from app.core.constants import States, TransactionTypeEnum
 
 # Import enum classes for validation
 from app.core.constants import States, TransactionTypeEnum
+
+
+class TransactionRecipient(Base):
+    """Recipient of a transaction: объединяет деньги, сертификаты и счетчики посещаемости"""
+    __tablename__ = "transaction_recipients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    bucks = Column(Float, default=0)  # Деньги
+    certs = Column(Float, default=0)  # Сертификаты
+    lab = Column(Integer, default=0)
+    lec = Column(Integer, default=0)
+    sem = Column(Integer, default=0)
+    fac = Column(Integer, default=0)
+    description = Column(String(511), nullable=True)
+    counted = Column(Boolean, default=False)
+    creation_timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    update_timestamp = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user = relationship("User")
+    transaction = relationship("Transaction", back_populates="recipients")
+
+    def apply(self):
+        if self.counted:
+            raise AttributeError("Already counted")
+        self.counted = True
+        self.update_timestamp = func.now()
+        # Применить изменения к пользователю
+        self.user.balance += self.bucks
+        # TODO: добавить обновление сертификатов и счетчиков
+
+    def undo(self):
+        if not self.counted:
+            raise AttributeError("Not counted yet")
+        self.counted = False
+        self.update_timestamp = func.now()
+        self.user.balance -= self.bucks
+        # TODO: добавить откат сертификатов и счетчиков
 
 
 class Transaction(Base):
@@ -29,8 +69,7 @@ class Transaction(Base):
     update_of = relationship("Transaction", remote_side=[id])
     
     # New relationships for money and attendance
-    money_records = relationship("Money", back_populates="related_transaction", cascade="all, delete-orphan")
-    attendance_records = relationship("Attendance", back_populates="related_transaction", cascade="all, delete-orphan")
+    recipients = relationship("TransactionRecipient", back_populates="transaction", cascade="all, delete-orphan")
 
     @classmethod
     def new_transaction(cls, creator, transaction_type, description="", recipients=None, update_of=None, db=None):
