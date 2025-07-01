@@ -41,7 +41,7 @@ export default function UserPage() {
           stats = await getStatistics();
         }
         setUserData(me);
-        setTransactions(tx);
+        setTransactions(tx.reverse);
         setStatistics(stats);
       } catch (err) {
         console.error("Ошибка загрузки:", err);
@@ -219,7 +219,7 @@ export default function UserPage() {
                 {userData.staff ? "Мои транзакции" : "Последние транзакции"}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               {displayedTransactions.map(transaction => (
                 <TransactionItem key={transaction.id} {...transaction} />
               ))}

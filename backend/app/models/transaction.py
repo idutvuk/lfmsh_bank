@@ -100,6 +100,44 @@ class Transaction(Base):
             db.add(new_transaction)
             db.commit()
             db.refresh(new_transaction)
+            
+            # Create recipients if provided
+            if recipients:
+                from app.models.user import User
+                
+                for recipient_data in recipients:
+                    # Handle different recipient data formats
+                    if isinstance(recipient_data, dict):
+                        username = recipient_data.get('username')
+                        bucks = recipient_data.get('bucks', 0)
+                        certs = recipient_data.get('certs', 0)
+                        lab = recipient_data.get('lab', 0)
+                        lec = recipient_data.get('lec', 0)
+                        sem = recipient_data.get('sem', 0)
+                        fac = recipient_data.get('fac', 0)
+                    else:
+                        # Fallback for other formats
+                        continue
+                    
+                    if username:
+                        # Find user by username
+                        user = db.query(User).filter(User.username == username).first()
+                        if user:
+                            recipient = TransactionRecipient(
+                                transaction_id=new_transaction.id,
+                                user_id=user.id,
+                                bucks=bucks,
+                                certs=certs,
+                                lab=lab,
+                                lec=lec,
+                                sem=sem,
+                                fac=fac,
+                                description=description
+                            )
+                            db.add(recipient)
+                
+                db.commit()
+            
             return new_transaction
         except Exception as e:
             logger.error(f"Error in new_transaction: {str(e)}")

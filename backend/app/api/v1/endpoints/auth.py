@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -47,7 +47,7 @@ def login_access_token(
 
 @router.post("/jwt/refresh/", response_model=Token)
 def refresh_access_token(
-    db: Session = Depends(get_db), refresh_token: str = None
+    db: Session = Depends(get_db), refresh_token: str = Form(...)
 ) -> Any:
     """
     Refresh access token using refresh token

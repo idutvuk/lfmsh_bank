@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Background } from "@/components/Background";
-
-const API_URL = import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:8000/api/";
+import { login } from "@/services/api";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -22,27 +21,16 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      const res = await fetch(`${API_URL}auth/jwt/create/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      
-      if (!res.ok) {
-        if (res.status === 401) {
-          setError("Неверный логин или пароль");
-        } else {
-          setError(`Ошибка сервера: ${res.status}`);
-        }
-        return;
-      }
-      
-      const data = await res.json() as { access: string; refresh: string };
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
+      const data = await login(username, password);
+      localStorage.setItem("accessToken", data.access_token);
+      localStorage.setItem("refreshToken", data.refresh_token);
       navigate("/user", { replace: true });
     } catch (err) {
-      setError("Не удалось подключиться к серверу");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Не удалось подключиться к серверу");
+      }
       console.error(err);
     } finally {
       setLoading(false);

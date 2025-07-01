@@ -22,6 +22,31 @@ function getCommonOpts(): CommonOpts {
     };
 }
 
+// Authentication function
+export const login = async (username: string, password: string): Promise<{ access_token: string; refresh_token: string; token_type: string }> => {
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    const res = await fetch(`${API_URL}auth/jwt/create/`, {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formData,
+    });
+
+    if (!res.ok) {
+        if (res.status === 401) {
+            throw new Error("Неверный логин или пароль");
+        } else {
+            throw new Error(`Ошибка сервера: ${res.status}`);
+        }
+    }
+
+    return res.json();
+};
+
 // Check if token needs refresh
 async function refreshTokenIfNeeded() {
     const refreshToken = localStorage.getItem("refreshToken");
@@ -30,19 +55,22 @@ async function refreshTokenIfNeeded() {
     }
 
     try {
+        const formData = new URLSearchParams();
+        formData.append('refresh_token', refreshToken);
+
         const res = await fetch(`${API_URL}auth/jwt/refresh/`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh: refreshToken }),
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData,
         });
 
         if (!res.ok) {
             throw new Error(`Refresh token error: ${res.status}`);
         }
 
-        const data = await res.json() as { access: string };
-        localStorage.setItem("accessToken", data.access);
-        return data.access;
+        const data = await res.json() as { access_token: string };
+        localStorage.setItem("accessToken", data.access_token);
+        return data.access_token;
     } catch (error) {
         console.error("Failed to refresh token:", error);
         // Clear tokens and redirect to login
