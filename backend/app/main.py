@@ -8,6 +8,7 @@ from app.core.logging import configure_logging
 from app.core.security import get_password_hash
 from app.db.session import SessionLocal
 from app.models.user import User
+from app.db.session import Base, engine
 
 # Configure loguru
 configure_logging()
@@ -112,6 +113,7 @@ def create_test_users(db):
 def initialize_data():
     logger.info("=== APPLICATION STARTUP - INITIALIZING DATABASE ===")
     db = SessionLocal()
+    Base.metadata.create_all(bind=engine)
     try:
         # Create test users if TEST_MODE is enabled
         create_test_users(db)

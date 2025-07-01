@@ -38,7 +38,12 @@ class TransactionRecipient(Base):
         self.update_timestamp = func.now()
         # Применить изменения к пользователю
         self.user.balance += self.bucks
-        # TODO: добавить обновление сертификатов и счетчиков
+        self.user.certificates += self.certs
+        # Обновить счетчики посещаемости
+        self.user.lab_count += self.lab
+        self.user.lec_count += self.lec
+        self.user.sem_count += self.sem
+        self.user.fac_count += self.fac
 
     def undo(self):
         if not self.counted:
@@ -46,7 +51,12 @@ class TransactionRecipient(Base):
         self.counted = False
         self.update_timestamp = func.now()
         self.user.balance -= self.bucks
-        # TODO: добавить откат сертификатов и счетчиков
+        self.user.certificates -= self.certs
+        # Откатить счетчики посещаемости
+        self.user.lab_count -= self.lab
+        self.user.lec_count -= self.lec
+        self.user.sem_count -= self.sem
+        self.user.fac_count -= self.fac
 
 
 class Transaction(Base):
@@ -108,20 +118,42 @@ class Transaction(Base):
                 for recipient_data in recipients:
                     # Handle different recipient data formats
                     if isinstance(recipient_data, dict):
+                        # Frontend sends 'id' and 'amount', backend expects 'username' and 'bucks'
+                        user_id = recipient_data.get('id')
+                        amount = recipient_data.get('amount', 0)
+                        
+                        # For attendance types, we need to set the appropriate counter
+                        bucks = 0
+                        certs = 0
+                        lab = 0
+                        lec = 0
+                        sem = 0
+                        fac = 0
+                        
+                        # Set bucks for financial transactions
+                        if transaction_type not in [TransactionTypeEnum.fac_attend, TransactionTypeEnum.lec_attend, 
+                                                   TransactionTypeEnum.sem_attend, TransactionTypeEnum.lab_pass]:
+                            bucks = amount
+                        
+                        # Set appropriate counter for attendance types
+                        if transaction_type == TransactionTypeEnum.fac_attend:
+                            fac = 1
+                        elif transaction_type == TransactionTypeEnum.lec_attend:
+                            lec = 1
+                        elif transaction_type == TransactionTypeEnum.sem_attend:
+                            sem = 1
+                        elif transaction_type == TransactionTypeEnum.lab_pass:
+                            lab = 1
+                        
+                        # Handle legacy format with username
                         username = recipient_data.get('username')
-                        bucks = recipient_data.get('bucks', 0)
-                        certs = recipient_data.get('certs', 0)
-                        lab = recipient_data.get('lab', 0)
-                        lec = recipient_data.get('lec', 0)
-                        sem = recipient_data.get('sem', 0)
-                        fac = recipient_data.get('fac', 0)
-                    else:
-                        # Fallback for other formats
-                        continue
-                    
-                    if username:
-                        # Find user by username
-                        user = db.query(User).filter(User.username == username).first()
+                        if username:
+                            user = db.query(User).filter(User.username == username).first()
+                        elif user_id:
+                            user = db.query(User).filter(User.id == user_id).first()
+                        else:
+                            continue
+                        
                         if user:
                             recipient = TransactionRecipient(
                                 transaction_id=new_transaction.id,

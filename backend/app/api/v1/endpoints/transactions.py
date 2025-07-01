@@ -172,6 +172,11 @@ def create_transaction_frontend(
             db=db
         )
         
+        # If the creator is staff/superuser, automatically process the transaction
+        if current_user.is_staff or current_user.is_superuser:
+            logger.info(f"Auto-processing transaction {transaction.id} for staff user {current_user.username}")
+            transaction.process()
+        
         logger.info(f"Successfully created transaction with ID: {transaction.id}")
         return format_transaction_for_frontend(transaction, db)
         

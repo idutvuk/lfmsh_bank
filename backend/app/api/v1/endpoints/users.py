@@ -19,7 +19,7 @@ def read_users(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Retrieve users. Regular users can only access their own info and their party.
+    Retrieve users. Staff can see all users, regular users can see only pioneers.
     """
     # Check if user has permission to view all users
     if current_user.is_staff or current_user.is_superuser:
@@ -27,12 +27,9 @@ def read_users(
         users = db.query(User).offset(skip).limit(limit).all()
         return [prepare_user_list_item(user) for user in users]
     else:
-        # Regular users can only see themselves and their party members
-        # For MVP, we're restricting to only themselves
-        raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions to view user list"
-        )
+        # Regular users (pioneers) can see only other pioneers (non-staff users)
+        users = db.query(User).filter(User.is_staff == False, User.is_superuser == False).offset(skip).limit(limit).all()
+        return [prepare_user_list_item(user) for user in users]
 
 
 @router.post("/", response_model=UserSchema)

@@ -22,8 +22,15 @@ class User(Base):
     
     # School-specific info
     balance = Column(Float, default=0)
+    certificates = Column(Float, default=0)  # Сертификаты
     party = Column(Integer, default=0)
     grade = Column(Integer, default=0)
+    
+    # Attendance counters
+    lab_count = Column(Integer, default=0)
+    lec_count = Column(Integer, default=0)
+    sem_count = Column(Integer, default=0)
+    fac_count = Column(Integer, default=0)
     
     # Status fields
     is_active = Column(Boolean, default=True)
