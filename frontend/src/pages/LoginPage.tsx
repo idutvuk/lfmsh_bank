@@ -38,7 +38,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Background className="flex items-center justify-center p-4">
+      <Background className="flex flex-col items-center justify-center p-4 min-h-screen" navbar={null}>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-center">Вход в Банк ЛФМШ</CardTitle>
