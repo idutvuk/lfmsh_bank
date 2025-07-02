@@ -77,12 +77,12 @@ export function PioneerInfoCard({
               Начислить
             </Button>
             <Button
-              className="h-12"
+              className="h-12 bg-red-500"
               onClick={onPenalty}
-              variant="destructive"
+
             >
               <Minus className="h-5 w-5 mr-2" />
-              Отштрафовать
+              Штраф
             </Button>
           </div>
         )}

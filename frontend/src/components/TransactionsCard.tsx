@@ -39,7 +39,7 @@ export function TransactionsCard({ transactions, isStaff }: TransactionsCardProp
             onClick={() => setShowAllTransactions(!showAllTransactions)}
           >
             {showAllTransactions ? "Скрыть" : "Показать все"}
-            <ChevronDown className={`h-5 w-5 ml-1 transition-transform ${showAllTransactions ? "rotate-180" : ""}`} />
+            <ChevronDown className={`h-5 w-5 ml-1 transition-transform ${showAllTransactions ? "rotate-180" : "rotate-0"}`} />
           </Button>
         </CardFooter>
       )}

@@ -8,7 +8,7 @@ interface StaffInfoCardProps {
 
 export function StaffInfoCard({ onNavigate }: StaffInfoCardProps) {
   return (
-    <Card>
+    <Card className="border-0 shadow-0">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />

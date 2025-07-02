@@ -12,12 +12,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import {Search, X, AlertTriangle} from "lucide-react"
-import {getUsers, type UserListItem, createTransaction} from "@/services/api"
+import {Search, X} from "lucide-react"
+import {getUsers, type UserListItem, createTransaction, getMe} from "@/services/api"
 import {Navbar} from "@/components/Navbar"
 import {Loading} from "@/components/loading"
 import {TransactionUserItem} from "@/components/TransactionUserItem"
-import {useNavigate} from "react-router-dom"
+import {useNavigate, useSearchParams} from "react-router-dom"
+
 interface UserTransactionListItem extends UserListItem {
     isSelected: boolean;
     bucks: number;
@@ -27,37 +28,69 @@ export default function CreateTransactionPage() {
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [userTransactions, setUserTransactions] = useState<UserTransactionListItem[]>([])
+    const [currentUser, setCurrentUser] = useState<any>(null)
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const [searchQuery, setSearchQuery] = useState("")
     const [description, setDescription] = useState("")
     const [transactionType, setTransactionType] = useState("")
     const [amount, setAmount] = useState<number>(0)
 
-    // Check if too many recipients are selected for P2P
-    const selectedUsers = userTransactions.filter(user => user.isSelected)
-    const tooManyP2PRecipients = transactionType === "p2p" && selectedUsers.length > 1
+    const typeParam = searchParams.get('type')
+    const recipientIdParam = searchParams.get('recipientId')
 
     useEffect(() => {
-        const fetchUsers = async () => {
+        const fetchData = async () => {
             setLoading(true)
             try {
-                const fetchedUsers = await getUsers()
-                setUserTransactions(fetchedUsers
+                const [fetchedUsers, me] = await Promise.all([
+                    getUsers(),
+                    getMe()
+                ])
+                
+                setCurrentUser(me)
+                
+                // Filter users to only show non-staff users
+                const filteredUsers = fetchedUsers
                     .filter(user => !user.staff)
                     .map(user => {
                         return {
-                            ...user, isSelected: false, bucks: 0
+                            ...user, 
+                            isSelected: false, 
+                            bucks: 0
                         }
-                    }));
+                    })
+                
+                setUserTransactions(filteredUsers)
+
+                // Set transaction type based on URL parameter or user role
+                if (typeParam) {
+                    setTransactionType(typeParam)
+                } else if (!me.staff) {
+                    // For non-staff users, default to p2p
+                    setTransactionType("p2p")
+                }
+
+                // Auto-select recipient if provided in URL
+                if (recipientIdParam) {
+                    const recipientId = parseInt(recipientIdParam)
+                    setUserTransactions(prev => 
+                        prev.map(user => ({
+                            ...user,
+                            isSelected: user.id === recipientId,
+                            bucks: user.id === recipientId ? amount : 0
+                        }))
+                    )
+                }
             } catch (err) {
-                console.error("Error fetching users:", err)
+                console.error("Error fetching data:", err)
             } finally {
                 setLoading(false)
             }
         }
 
-        fetchUsers()
-    }, [])
+        fetchData()
+    }, [typeParam, recipientIdParam])
 
     // Reset selection when transaction type changes
     // useEffect(() => {
@@ -72,7 +105,7 @@ export default function CreateTransactionPage() {
 
     const handleSelectUser = (user: UserTransactionListItem) => {
         setUserTransactions(prev => {
-            // For P2P transactions, only allow one user to be selected
+            // For P2P transactions (pioneers), only allow one user to be selected
             if (transactionType === "p2p") {
                 return prev.map(u => ({
                     ...u,
@@ -113,6 +146,8 @@ export default function CreateTransactionPage() {
         )
     }
 
+
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSubmitting(true)
@@ -125,12 +160,6 @@ export default function CreateTransactionPage() {
                 return
             }
 
-            if (transactionType === "p2p" && selectedUsers.length > 1) {
-                alert("Для перевода между пионерами можно выбрать только одного получателя")
-                setSubmitting(false)
-                return
-            }
-
             // For attendance transaction types, the amount should be 0
             const isAttendanceType = ["fac_attend", "lec_attend", "sem_attend", "lab_pass"].includes(transactionType)
 
@@ -139,7 +168,9 @@ export default function CreateTransactionPage() {
                 description: description,
                 recipients: selectedUsers.map(user => ({
                     id: user.id,
-                    amount: isAttendanceType ? 0 : user.bucks
+                    amount: isAttendanceType
+                        ? 0
+                        : user.bucks
                 }))
             }
 
@@ -168,6 +199,9 @@ export default function CreateTransactionPage() {
         )
     }
 
+    // Show transaction type selector only for staff users
+    const showTransactionTypeSelector = currentUser?.staff
+
     return (
         <Background>
             {/* Header */}
@@ -184,27 +218,35 @@ export default function CreateTransactionPage() {
                                 <CardTitle>Детали перевода</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Select
-                                        value={transactionType}
-                                        onValueChange={setTransactionType}
-                                        required
-                                    >
-                                        <SelectTrigger id="type">
+                                {showTransactionTypeSelector && (
+                                    <div className="space-y-2">
+                                        <Select
+                                            value={transactionType}
+                                            onValueChange={setTransactionType}
+                                            required
+                                        >
+                                            <SelectTrigger id="type">
+                                                <SelectValue placeholder="Выберите тип перевода"/>
+                                            </SelectTrigger>
+                                            <SelectContent className="">
+                                                <SelectItem value="fine">Штраф</SelectItem>
+                                                <SelectItem value="general">Награда</SelectItem>
+                                                <SelectItem value="fac_attend">Посещение факультатива</SelectItem>
+                                                <SelectItem value="lec_attend">Посещение лекции</SelectItem>
+                                                <SelectItem value="sem_attend">Посещение семинара</SelectItem>
+                                                <SelectItem value="lab_pass">Лабораторная работа</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
 
-                                            <SelectValue placeholder="Выберите тип перевода"/>
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white">
-                                            <SelectItem value="p2p">Перевод между пионерами</SelectItem>
-                                            <SelectItem value="fine">Штраф</SelectItem>
-                                            <SelectItem value="general">Награда</SelectItem>
-                                            <SelectItem value="fac_attend">Посещение факультатива</SelectItem>
-                                            <SelectItem value="lec_attend">Посещение лекции</SelectItem>
-                                            <SelectItem value="sem_attend">Посещение семинара</SelectItem>
-                                            <SelectItem value="lab_pass">Лабораторная работа</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                {!showTransactionTypeSelector && transactionType && (
+                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                        <p className="text-blue-800 text-sm">
+                                            Тип перевода: <strong>Перевод между пионерами</strong>
+                                        </p>
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
                                     <Textarea
@@ -228,31 +270,12 @@ export default function CreateTransactionPage() {
                                         required
                                     />
                                 </div>
-
-                                {transactionType === "p2p" && (
-                                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-                                        <p className="text-amber-800 text-sm flex items-center gap-2">
-                                            <AlertTriangle size={16} />
-                                            Для перевода между пионерами можно выбрать только одного получателя
-                                        </p>
-                                    </div>
-                                )}
-
-                                {tooManyP2PRecipients && (
-                                    <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                                        <p className="text-red-800 text-sm flex items-center gap-2">
-                                            <AlertTriangle size={16} />
-                                            <strong>Внимание!</strong> Выбрано слишком много получателей для перевода между пионерами.
-                                            Пожалуйста, выберите только одного получателя.
-                                        </p>
-                                    </div>
-                                )}
                             </CardContent>
                         </Card>
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                disabled={submitting || !description || !transactionType || amount === 0 || !userTransactions.some(u => u.isSelected) || tooManyP2PRecipients}
+                                disabled={submitting || !description || !transactionType || amount === 0 || !userTransactions.some(u => u.isSelected)}
                             >
                                 {submitting ? "Создание..." : "Создать перевод"}
                             </Button>
@@ -295,6 +318,7 @@ export default function CreateTransactionPage() {
                                                 onAmountChange={userAmountChanged}
                                                 onResetAmount={handleCustomAmountChange}
                                                 defaultAmount={amount}
+                                                transactionType={transactionType}
                                             />
                                         ))
                                     ) : (

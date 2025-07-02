@@ -88,6 +88,7 @@ export interface Counter {
 }
 
 export interface UserData {
+    id: number;
     username: string;
     name: string;
     staff: boolean;

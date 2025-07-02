@@ -69,6 +69,7 @@ export default function StaffPage() {
         <Navbar
           showRulesButton={true}
           showSearch={true}
+          showTheme={true}
           isStaff={userData.staff}
           onLogout={handleLogout}
         />

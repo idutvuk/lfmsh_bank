@@ -7,7 +7,7 @@ interface StatisticsCardProps {
 
 export function StatisticsCard({ statistics }: StatisticsCardProps) {
   return (
-    <Card>
+    <Card className="border-0 shadow-0">
       <CardContent className="pt-6">
         <div className="grid grid-cols-2 gap-4">
           <Card className="bg-[#31a4d7]/10 border-0 shadow-0">

@@ -15,6 +15,7 @@ interface TransactionUserItemProps {
     onAmountChange: (userId: number, amount: number) => void;
     onResetAmount: (userId: number) => void;
     defaultAmount: number;
+    transactionType?: string;
 }
 
 export function TransactionUserItem({
@@ -23,7 +24,11 @@ export function TransactionUserItem({
     onAmountChange,
     onResetAmount,
     defaultAmount,
+    transactionType,
 }: TransactionUserItemProps) {
+    // Для штрафов показываем отрицательную сумму
+    const displayAmount = transactionType === "fine" ? -user.bucks : user.bucks;
+    
     return (
         <Label
             htmlFor={user.id.toString()}
@@ -69,9 +74,12 @@ export function TransactionUserItem({
                             </Button>
                         )}
                         <Input
-                            value={user.bucks}
+                            value={displayAmount}
                             className="bg-transparent w-16 border-0 text-right"
-                            onChange={(e) => onAmountChange(user.id, Number(e.target.value))}
+                            onChange={(e) => {
+                                const inputValue = Number(e.target.value);
+                                onAmountChange(user.id, inputValue);
+                            }}
                         />
                     </div>
                 )}

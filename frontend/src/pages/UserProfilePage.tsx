@@ -58,13 +58,13 @@ export default function UserProfilePage() {
   }
 
   const handleReward = () => {
-    // TODO: Реализовать логику начисления
-    console.log("Начислить пользователю:", userData?.username)
+    // Navigate to create transaction page with reward type and recipient
+    navigate(`/create-transfer?type=general&recipientId=${userData?.id}`)
   }
 
   const handlePenalty = () => {
-    // TODO: Реализовать логику штрафа
-    console.log("Оштрафовать пользователя:", userData?.username)
+    // Navigate to create transaction page with fine type and recipient
+    navigate(`/create-transfer?type=fine&recipientId=${userData?.id}`)
   }
 
   if (loading) {
@@ -105,7 +105,6 @@ export default function UserProfilePage() {
         {/* User info */}
         <PioneerInfoCard 
           userData={userData} 
-          statistics={null} 
           onNavigate={handleNavigate}
           isOwnProfile={isOwnProfile}
           isStaffViewing={isStaffViewing}
