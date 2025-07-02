@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { FileText, ChevronLeft } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { FileText, ChevronLeft, Search, X, Moon, Sun, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { getUsers, type UserListItem } from "@/services/api";
 
 interface NavbarProps {
   title?: string;
@@ -12,7 +15,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ 
-  title = "Банк ЛФМШ 38",
+  title = "ЛФМШ 38",
   showBackButton = false, 
   showRulesButton = false, 
   isStaff = false,
@@ -20,7 +23,11 @@ export function Navbar({
   customTitle
 }: NavbarProps) {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<UserListItem[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -28,9 +35,63 @@ export function Navbar({
     navigate("/login", { replace: true });
   };
 
+  // Поиск пионеров
+  useEffect(() => {
+    const searchPioneers = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchResults([]);
+        setShowSearchResults(false);
+        return;
+      }
+
+      try {
+        const users = await getUsers();
+        const filtered = users.filter(user => 
+          user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.username.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setSearchResults(filtered);
+        setShowSearchResults(true);
+      } catch (error) {
+        console.error("Ошибка поиска:", error);
+      }
+    };
+
+    const timeoutId = setTimeout(searchPioneers, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Закрытие результатов поиска при клике вне
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleUserSelect = (user: UserListItem) => {
+    navigate(`/user/${user.id}`);
+    setSearchQuery("");
+    setShowSearchResults(false);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    // TODO: Реализовать переключение темы
+  };
 
   return (
-    <header className="w-full bg-background sticky top-0 z-10 shadow-sm">
+    <header className="w-full bg-background sticky top-0 z-10 border-b-2 border-black">
       <div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
         {/* Left side */}
         <div className="flex items-center gap-2">
@@ -42,7 +103,6 @@ export function Navbar({
               onClick={() => navigate(-1)}
             >
               <ChevronLeft className="h-5 w-5" />
-              Назад
             </Button>
           )}
           <div className="text-l font-bold">
@@ -50,8 +110,60 @@ export function Navbar({
           </div>
         </div>
 
+        {/* Center - Search */}
+        {isStaff && (
+          <div className="flex-1 max-w-md mx-4 relative" ref={searchRef}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Поиск пионеров"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10 bg-transparent border-0"
+              />
+              {searchQuery && (
+                <Button
+                  variant="text"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                  onClick={clearSearch}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+            
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto z-20">
+                {searchResults.map((user) => (
+                  <div
+                    key={user.id}
+                    className="px-4 py-2 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                    onClick={() => handleUserSelect(user)}
+                  >
+                    <div className="font-medium">{user.name}</div>
+                    <div className="text-sm text-muted-foreground">@{user.username}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Right side */}
         <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          <Button
+            variant="text"
+            size="sm"
+            onClick={toggleTheme}
+            className="p-2"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
           {showRulesButton && !isStaff && (
             <Button
               variant="default"
@@ -63,8 +175,8 @@ export function Navbar({
             </Button>
           )}
           {onLogout && (
-            <Button onClick={onLogout || handleLogout} size="sm">
-              Выйти
+            <Button variant="text" onClick={onLogout || handleLogout} size="sm">
+              <LogOut className="h-4 w-4" />
             </Button>
           )}
         </div>

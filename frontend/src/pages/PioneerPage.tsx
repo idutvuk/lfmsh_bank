@@ -81,7 +81,8 @@ export default function PioneerPage() {
         <PioneerInfoCard 
           userData={userData} 
           statistics={statistics} 
-          onNavigate={handleNavigate} 
+          onNavigate={handleNavigate}
+          isOwnProfile={true}
         />
         <TransactionsCard 
           transactions={transactions} 

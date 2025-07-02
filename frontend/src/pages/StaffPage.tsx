@@ -76,8 +76,8 @@ export default function StaffPage() {
     >
       <div className="w-full max-w-250 mx-auto py-6 space-y-4 min-h-[100dvh]">
         <StaffInfoCard 
-          userData={userData} 
-          statistics={statistics} 
+          // userData={userData}
+          // statistics={statistics}
           onNavigate={handleNavigate} 
         />
 
