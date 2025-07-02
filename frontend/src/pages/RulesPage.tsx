@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button"
-import { ChevronLeft } from "lucide-react"
-import { useNavigate } from "react-router-dom"
 import { Background } from "@/components/Background"
 import {
   Accordion,
@@ -12,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Navbar } from "@/components/Navbar"
 
 export default function RulesPage() {
-  const navigate = useNavigate()
 
   return (
     <Background>
@@ -20,6 +16,7 @@ export default function RulesPage() {
       <Navbar 
         showBackButton={true}
         title="Правила"
+        showSearch={true}
       />
 
       <div className="w-full max-w-screen-xl mx-auto px-4 py-6">

@@ -8,7 +8,7 @@ interface BackgroundProps {
 
 export function Background({ children, navbar, className = "" }: BackgroundProps) {
   return (
-    <div className="min-h-screen w-full bg-[linear-gradient(to_right,#40459020_1px,transparent_1px),linear-gradient(to_bottom,#40459020_1px,transparent_1px)] bg-[size:45px_45px]">
+    <div className="min-h-screen w-full bg-[linear-gradient(to_right,#40459020_1px,transparent_1px),linear-gradient(to_bottom,#40459020_1px,transparent_1px)] bg-[size:45px_45px] bg-secondary-background ">
       {navbar}
       <div className={`${className}`}>
         {children}

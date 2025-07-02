@@ -20,10 +20,10 @@ export function TransactionsCard({ transactions, isStaff }: TransactionsCardProp
   const displayedTransactions = showAllTransactions ? transactions : transactions.slice(0, 3)
 
   return (
-    <Card>
+    <Card className="shadow-0 border-0">
       <CardHeader>
-        <CardTitle className="text-lg">
-          {isStaff ? "Мои транзакции" : "Последние транзакции"}
+        <CardTitle className="text-lg flex justify-center">
+          Мои транзакции
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">

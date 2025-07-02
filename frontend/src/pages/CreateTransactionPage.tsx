@@ -190,7 +190,7 @@ export default function CreateTransactionPage() {
                                         onValueChange={setTransactionType}
                                         required
                                     >
-                                        <SelectTrigger className="bg-white" id="type">
+                                        <SelectTrigger id="type">
 
                                             <SelectValue placeholder="Выберите тип перевода"/>
                                         </SelectTrigger>

@@ -71,6 +71,7 @@ export default function PioneerPage() {
       navbar={
         <Navbar
           showRulesButton={true}
+          showTheme={true}
           isStaff={userData.staff}
           onLogout={handleLogout}
         />

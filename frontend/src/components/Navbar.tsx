@@ -4,11 +4,14 @@ import { FileText, ChevronLeft, Search, X, Moon, Sun, LogOut } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { getUsers, type UserListItem } from "@/services/api";
+import { useTheme } from "@/ThemeProvider";
 
 interface NavbarProps {
   title?: string;
   showBackButton?: boolean;
   showRulesButton?: boolean;
+  showSearch?: boolean;
+  showTheme?: boolean;
   isStaff?: boolean;
   onLogout?: () => void;
   customTitle?: string;
@@ -17,16 +20,18 @@ interface NavbarProps {
 export function Navbar({ 
   title = "ЛФМШ 38",
   showBackButton = false, 
-  showRulesButton = false, 
+  showRulesButton = false,
+  showSearch = false,
+  showTheme = false,
   isStaff = false,
   onLogout,
   customTitle
 }: NavbarProps) {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<UserListItem[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
@@ -86,12 +91,11 @@ export function Navbar({
   };
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    // TODO: Реализовать переключение темы
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
-    <header className="w-full bg-background sticky top-0 z-10 border-b-2 border-black">
+    <header className="w-full bg-secondary-background sticky top-0 z-10 border-b-2 border-black">
       <div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
         {/* Left side */}
         <div className="flex items-center gap-2">
@@ -111,7 +115,7 @@ export function Navbar({
         </div>
 
         {/* Center - Search */}
-        {isStaff && (
+        {showSearch && isStaff && (
           <div className="flex-1 max-w-md mx-4 relative" ref={searchRef}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -154,24 +158,22 @@ export function Navbar({
 
         {/* Right side */}
         <div className="flex items-center gap-2">
-          {/* Theme Toggle */}
+          { showTheme && (
           <Button
             variant="text"
             size="sm"
             onClick={toggleTheme}
-            className="p-2"
           >
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-
+          )}
           {showRulesButton && !isStaff && (
             <Button
-              variant="default"
+              variant="text"
               className="bg-primary hover:bg-primary/90 flex justify-end"
               onClick={() => navigate('/rules')}
             >
               <FileText className="h-4 w-4 mr-1" />
-              Правила
             </Button>
           )}
           {onLogout && (

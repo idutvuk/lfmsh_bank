@@ -5,6 +5,7 @@ import PioneersPage from "./pages/PioneersPage";
 import LoginPage from "./pages/LoginPage";
 import RulesPage from "./pages/RulesPage";
 import CreateTransactionPage from "./pages/CreateTransactionPage";
+import {ThemeProvider} from "@/ThemeProvider.tsx";
 
 const isAuthenticated = () => {
   return !!localStorage.getItem("accessToken");
@@ -16,6 +17,7 @@ const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
 
 export default function App() {
   return (
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
     <BrowserRouter>
       <Routes>
         {/* Redirect to user page or login based on authentication status */}
@@ -88,5 +90,6 @@ export default function App() {
         />
       </Routes>
     </BrowserRouter>
+  </ThemeProvider>
   );
 }

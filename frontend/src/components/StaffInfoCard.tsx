@@ -1,11 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { User, Users, Edit } from "lucide-react"
-import { type UserData, type Statistics } from "@/services/api"
 
 interface StaffInfoCardProps {
-  userData: UserData
-  statistics: Statistics | null
   onNavigate: (path: string) => void
 }
 

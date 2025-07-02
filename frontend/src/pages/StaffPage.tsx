@@ -68,6 +68,7 @@ export default function StaffPage() {
       navbar={
         <Navbar
           showRulesButton={true}
+          showSearch={true}
           isStaff={userData.staff}
           onLogout={handleLogout}
         />
@@ -75,9 +76,7 @@ export default function StaffPage() {
       className="px-2"
     >
       <div className="w-full max-w-250 mx-auto py-6 space-y-4 min-h-[100dvh]">
-        <StaffInfoCard 
-          // userData={userData}
-          // statistics={statistics}
+        <StaffInfoCard
           onNavigate={handleNavigate} 
         />
 

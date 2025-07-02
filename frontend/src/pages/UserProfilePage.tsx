@@ -94,6 +94,7 @@ export default function UserProfilePage() {
       <Navbar
         showBackButton={true}
         showRulesButton={true}
+        showSearch={true}
         isStaff={currentUser.staff}
         customTitle={"."}
         onLogout={handleLogout}
