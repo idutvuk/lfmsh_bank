@@ -81,14 +81,14 @@ export function TransactionItem({description, author, date_created, status, rece
   }
 
   return (
-    <Card className="bg-card">
-      <CardContent className="p-4">
+    <Card className="shadow-0 border-black/10">
+      <CardContent className="p-4 py-0">
         <div className="flex justify-between items-start mb-2">
           <div>
             <p className={`font-medium ${status === 'declined' ? 'line-through text-muted-foreground' : ''}`}>
-              {description}
+              {description} от {author}
             </p>
-            <p className="text-sm text-muted-foreground">от {author}</p>
+            <p className="text-sm text-muted-foreground"></p>
           </div>
           {getStatusIcon()}
         </div>
@@ -99,7 +99,7 @@ export function TransactionItem({description, author, date_created, status, rece
             {formatDate(date_created)}
           </span>
           <span
-            className={`font-medium ${status === 'declined' 
+            className={`font-bold text-xl ${status === 'declined' 
               ? 'text-muted-foreground line-through' 
               : receivers[0]?.bucks >= 0 
                 ? "text-[#1e99a0]" 

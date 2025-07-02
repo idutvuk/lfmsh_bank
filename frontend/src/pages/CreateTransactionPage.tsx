@@ -60,11 +60,11 @@ export default function CreateTransactionPage() {
     }, [])
 
     // Reset selection when transaction type changes
-    useEffect(() => {
-        setUserTransactions(prev =>
-            prev.map(u => ({...u, isSelected: false, bucks: 0}))
-        )
-    }, [transactionType])
+    // useEffect(() => {
+    //     // setUserTransactions(prev =>
+    //     //     prev.map(u => ({...u, bucks: 0}))
+    //     // )
+    // }, [transactionType])
 
     const filteredUsers = userTransactions.filter(user =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -213,6 +213,7 @@ export default function CreateTransactionPage() {
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         required
+                                        maxLength={511}
                                     />
                                 </div>
 
