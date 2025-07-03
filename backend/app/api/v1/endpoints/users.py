@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import User as UserSchema, UserCreate, UserUpdate, UserListItem
 from app.api.v1.deps import get_current_active_user, get_current_active_superuser
-
+from app.core.constants import SEM_NEEDED, LEC_NEEDED, FAC_NEEDED
 router = APIRouter()
 
 
@@ -42,14 +42,6 @@ def create_user(
     """
     Create new user. Only accessible to superusers.
     """
-    # Check if user already exists
-    user = db.query(User).filter(User.email == user_in.email).first()
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system",
-        )
-    
     user = db.query(User).filter(User.username == user_in.username).first()
     if user:
         raise HTTPException(
@@ -60,7 +52,6 @@ def create_user(
     # Create user object
     from app.core.security import get_password_hash
     user = User(
-        email=user_in.email,
         username=user_in.username,
         hashed_password=get_password_hash(user_in.password),
         first_name=user_in.first_name,
@@ -137,8 +128,6 @@ def update_user(
     # Update user fields
     if user_in.username:
         user.username = user_in.username
-    if user_in.email:
-        user.email = user_in.email
     if user_in.is_active is not None:
         user.is_active = user_in.is_active
     if user_in.is_staff is not None:
@@ -179,13 +168,11 @@ def prepare_user_schema(db: Session, user: User) -> UserSchema:
     
     # Add lecture counter
     lec_value = user.get_counter(AttendanceTypeEnum.lecture_attend.value, db)
-    lec_max = 8  # This should come from settings
-    counters.append(CounterSchema(counter_name="lec", value=lec_value, max_value=lec_max))
+    counters.append(CounterSchema(counter_name="lec", value=lec_value, max_value=LEC_NEEDED))
     
     # Add seminar counter
     sem_value = user.get_counter(AttendanceTypeEnum.seminar_attend.value, db)
-    sem_max = 5  # This should come from settings
-    counters.append(CounterSchema(counter_name="sem", value=sem_value, max_value=sem_max))
+    counters.append(CounterSchema(counter_name="sem", value=sem_value, max_value=SEM_NEEDED))
     
     # Add lab counter
     lab_value = user.get_counter(AttendanceTypeEnum.lab_pass.value, db)
@@ -194,8 +181,7 @@ def prepare_user_schema(db: Session, user: User) -> UserSchema:
     
     # Add faculty counter
     fac_value = user.get_counter(AttendanceTypeEnum.fac_attend.value, db)
-    fac_max = 4  # This should come from settings
-    counters.append(CounterSchema(counter_name="fac", value=fac_value, max_value=fac_max))
+    counters.append(CounterSchema(counter_name="fac", value=fac_value, max_value=FAC_NEEDED))
     
     # Calculate expected penalty (if not staff)
     expected_penalty = 0
@@ -206,7 +192,6 @@ def prepare_user_schema(db: Session, user: User) -> UserSchema:
     user_dict = {
         "id": user.id,
         "username": user.username,
-        "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
         "middle_name": user.middle_name,

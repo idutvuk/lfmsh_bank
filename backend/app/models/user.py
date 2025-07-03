@@ -3,22 +3,20 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.db.session import Base
-from app.core.constants import SIGN
+import app.core.constants as c
 
 
 class User(Base):
-    """User model based on Django's Account model"""
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(256), unique=True, index=True)
-    email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     
-    # Basic info
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
-    middle_name = Column(String(40), default="Not stated")
+    # identification info
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    middle_name = Column(String, nullable=True)
     
     # School-specific info
     balance = Column(Float, default=0)
@@ -43,6 +41,10 @@ class User(Base):
 
     # Relationships
     created_transactions = relationship("Transaction", back_populates="creator")
+    
+    # New fields
+    bio = Column(String(1024), default="", nullable=True)  # Биография
+    position = Column(String(256), default="", nullable=True)  # Должность
     
     # Count attendance by type
     def get_counter(self, counter_name, db):
@@ -82,29 +84,31 @@ class User(Base):
         if self.balance:
             return f"{self.short_name()} {self.get_balance()}"
         return self.short_name()
-        
-    def name_with_balance(self):
-        """Get name with balance"""
-        return f"{self.last_name} {self.first_name} {self.get_balance()}"
-        
-    def long_name(self):
-        """Get full name"""
-        return f"{self.last_name} {self.first_name}"
-        
+
+    # Гиричев А. А.
     def short_name(self):
         """Get short name with initials"""
         if self.first_name and self.middle_name:
             return f"{self.last_name} {self.first_name[0]}. {self.middle_name[0]}."
-        return self.last_name
-        
+        return f"{self.last_name} {self.first_name[0]}."
+
+    def name_with_balance(self):
+        """Get name with balance"""
+        return f"{self.last_name} {self.first_name} {self.get_balance()}"
+
+    def long_name(self):
+        """Get full name"""
+        return f"{self.last_name} {self.first_name}"
+
+
     def get_balance(self):
         """Format the balance with currency sign"""
         if abs(self.balance) > 9.99:
-            return f"{int(self.balance)}{SIGN}"
-        return f"{round(self.balance, 1)}{SIGN}"
+            return f"{int(self.balance)}{c.SIGN_BUCKS}"
+        return f"{round(self.balance, 1)}{c.SIGN_BUCKS}"
     
     # Money-related methods
-    def get_all_money(self, db):
+    def get_all_transactions(self, db):
         """Get all money transactions"""
         from app.models.transaction import TransactionRecipient
         
@@ -134,75 +138,64 @@ class User(Base):
         
     def get_sem_fine(self, db):
         """Calculate seminar fine"""
-        from app.core.constants import SEM_NOT_READ_PEN
-        return SEM_NOT_READ_PEN * max(0, 1 - self.get_counter('seminar_pass', db))
+        return c.SEM_NOT_READ_PEN * max(0, 1 - self.get_counter('seminar_pass', db))
         
     def get_lab_fine(self, db):
         """Calculate laboratory fine"""
-        from app.core.constants import LAB_PENALTY
-        return max(0, self.lab_needed() - self.get_counter('lab_pass', db)) * LAB_PENALTY
+        return max(0, self.lab_needed() - self.get_counter('lab_pass', db)) * c.LAB_PENALTY
         
     def get_lab_fine_equator(self, db):
         """Calculate laboratory fine at equator"""
-        from app.core.constants import LAB_PENALTY, LAB_PASS_NEEDED_EQUATOR
-        return max(0, (LAB_PASS_NEEDED_EQUATOR - self.get_counter('lab_pass', db))) * LAB_PENALTY
+        return max(0, (c.LAB_PASS_NEEDED_EQUATOR - self.get_counter('lab_pass', db))) * c.LAB_PENALTY
         
     def get_obl_study_fine(self, db):
         """Calculate obligatory study fine"""
-        from app.core.constants import (OBL_STUDY_NEEDED, INITIAL_STEP_OBL_STD, 
-                                       STEP_OBL_STD)
-        
+
         seminar_count = self.get_counter('seminar_attend', db)
         fac_count = self.get_counter('fac_attend', db)
         
-        deficit = max(0, OBL_STUDY_NEEDED - int(seminar_count + fac_count))
-        single_fine = INITIAL_STEP_OBL_STD
+        deficit = max(0, c.OBL_STUDY_NEEDED - int(seminar_count + fac_count))
+        single_fine = c.INITIAL_STEP_OBL_STD
         fine = 0
         
         for _ in range(deficit):
             fine += single_fine
-            single_fine += STEP_OBL_STD
+            single_fine += c.STEP_OBL_STD
             
         return fine
         
     def get_obl_study_fine_equator(self, db):
         """Calculate obligatory study fine at equator"""
-        from app.core.constants import (OBL_STUDY_NEEDED_EQUATOR, INITIAL_STEP_OBL_STD, 
-                                       STEP_OBL_STD)
-        
+
         seminar_count = self.get_counter('seminar_attend', db)
         fac_count = self.get_counter('fac_attend', db)
         
-        deficit = max(0, OBL_STUDY_NEEDED_EQUATOR - int(seminar_count + fac_count))
-        single_fine = INITIAL_STEP_OBL_STD
+        deficit = max(0, c.OBL_STUDY_NEEDED_EQUATOR - int(seminar_count + fac_count))
+        single_fine = c.INITIAL_STEP_OBL_STD
         fine = 0
         
         for _ in range(deficit):
             fine += single_fine
-            single_fine += STEP_OBL_STD
+            single_fine += c.STEP_OBL_STD
             
         return fine
         
     def get_fac_fine(self, db):
         """Calculate faculty fine"""
-        from app.core.constants import FAC_PENALTY
-        return max(0, (self.fac_needed() - self.get_counter('fac_pass', db))) * FAC_PENALTY
+        return max(0, (self.fac_needed() - self.get_counter('fac_pass', db))) * c.FAC_PENALTY
         
     def lab_needed(self):
         """Get required number of labs based on grade"""
-        from app.core.constants import LAB_PASS_NEEDED
-        return LAB_PASS_NEEDED.get(self.grade, 2)  # Default to 2 if grade not found
+        return c.LAB_NEEDED.get(self.grade, 2)  # Default to 2 if grade not found
         
     def fac_needed(self):
         """Get required number of faculty passes based on grade"""
-        from app.core.constants import FAC_PASS_NEEDED
-        return FAC_PASS_NEEDED.get(self.grade, 1)  # Default to 1 if grade not found
+        return c.FAC_PASS_NEEDED.get(self.grade, 1)  # Default to 1 if grade not found
         
     def get_next_missed_lec_penalty(self, db):
         """Calculate penalty for next missed lecture"""
-        from app.core.constants import (LECTURE_PENALTY_STEP, LECTURE_PENALTY_INITIAL)
-        return (self.get_counter('lecture_miss', db) * 
-                LECTURE_PENALTY_STEP + LECTURE_PENALTY_INITIAL)
+        return (self.get_counter('lecture_miss', db) *
+                c.LECTURE_PENALTY_STEP + c.LECTURE_PENALTY_INITIAL)
     
     # Data export methods
     def full_info_as_list(self):
@@ -214,7 +207,9 @@ class User(Base):
             self.username, 
             self.party, 
             self.grade, 
-            self.balance
+            self.balance,
+            self.position,
+            self.bio,
         ]
         
     def full_info_as_map(self, with_balance=True):
@@ -226,10 +221,12 @@ class User(Base):
             'username': self.username,
             'party': self.party,
             'grade': self.grade,
+            'position': self.position,
+            'bio': self.bio,
         }
         
         if with_balance:
-            result['balance'] = self.balance
+            result['balance'] = str(self.balance)
             
         return result
         
@@ -242,5 +239,7 @@ class User(Base):
             'username', 
             'party', 
             'grade',
-            'balance'
+            'balance',
+            'position',
+            'bio',
         ] 

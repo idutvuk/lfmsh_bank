@@ -28,7 +28,6 @@ def generate_openapi_spec():
     # Add additional OpenAPI metadata
     openapi_schema["info"]["contact"] = {
         "name": "LFMSH Team",
-        "email": "example@example.com"
     }
     
     openapi_schema["info"]["license"] = {

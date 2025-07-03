@@ -6,7 +6,6 @@
     "version": "0.1.0",
     "contact": {
       "name": "LFMSH Team",
-      "email": "example@example.com"
     },
     "license": {
       "name": "MIT",
@@ -872,18 +871,6 @@
           "username": {
             "type": "string",
             "title": "Username"
-          },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "email"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
           },
           "is_active": {
             "anyOf": [

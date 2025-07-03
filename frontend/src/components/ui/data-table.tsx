@@ -41,7 +41,6 @@ export type Payment = {
   id: string
   amount: number
   status: "pending" | "processing" | "success" | "failed"
-  email: string
 }
 export function DataTable<TData, TValue>({
   columns,

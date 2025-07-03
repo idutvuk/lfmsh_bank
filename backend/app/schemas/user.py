@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -13,7 +13,6 @@ class CounterSchema(BaseModel):
 # Shared properties
 class UserBase(BaseModel):
     username: str
-    email: Optional[EmailStr] = None
     is_active: Optional[bool] = True
 
 

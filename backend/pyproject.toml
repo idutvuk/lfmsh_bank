@@ -7,7 +7,7 @@ name = "lfmsh_bank_backend"
 version = "0.1.0"
 description = "FastAPI backend for LFMSH Bank System"
 authors = [
-  { name = "LFMSH Team", email = "example@example.com" }
+  { name = "LFMSH Team", email = "idutvuk@gmail.com" }
 ]
 dependencies = [
     "fastapi>=0.100.0",
@@ -19,7 +19,6 @@ dependencies = [
     "python-jose>=3.3.0",
     "passlib>=1.7.4",
     "python-dotenv>=1.0.0",
-    "email-validator>=2.0.0",
     "python-multipart>=0.0.6",
     "bcrypt>=4.0.1",
     "alembic>=1.11.1",

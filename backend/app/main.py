@@ -46,7 +46,6 @@ def create_test_users(db):
     test_users = [
         {
             "username": "girik",
-            "email": "girik@test.com",
             "first_name": "Саша",
             "last_name": "Гирик",
             "is_superuser": False,
@@ -56,7 +55,6 @@ def create_test_users(db):
         },
         {
             "username": "girix",
-            "email": "girix@test.com", 
             "first_name": "Александр",
             "last_name": "Гирикс",
             "is_superuser": False,
@@ -66,7 +64,6 @@ def create_test_users(db):
         },
         {
             "username": "bank_manager",
-            "email": "bank_manager@test.com",
             "first_name": "Банкир",
             "last_name": "ЛФМШ",
             "is_superuser": True,
@@ -87,7 +84,6 @@ def create_test_users(db):
         hashed_password = get_password_hash("r")
         new_user = User(
             username=user_data["username"],
-            email=user_data["email"],
             hashed_password=hashed_password,
             first_name=user_data["first_name"],
             last_name=user_data["last_name"],
