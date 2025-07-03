@@ -1,0 +1,24 @@
+# Используем официальный Node.js с pnpm
+FROM node:20-alpine
+
+# Устанавливаем pnpm глобально
+RUN npm install -g pnpm
+
+# Создаём рабочую директорию
+WORKDIR /app
+
+# Копируем манифесты для установки зависимостей
+COPY package.json pnpm-lock.yaml* ./
+
+# Опционально: если у вас .npmrc в корне проекта
+COPY .npmrc ./
+
+# Устанавливаем зависимости (hoisted mode для exFAT-дисков)
+RUN pnpm config set node-linker hoisted \
+ && pnpm install
+
+# Не копируем исходный код - он будет смонтирован через volume
+# COPY . .
+
+# Запускаем dev-сервер с дополнительными флагами для лучшей работы в Docker
+CMD ["pnpm", "run", "dev", "--host", "--port", "5173"] 

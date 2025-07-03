@@ -13,8 +13,17 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    allowedHosts: ['frontend', 'backend'],
+    allowedHosts: ['frontend', 'backend', 'localhost'],
     port: 5173,
+    hmr: {
+      host: 'localhost',
+      port: 80,
+      protocol: 'ws',
+    },
+    watch: {
+      usePolling: true,
+      interval: 1000,
+    },
     proxy: {
       '/api': {
         target: 'http://backend',
