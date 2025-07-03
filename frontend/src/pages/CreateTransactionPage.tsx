@@ -16,13 +16,90 @@ import {Search, X} from "lucide-react"
 import {getUsers, type UserListItem, createTransaction, getMe} from "@/services/api"
 import {Navbar} from "@/components/Navbar"
 import {Loading} from "@/components/loading"
-import {TransactionUserItem} from "@/components/TransactionUserItem"
 import {useNavigate, useSearchParams} from "react-router-dom"
+import { DataTable } from "@/components/ui/data-table"
+import { Link } from "react-router-dom"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ArrowUpDown } from "lucide-react"
+import type { ColumnDef, Table as ReactTable } from "@tanstack/react-table"
 
 interface UserTransactionListItem extends UserListItem {
     isSelected: boolean;
     bucks: number;
 }
+
+type TableMeta = {
+  onAmountChange?: (id: number, value: number) => void;
+};
+
+const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
+  {
+    id: "select",
+    header: ({ table }: { table: ReactTable<UserTransactionListItem> }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }: { row: any }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "name",
+    header: ({ column }: { column: any }) => (
+      <Button
+        type="button"
+        variant="noShadow"
+        size="sm"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Имя
+        <ArrowUpDown />
+      </Button>
+    ),
+    cell: ({ row }: { row: any }) => (
+      <Link to={`/user/${row.original.id}`}>{row.original.name}</Link>
+    ),
+  },
+  {
+    accessorKey: "party",
+    header: "Отряд",
+    cell: ({ row }: { row: any }) => <span>{row.original.party} отряд</span>,
+  },
+  {
+    accessorKey: "balance",
+    header: "Баланс",
+    cell: ({ row }: { row: any }) => <span>{row.original.balance}@</span>,
+  },
+  {
+    accessorKey: "bucks",
+    header: "Сумма",
+    cell: ({ row, table }: { row: any, table: ReactTable<UserTransactionListItem> }) => (
+      row.getIsSelected() ? (
+        <Input
+          type="number"
+          value={row.original.bucks}
+          onChange={e => {
+            const newAmount = Number(e.target.value);
+            (table.options.meta as TableMeta)?.onAmountChange?.(row.original.id, newAmount);
+          }}
+          className="w-20 text-right"
+        />
+      ) : null
+    ),
+  },
+];
 
 export default function CreateTransactionPage() {
     const [loading, setLoading] = useState(true)
@@ -35,6 +112,7 @@ export default function CreateTransactionPage() {
     const [description, setDescription] = useState("")
     const [transactionType, setTransactionType] = useState("")
     const [amount, setAmount] = useState<number>(0)
+    const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
 
     const typeParam = searchParams.get('type')
     const recipientIdParam = searchParams.get('recipientId')
@@ -98,55 +176,6 @@ export default function CreateTransactionPage() {
     //     //     prev.map(u => ({...u, bucks: 0}))
     //     // )
     // }, [transactionType])
-
-    const filteredUsers = userTransactions.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-
-    const handleSelectUser = (user: UserTransactionListItem) => {
-        setUserTransactions(prev => {
-            // For P2P transactions (pioneers), only allow one user to be selected
-            if (transactionType === "p2p") {
-                return prev.map(u => ({
-                    ...u,
-                    isSelected: u.id === user.id ? !u.isSelected : false,
-                    bucks: u.id === user.id && !u.isSelected ? amount : u.bucks
-                }))
-            } else {
-                // For other transaction types, allow multiple selections
-                return prev.map(u =>
-                    u.id === user.id
-                        ? {...u, isSelected: !u.isSelected, bucks: !u.isSelected ? amount : 0}
-                        : u
-                )
-            }
-        })
-    }
-
-    function userAmountChanged(uid: number, newAmount: number) {
-        if (isNaN(newAmount)) {
-            return; // игнорируем некорректный ввод
-        }
-        setUserTransactions(prev =>
-            prev.map(u =>
-                u.id === uid
-                    ? {...u, bucks: newAmount}
-                    : u
-            )
-        );
-    }
-
-    const handleCustomAmountChange = (uid: number) => {
-        setUserTransactions(prev =>
-            prev.map(u =>
-                u.id === uid
-                    ? {...u, bucks: amount}
-                    : u
-            )
-        )
-    }
-
-
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -267,7 +296,7 @@ export default function CreateTransactionPage() {
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                disabled={submitting || !description || !transactionType || amount === 0 || !userTransactions.some(u => u.isSelected)}
+                                disabled={submitting || !description || !transactionType || amount === 0 || selectedUserIds.length === 0}
                             >
                                 {submitting ? "Создание..." : "Создать перевод"}
                             </Button>
@@ -277,52 +306,36 @@ export default function CreateTransactionPage() {
                                 <CardTitle>Получатели</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="relative mb-4">
-                                    <Search
-                                        className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                                {loading ? (
+                                    <div className="p-4 text-center">
+                                        <Loading text="Загрузка списка пионеров..." />
+                                    </div>
+                                ) : (
+                                    <DataTable
+                                        columns={userColumns}
+                                        data={userTransactions}
+                                        filterKey="name"
+                                        filterPlaceholder="Найти жертву..."
+                                        rowSelectionMode={transactionType === "p2p" ? "single" : "multiple"}
+                                        onRowSelectionChange={(selectedIds: number[]) => {
+                                            setSelectedUserIds(selectedIds);
+                                            setUserTransactions(prev =>
+                                              prev.map(u => ({
+                                                ...u,
+                                                isSelected: selectedIds.includes(u.id)
+                                              }))
+                                            )
+                                        }}
+                                        onAmountChange={(uid: number, newAmount: number) => {
+                                            setUserTransactions(prev => prev.map(u => u.id === uid ? { ...u, bucks: newAmount } : u));
+                                        }}
+                                        emptyMessage={searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
+                                        searchQuery={searchQuery}
+                                        setSearchQuery={setSearchQuery}
                                     />
-                                    <Input
-                                        placeholder="Найти жертву..."
-                                        className="pl-10 pr-10"  // добавляем отступ справа
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                    {searchQuery && (
-                                        <X
-                                            onClick={() => setSearchQuery("")}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary"
-                                        />
-                                    )}
-                                </div>
-
-                                {/* User list with custom amount inputs */}
-                                <div className="rounded-md divide-y max-h-80 overflow-y-auto">
-                                    {loading ? (
-                                        <div className="p-4 text-center">
-                                            <Loading text="Загрузка списка пионеров..." />
-                                        </div>
-                                    ) : filteredUsers.length > 0 ? (
-                                        filteredUsers.map((user) => (
-                                            <TransactionUserItem
-                                                key={user.id}
-                                                user={user}
-                                                onSelect={handleSelectUser}
-                                                onAmountChange={userAmountChanged}
-                                                onResetAmount={handleCustomAmountChange}
-                                                defaultAmount={amount}
-                                                transactionType={transactionType}
-                                            />
-                                        ))
-                                    ) : (
-                                        <div className="p-4 text-center text-muted-foreground">
-                                            {searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </CardContent>
                         </Card>
-
-
                     </div>
                 </form>
             </div>

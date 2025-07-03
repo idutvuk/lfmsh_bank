@@ -17,7 +17,7 @@ interface TransactionUserItemProps {
     defaultAmount: number;
     transactionType?: string;
 }
-
+// todo delete
 export function TransactionUserItem({
     user,
     onSelect,
