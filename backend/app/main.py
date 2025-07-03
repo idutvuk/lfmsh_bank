@@ -37,31 +37,9 @@ async def health_check():
     return {"status": "ok"}
 
 def create_test_users(db):
-    """Create test users if TEST_MODE is enabled"""
     if not settings.TEST_MODE:
         return
-    
-    logger.info("=== TEST MODE ENABLED - CREATING TEST USERS ===")
-    
     test_users = [
-        {
-            "username": "girik",
-            "first_name": "Саша",
-            "last_name": "Гирик",
-            "is_superuser": False,
-            "is_staff": False,
-            "grade": 7,
-            "party": 4
-        },
-        {
-            "username": "girix",
-            "first_name": "Александр",
-            "last_name": "Гирикс",
-            "is_superuser": False,
-            "is_staff": True,
-            "grade": 0,
-            "party": 0
-        },
         {
             "username": "bank_manager",
             "first_name": "Банкир",

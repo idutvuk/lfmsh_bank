@@ -21,9 +21,9 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "python-multipart>=0.0.6",
     "bcrypt>=4.0.1",
-    "alembic>=1.11.1",
     "pyyaml>=6.0.2",
     "loguru>=0.7.0",
+    "transliterate>=1.10.2",
 ]
 
 [project.optional-dependencies]

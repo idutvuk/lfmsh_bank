@@ -40,6 +40,21 @@ class UserUpdate(UserBase):
     is_superuser: Optional[bool] = None
 
 
+# Properties for CSV import
+class UserCSVImport(BaseModel):
+    """Schema for CSV import of users"""
+    username: Optional[str] = None
+    last_name: str
+    first_name: str
+    middle_name: Optional[str] = None
+    party: Optional[int] = 0
+    grade: Optional[int] = 0
+    is_staff: bool = False
+    is_superuser: bool = False
+    bio: Optional[str] = None
+    position: Optional[str] = None
+
+
 # Properties shared by models stored in DB
 class UserInDBBase(UserBase):
     id: int
