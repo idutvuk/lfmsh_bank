@@ -27,7 +27,6 @@ services:
     build:
       context: ./frontend
       dockerfile: ../docker/frontend/Dockerfile.dev
-    image: bank-frontend:dev
     environment:
       - VITE_API_URL=/api/v1/
     volumes:
@@ -46,4 +45,6 @@ services:
       - "80:80"
     depends_on:
       - backend
-      - frontend 
+      - frontend
+
+
