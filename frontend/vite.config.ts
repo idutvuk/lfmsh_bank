@@ -12,15 +12,14 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
+    allowedHosts: ['frontend', 'backend'],
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://10.0.0.69:8000',
+        target: 'http://backend',
         changeOrigin: true,
-        // при необходимости убираем префикс:
-        rewrite: path => path.replace(/^\/api/, '/api'),
       },
     },
   },
-
-
 })

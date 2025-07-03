@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_PUBLIC_API_URL || "http://localhost:8000/api/v1/";
+const API_URL = import.meta.env.VITE_PUBLIC_API_URL || "/api/v1/";
 
 interface CommonOpts {
     headers: {
