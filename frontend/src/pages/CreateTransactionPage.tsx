@@ -240,14 +240,6 @@ export default function CreateTransactionPage() {
                                     </div>
                                 )}
 
-                                {!showTransactionTypeSelector && transactionType && (
-                                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                        <p className="text-blue-800 text-sm">
-                                            Тип перевода: <strong>Перевод между пионерами</strong>
-                                        </p>
-                                    </div>
-                                )}
-
                                 <div className="space-y-2">
                                     <Textarea
                                         id="description"

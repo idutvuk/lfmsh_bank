@@ -26,7 +26,6 @@ export function TransactionUserItem({
     defaultAmount,
     transactionType,
 }: TransactionUserItemProps) {
-    // Для штрафов показываем отрицательную сумму
     const displayAmount = transactionType === "fine" ? -user.bucks : user.bucks;
     
     return (

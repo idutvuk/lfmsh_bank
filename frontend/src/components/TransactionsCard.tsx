@@ -17,10 +17,12 @@ export function TransactionsCard({ transactions, isStaff }: TransactionsCardProp
     return null
   }
 
-  const displayedTransactions = showAllTransactions ? transactions : transactions.slice(0, 3)
+  const displayedTransactions = showAllTransactions ? transactions : transactions.sort((a, b) => {
+    return new Date(b.date_created).getTime() - new Date(a.date_created).getTime()
+  }).slice(0, 3)
 
   return (
-    <Card className="shadow-0 border-0">
+    <Card variant="clean">
       <CardHeader>
         <CardTitle className="text-lg flex justify-center">
           Мои транзакции

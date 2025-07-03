@@ -95,6 +95,8 @@ export interface UserData {
     balance: number;
     expected_penalty: number;
     counters: Counter[];
+    party: number;
+    is_active: boolean;
 }
 
 export interface UserListItem {

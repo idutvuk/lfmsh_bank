@@ -22,7 +22,7 @@ export function AttendanceCard({ userData }: AttendanceCardProps) {
   }
 
   return (
-    <Card>
+    <Card variant="clean">
       <CardHeader>
         <CardTitle className="text-lg">Посещаемость</CardTitle>
       </CardHeader>

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { User, Wallet, AlertTriangle, Send, Plus, Minus } from "lucide-react"
 import { type UserData } from "@/services/api"
+import { Badge } from "@/components/ui/badge"
 
 interface PioneerInfoCardProps {
   userData: UserData
@@ -24,16 +25,27 @@ export function PioneerInfoCard({
   const showStaffButtons = isStaffViewing && !isOwnProfile
 
   return (
-    <Card className="shadow-0 border-0">
+    <Card variant="clean">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5" />
           {userData.name}
+          <div className="flex gap-2 ml-2">
+            {userData.party > 0 && (
+              <Badge variant="default">{userData.party} отряд</Badge>
+            )}
+            {isOwnProfile === false && !userData.is_active && (
+              <Badge variant="neutral" className="bg-red-300">неактивен</Badge>
+            )}
+            <Badge variant={userData.staff ? "default" : "neutral"}>
+              {userData.staff ? "педсостав" : "пионер"}
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-          <Card className="bg-[#1e99a0]/10 border-0 shadow-0">
+          <Card variant="clean" className="bg-[#1e99a0]/10">
             <CardContent className="flex items-center gap-3 p-3">
               <Wallet className="h-6 w-6 text-[#1e99a0]" />
               <div>
@@ -44,7 +56,7 @@ export function PioneerInfoCard({
           </Card>
 
           {userData.expected_penalty > 0 && (
-            <Card className="bg-[#d84081]/10 border-0 shadow-0">
+            <Card variant="clean" className="bg-[#d84081]/10">
               <CardContent className="flex items-center gap-3 p-3">
                 <AlertTriangle className="h-6 w-6 text-[#d84081]" />
                 <div>
