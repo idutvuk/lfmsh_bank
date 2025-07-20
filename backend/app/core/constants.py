@@ -38,6 +38,9 @@ class States(Enum):
 class TransactionTypeEnum(Enum):
     p2p = "p2p"
     fine = "fine"
+    tax = "tax"
+    equatorial_fine = "equatorial_fine"
+    final_fine = "final_fine"
     activity = "activity"
     seminar = "seminar"
     lecture = "lecture"
@@ -70,6 +73,3 @@ class AttendanceBlockEnum(Enum):
     first = "first"
     second = "second"
     third = "third"
-    fourth = "fourth"
-    fifth = "fifth"
-    evening = "evening"
