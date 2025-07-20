@@ -15,10 +15,6 @@ def apply_daily_tax(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
 ):
-    """
-    Apply daily tax to all active users.
-    Only superusers can invoke this endpoint.
-    """
     logger.info(f"Applying daily tax: {DAILY_TAX_AMOUNT}@")
     
     # Get all active non-staff users (pioneers)
