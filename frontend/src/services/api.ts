@@ -306,3 +306,49 @@ export const declineTransaction = (id: number): Promise<Transaction> =>
     request<Transaction>(`transactions/${id}/decline`, {
         method: "POST"
     });
+
+// Seminar interfaces and functions
+export interface SeminarEvaluation {
+    contentQuality: number;
+    knowledgeQuality: number;
+    presentationQuality: number;
+    presentationQuality2: number;
+    presentationQuality3: number;
+    materials: number;
+    unusualThings: number;
+    discussion: number;
+    generalQuality: number;
+}
+
+export interface SeminarCreate {
+    speaker: string;
+    block: string;
+    description: string;
+    evaluation: SeminarEvaluation;
+    totalScore: number;
+    attendees: string[];
+}
+
+export interface Seminar {
+    id: number;
+    speaker: string;
+    speaker_name: string;
+    block: string;
+    evaluation: SeminarEvaluation;
+    totalScore: number;
+    attendees: string[];
+    date_created: string;
+    author: string;
+}
+
+// Seminar management
+export const createSeminar = async (data: SeminarCreate): Promise<any> => {
+    return request<any>("transactions/seminar/", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+};
+
+export const getSeminars = (): Promise<Seminar[]> => request<Seminar[]>("seminars/");
+
+export const getSeminarById = (id: number): Promise<Seminar> => request<Seminar>(`seminars/${id}/`);

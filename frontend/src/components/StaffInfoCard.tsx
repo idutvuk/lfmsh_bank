@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, Users, Edit, Upload, X } from "lucide-react"
+import { User, Users, Edit, Upload, X, GraduationCap } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
 import { uploadAvatar, deleteAvatar, getAvatarUrl, type UserData } from "@/services/api"
@@ -182,6 +182,14 @@ export function StaffInfoCard({ onNavigate, userData, onAvatarChange }: StaffInf
         >
           <Edit className="h-5 w-5 mr-2" />
           Создать транзакцию
+        </Button>
+
+        <Button 
+          className="h-12 w-full bg-primary hover:bg-primary/90"
+          onClick={() => onNavigate('/seminar')}
+        >
+          <GraduationCap className="h-5 w-5 mr-2" />
+          Семинар
         </Button>
       </CardContent>
     </Card>

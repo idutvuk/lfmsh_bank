@@ -5,6 +5,7 @@ import PioneersPage from "./pages/PioneersPage";
 import LoginPage from "./pages/LoginPage";
 import RulesPage from "./pages/RulesPage";
 import CreateTransactionPage from "./pages/CreateTransactionPage";
+import SeminarPage from "./pages/SeminarPage";
 import {ThemeProvider} from "@/ThemeProvider.tsx";
 
 const isAuthenticated = () => {
@@ -75,6 +76,15 @@ export default function App() {
           element={
             <PrivateRoute>
               <PioneersPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/seminar"
+          element={
+            <PrivateRoute>
+              <SeminarPage />
             </PrivateRoute>
           }
         />

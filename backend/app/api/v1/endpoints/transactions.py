@@ -202,6 +202,107 @@ def create_transaction_frontend(
         )
 
 
+@router.post("/seminar/")
+def create_seminar(
+    *,
+    db: Session = Depends(get_db),
+    seminar_data: dict,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Create a seminar as two transactions:
+    1. Award points to the speaker based on evaluation
+    2. Mark attendance for all attendees
+    """
+    # Only staff can create seminars
+    if not current_user.is_staff and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only staff can conduct seminars",
+        )
+    
+    logger.info(f"Creating seminar from {current_user.username}")
+    logger.info(f"Seminar data: {seminar_data}")
+    
+    try:
+        speaker_username = seminar_data.get("speaker")
+        description = seminar_data.get("description", "")
+        block = seminar_data.get("block", "")
+        total_score = seminar_data.get("totalScore", 0)
+        attendees = seminar_data.get("attendees", [])
+
+        # Find speaker
+        speaker = db.query(User).filter(User.username == speaker_username).first()
+        if not speaker:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Speaker {speaker_username} not found",
+            )
+        
+
+        # Transaction 1: Award points to speaker for conducting seminar
+        if total_score != 0:  # Only create transaction if there are points to award
+            speaker_transaction = Transaction.new_transaction(
+                creator=current_user,
+                transaction_type=TransactionTypeEnum.seminar,
+                description=description,
+                recipients=[{
+                    "username": speaker_username,
+                    "amount": total_score
+                }],
+                db=db
+            )
+            
+            # Auto-process the transaction since it's created by staff
+            speaker_transaction.process(db)
+            logger.info(f"Created speaker transaction {speaker_transaction.id} for {total_score} points")
+        
+        # Transaction 2: Mark seminar attendance for all attendees
+        if attendees:
+            # Create recipients for faculty attendance
+            attendance_recipients = []
+            for attendee_username in attendees:
+                attendee = db.query(User).filter(User.username == attendee_username).first()
+                if attendee:
+                    attendance_recipients.append({
+                        "username": attendee_username,
+                        "amount": 0  # No bucks for attendance, just counter increment
+                    })
+            
+            if attendance_recipients:
+                attendance_transaction = Transaction.new_transaction(
+                    creator=current_user,
+                    transaction_type=TransactionTypeEnum.fac_attend,
+                    description=f"Посещение семинара '{description}' (блок {block})",
+                    recipients=attendance_recipients,
+                    db=db
+                )
+                
+                # Auto-process the attendance transaction
+                attendance_transaction.process(db)
+                logger.info(f"Created attendance transaction {attendance_transaction.id} for {len(attendees)} attendees")
+        
+        # Return success response
+        response = {
+            "success": True,
+            "message": f"Семинар успешно проведен! Докладчик получил {total_score} баллов, {len(attendees)} участников отмечены.",
+            "speaker_points": total_score,
+            "attendees_count": len(attendees),
+            "block": block,
+            "description": description
+        }
+        
+        logger.info(f"Seminar creation completed successfully")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error creating seminar: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating seminar: {str(e)}",
+        )
+
+
 @router.get("/types/")
 def get_transaction_types():
     """

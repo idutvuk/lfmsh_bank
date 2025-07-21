@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, ChevronLeft, Search, X, Moon, Sun, LogOut } from "lucide-react";
+import { FileText, ChevronLeft, Search, X, Moon, Sun, LogOut, GraduationCap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { getUsers, type UserListItem } from "@/services/api";
@@ -12,6 +12,7 @@ interface NavbarProps {
   showRulesButton?: boolean;
   showSearch?: boolean;
   showTheme?: boolean;
+  showSeminarButton?: boolean;
   isStaff?: boolean;
   onLogout?: () => void;
   customTitle?: string;
@@ -23,6 +24,7 @@ export function Navbar({
   showRulesButton = false,
   showSearch = false,
   showTheme = false,
+  showSeminarButton = false,
   isStaff = false,
   onLogout,
   customTitle
@@ -166,6 +168,16 @@ export function Navbar({
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+          )}
+          {showSeminarButton && isStaff && (
+            <Button
+              variant="text"
+              className="bg-primary hover:bg-primary/90"
+              onClick={() => navigate('/seminar')}
+            >
+              <GraduationCap className="h-4 w-4 mr-1" />
+              Семинар
+            </Button>
           )}
           {showRulesButton && !isStaff && (
             <Button
