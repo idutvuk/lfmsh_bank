@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Check, X, AlertCircle } from "lucide-react"
+import { getAvatarUrl } from "@/services/api"
 import {
   Tooltip,
   TooltipContent,
@@ -137,7 +138,7 @@ export function TransactionItem({
           {/* Левая часть: аватар + автор + получатели */}
           <div className="flex items-start gap-2 sm:gap-4 w-full min-w-0">
             <Avatar className={`h-15 w-10 min-w-[40px] ${getAvatarBorderClass(authorParty)}`}>
-              <AvatarImage src={`/api/avatar/${author}`} alt={author} />
+              <AvatarImage src={getAvatarUrl(author, 'small')} alt={author} />
               <AvatarFallback>{author[0]}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 w-full">

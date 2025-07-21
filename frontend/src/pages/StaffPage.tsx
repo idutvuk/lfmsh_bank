@@ -44,6 +44,11 @@ export default function StaffPage() {
   const handleNavigate = (path: string) => {
     navigate(path)
   }
+  
+  // Handle avatar changes
+  const handleAvatarChange = (updatedUser: UserData) => {
+    setUserData(updatedUser)
+  }
 
   if (loading) {
     return (
@@ -79,6 +84,8 @@ export default function StaffPage() {
       <div className="w-full max-w-250 mx-auto py-6 space-y-4 min-h-[100dvh]">
         <StaffInfoCard
           onNavigate={handleNavigate} 
+          userData={userData}
+          onAvatarChange={handleAvatarChange}
         />
 
         {statistics && <StatisticsCard statistics={statistics} />}

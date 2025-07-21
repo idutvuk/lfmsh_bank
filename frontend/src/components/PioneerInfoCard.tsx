@@ -72,7 +72,7 @@ export function PioneerInfoCard({
 
     try {
       setIsUploading(true)
-      await uploadAvatar(userData.id, file)
+      await uploadAvatar(userData.username, file)
       toast.success('Аватар успешно обновлен')
       setHasAvatar(true)
       
@@ -98,7 +98,7 @@ export function PioneerInfoCard({
 
     try {
       setIsUploading(true)
-      await deleteAvatar(userData.id)
+      await deleteAvatar(userData.username)
       toast.success('Аватар удален')
       setHasAvatar(false)
       
@@ -145,16 +145,22 @@ export function PioneerInfoCard({
 
           {/* Avatar section */}
           <div className="relative">
-            <Avatar className="h-16 w-16 border-2 border-primary">
+            <div className="border-2 border-primary overflow-hidden rounded-md">
               {hasAvatar ? (
-                <AvatarImage src={getAvatarUrl(userData.username)} alt={userData.name} />
+                <img 
+                  src={getAvatarUrl(userData.username, 'large')} 
+                  alt={userData.name}
+                  className="h-24 w-24 object-cover" 
+                />
               ) : (
-                <AvatarFallback>{getInitials()}</AvatarFallback>
+                <div className="h-24 w-24 flex items-center justify-center bg-secondary-background text-foreground font-base">
+                  {getInitials()}
+                </div>
               )}
-            </Avatar>
+            </div>
             
             {/* Avatar controls - only show if it's the user's own profile */}
-            {isOwnProfile && (
+            {isOwnProfile && userData.staff && (
               <div className="absolute -bottom-2 -right-2 flex gap-1">
                 <Button 
                   size="icon"

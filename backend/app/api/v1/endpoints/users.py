@@ -168,27 +168,92 @@ def update_user(
     return prepare_user_schema(db, user)
 
 
-@router.post("/{user_id}/avatar", response_model=UserSchema)
+@router.post("/{username}/avatar", response_model=UserSchema)
 async def upload_user_avatar(
     *,
     db: Session = Depends(get_db),
-    user_id: int,
+    username: str,
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Upload user avatar.
+    Upload user avatar. Only staff can upload their own avatars.
     """
-    # Check permissions
-    if user_id != current_user.id and not current_user.is_staff and not current_user.is_superuser:
+    # Get user by username
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+    
+    # Check permissions - only allow staff to upload their own avatars
+    if (user.id != current_user.id or not current_user.is_staff) and not current_user.is_superuser:
         raise HTTPException(
             status_code=403,
             detail="Not enough permissions to update this user's avatar",
         )
     
-    # Get user
-    user = db.query(User).filter(User.id == user_id).first()
+    # Check file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be an image",
+        )
+    
+    # Upload avatar using username
+    await upload_avatar(file, username, background_tasks)
+    
+    return prepare_user_schema(db, user)
+
+
+@router.delete("/{username}/avatar", response_model=UserSchema)
+def delete_user_avatar(
+    *,
+    db: Session = Depends(get_db),
+    username: str,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Delete user avatar. Only staff can delete their own avatars.
+    """
+    # Get user by username
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+    
+    # Check permissions - only allow staff to delete their own avatars
+    if (user.id != current_user.id or not current_user.is_staff) and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions to delete this user's avatar",
+        )
+    
+    # Delete avatar using username
+    delete_avatar(username)
+    
+    return prepare_user_schema(db, user)
+
+
+@router.post("/admin/set-avatar/{target_username}", response_model=UserSchema)
+async def admin_set_user_avatar(
+    *,
+    db: Session = Depends(get_db),
+    target_username: str,
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_superuser),
+):
+    """
+    Administrator endpoint to set avatar for any user.
+    Only accessible to superusers.
+    """
+    # Get target user by username
+    user = db.query(User).filter(User.username == target_username).first()
     if not user:
         raise HTTPException(
             status_code=404,
@@ -203,38 +268,7 @@ async def upload_user_avatar(
         )
     
     # Upload avatar using username
-    await upload_avatar(file, user.username, background_tasks)
-    
-    return prepare_user_schema(db, user)
-
-
-@router.delete("/{user_id}/avatar", response_model=UserSchema)
-def delete_user_avatar(
-    *,
-    db: Session = Depends(get_db),
-    user_id: int,
-    current_user: User = Depends(get_current_active_user),
-):
-    """
-    Delete user avatar.
-    """
-    # Check permissions
-    if user_id != current_user.id and not current_user.is_staff and not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions to update this user's avatar",
-        )
-    
-    # Get user
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
-    
-    # Delete avatar using username
-    delete_avatar(user.username)
+    await upload_avatar(file, target_username, background_tasks)
     
     return prepare_user_schema(db, user)
 

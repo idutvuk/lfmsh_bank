@@ -253,12 +253,14 @@ export const getUsers = (): Promise<UserListItem[]> => request<UserListItem[]>("
 export const getUserById = (id: number): Promise<UserData> => request<UserData>(`users/${id}/`);
 
 // Avatar management - simplified to use username-based approach
-export const uploadAvatar = (userId: number, file: File): Promise<UserData> => 
-    uploadFile(`users/${userId}/avatar`, file);
-export const deleteAvatar = (userId: number): Promise<UserData> =>
-    request<UserData>(`users/${userId}/avatar`, {
+export const uploadAvatar = (username: string, file: File): Promise<UserData> => 
+    uploadFile(`users/${username}/avatar`, file);
+export const deleteAvatar = (username: string): Promise<UserData> =>
+    request<UserData>(`users/${username}/avatar`, {
         method: "DELETE"
     });
+export const adminSetUserAvatar = (username: string, file: File): Promise<UserData> => 
+    uploadFile(`users/admin/set-avatar/${username}`, file);
 
 // Helper function to get avatar URL by username and size
 export const getAvatarUrl = (username: string, size: string = 'medium'): string => 

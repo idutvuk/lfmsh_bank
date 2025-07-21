@@ -1,11 +1,11 @@
 "use client"
 import { useEffect, useState } from "react"
-import { getUsers, type UserListItem } from "../services/api";
+import { getUsers, getAvatarUrl, type UserListItem } from "../services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Background } from "@/components/Background"
 import { Navbar } from "@/components/Navbar"
 import { Loading } from "@/components/loading"
-import { User } from "lucide-react"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useNavigate } from "react-router-dom";
 
 export default function PioneersPage() {
@@ -34,7 +34,14 @@ export default function PioneersPage() {
     navigate(`/user/${userId}`);
   };
 
-
+  // Get initial letters for avatar fallback
+  const getInitials = (name: string) => {
+    const nameParts = name.split(' ');
+    if (nameParts.length >= 2) {
+      return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
 
   if (loading) {
     return (
@@ -69,8 +76,11 @@ export default function PioneersPage() {
               onClick={() => handleUserClick(user.id)}
             >
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <User className="h-5 w-5" />
+                <CardTitle className="text-lg flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={getAvatarUrl(user.username, 'small')} alt={user.name} />
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                  </Avatar>
                   {user.name}
                 </CardTitle>
               </CardHeader>
