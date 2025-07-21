@@ -508,3 +508,108 @@ def import_users_from_csv(
         )
     finally:
         file.file.close() 
+
+
+@router.post("/import-images", status_code=201)
+async def import_users_from_images(
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: User = Depends(get_current_active_superuser),
+):
+    """
+    Import users from image files. Only accessible to superusers.
+    The filename format should be:
+    username,last_name,first_name,middle_name,party,grade,is_staff,is_superuser,bio,position.jpg
+    
+    Empty values can be represented by leaving the field blank (e.g., username,,first_name)
+    """
+    imported_users = []
+    errors = []
+    
+    for file in files:
+        try:
+            # Ensure it's an image
+            if not file.content_type.startswith("image/"):
+                errors.append(f"File {file.filename}: Not an image")
+                continue
+                
+            # Parse filename
+            # Get base name without extension
+            filename_parts = file.filename.rsplit('.', 1)[0].split(',')
+            
+            # Check if we have enough parts
+            if len(filename_parts) < 3:  # Need at least username, last_name, first_name
+                errors.append(f"File {file.filename}: Invalid format, needs at least username,last_name,first_name")
+                continue
+                
+            # Extract data from filename
+            user_data = {
+                "username": filename_parts[0].strip() if filename_parts[0].strip() else None,
+                "last_name": filename_parts[1].strip() if len(filename_parts) > 1 and filename_parts[1].strip() else "",
+                "first_name": filename_parts[2].strip() if len(filename_parts) > 2 and filename_parts[2].strip() else "",
+                "middle_name": filename_parts[3].strip() if len(filename_parts) > 3 and filename_parts[3].strip() else None,
+                "party": int(filename_parts[4]) if len(filename_parts) > 4 and filename_parts[4].strip() else 0,
+                "grade": int(filename_parts[5]) if len(filename_parts) > 5 and filename_parts[5].strip() else 0,
+                "is_staff": filename_parts[6].lower() in ("true", "1", "yes") if len(filename_parts) > 6 and filename_parts[6].strip() else False,
+                "is_superuser": filename_parts[7].lower() in ("true", "1", "yes") if len(filename_parts) > 7 and filename_parts[7].strip() else False,
+                "bio": filename_parts[8].strip() if len(filename_parts) > 8 and filename_parts[8].strip() else None,
+                "position": filename_parts[9].strip() if len(filename_parts) > 9 and filename_parts[9].strip() else None
+            }
+            
+            # Generate username if not provided
+            if not user_data["username"]:
+                user_data["username"] = generate_username(
+                    user_data["last_name"],
+                    user_data["first_name"],
+                    user_data["middle_name"],
+                    db
+                )
+                
+            # Check if user already exists
+            existing_user = db.query(User).filter(User.username == user_data["username"]).first()
+            if existing_user:
+                errors.append(f"File {file.filename}: Username '{user_data['username']}' already exists")
+                continue
+                
+            # Create user
+            new_user = User(
+                username=user_data["username"],
+                hashed_password=get_password_hash("r"),  # Default password
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                middle_name=user_data["middle_name"],
+                party=user_data["party"],
+                grade=user_data["grade"],
+                is_staff=user_data["is_staff"],
+                is_superuser=user_data["is_superuser"],
+                bio=user_data["bio"],
+                position=user_data["position"]
+            )
+            
+            db.add(new_user)
+            db.flush()  # Get user ID without committing
+            
+            # Save and process avatar
+            await upload_avatar(file, user_data["username"], background_tasks)
+            
+            imported_users.append(user_data["username"])
+            
+        except Exception as e:
+            errors.append(f"File {file.filename}: {str(e)}")
+            continue
+    
+    # Commit all changes
+    try:
+        db.commit()
+        return {
+            "message": f"Successfully imported {len(imported_users)} users with avatars",
+            "imported_users": imported_users,
+            "errors": errors,
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error importing users: {str(e)}"
+        ) 

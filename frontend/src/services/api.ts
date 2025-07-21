@@ -246,11 +246,34 @@ async function uploadFile(endpoint: string, file: File): Promise<any> {
     }
 }
 
+// User management
 export const getMe = (): Promise<UserData> => request<UserData>("users/me/");
 export const getTransactions = (): Promise<Transaction[]> => request<Transaction[]>("transactions/");
 export const getStatistics = (): Promise<Statistics> => request<Statistics>("statistics/");
 export const getUsers = (): Promise<UserListItem[]> => request<UserListItem[]>("users/");
 export const getUserById = (id: number): Promise<UserData> => request<UserData>(`users/${id}/`);
+
+// Import users from images with metadata in filenames
+export const importUsersFromImages = (files: File[]): Promise<any> => {
+    const formData = new FormData();
+    files.forEach(file => {
+        formData.append('files', file);
+    });
+    
+    const commonOpts = getCommonOpts();
+    return fetch(`${API_URL}users/import-images`, {
+        method: 'POST',
+        headers: {
+            Authorization: commonOpts.headers.Authorization,
+        },
+        body: formData,
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error(`API error users/import-images: ${response.status}`);
+        }
+        return response.json();
+    });
+};
 
 // Avatar management - simplified to use username-based approach
 export const uploadAvatar = (username: string, file: File): Promise<UserData> => 
