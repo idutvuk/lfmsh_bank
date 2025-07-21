@@ -152,21 +152,23 @@ class Transaction(Base):
                         elif user_id:
                             user = db.query(User).filter(User.id == user_id).first()
                         else:
-                            continue
+                            raise ValueError(f"Invalid recipient data: {recipient_data}")
                         
-                        if user:
-                            recipient = TransactionRecipient(
-                                transaction_id=new_transaction.id,
-                                user_id=user.id,
-                                bucks=bucks,
-                                certs=certs,
-                                lab=lab,
-                                lec=lec,
-                                sem=sem,
-                                fac=fac,
-                                description=description
-                            )
-                            db.add(recipient)
+                        if not user:
+                            raise ValueError(f"User not found: {username or user_id}")
+
+                        recipient = TransactionRecipient(
+                            transaction_id=new_transaction.id,
+                            user_id=user.id,
+                            bucks=bucks,
+                            certs=certs,
+                            lab=lab,
+                            lec=lec,
+                            sem=sem,
+                            fac=fac,
+                            description=description
+                        )
+                        db.add(recipient)
                 
                 db.commit()
             

@@ -97,16 +97,14 @@ def read_user_me(
     return prepare_user_schema(db, current_user)
 
 
-@router.get("/{user_id}", response_model=UserSchema)
-def read_user_by_id(
-    user_id: int,
+@router.get("/{username}", response_model=UserSchema)
+def read_user_by_username(
+    username: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """
-    Get a specific user by id.
-    """
-    user = db.query(User).filter(User.id == user_id).first()
+
+    user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(
             status_code=404,
@@ -115,7 +113,7 @@ def read_user_by_id(
 
     # Only superusers/staff can access other users' profiles
     if (
-        user.id != current_user.id
+        user.username != current_user.username
         and not current_user.is_staff
         and not current_user.is_superuser
     ):
@@ -127,114 +125,103 @@ def read_user_by_id(
     return prepare_user_schema(db, user)
 
 
-@router.put("/{user_id}", response_model=UserSchema)
+@router.put("/{username}", response_model=UserSchema)
 def update_user(
     *,
     db: Session = Depends(get_db),
-    user_id: int,
+    username: str,
     user_in: UserUpdate,
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Update user information.
+    Update a user.
     """
-    # Only staff/superusers can update other users
-    if user_id != current_user.id and not current_user.is_staff and not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions",
-        )
-    
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found",
         )
+
+    # Only superusers can update other users, and only superusers can promote to superusers
+    if user.username != current_user.username and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions",
+        )
+    # Normal users can't change their admin status
+    if not current_user.is_superuser and (
+        user_in.is_superuser or user_in.is_staff
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions to change admin status",
+        )
+
+    # Update user
+    if user_in.password:
+        user.hashed_password = get_password_hash(user_in.password)
+    if user_in.first_name:
+        user.first_name = user_in.first_name
+    if user_in.last_name:
+        user.last_name = user_in.last_name
+    if user_in.middle_name:
+        user.middle_name = user_in.middle_name
+    if user_in.party is not None:
+        user.party = user_in.party
+    if user_in.grade is not None:
+        user.grade = user_in.grade
+    if user_in.bio is not None:
+        user.bio = user_in.bio
+    if user_in.position is not None:
+        user.position = user_in.position
+    if user_in.is_superuser is not None and current_user.is_superuser:
+        user.is_superuser = user_in.is_superuser
+    if user_in.is_staff is not None and current_user.is_superuser:
+        user.is_staff = user_in.is_staff
     
-    update_data = user_in.model_dump(exclude_unset=True)
-    
-    # Update user fields
-    for field, value in update_data.items():
-        if field in ["is_staff", "is_superuser", "is_active"]:
-            # Only superusers can update these fields
-            if not current_user.is_superuser:
-                continue
-        setattr(user, field, value)
-    
-    db.add(user)
     db.commit()
     db.refresh(user)
     return prepare_user_schema(db, user)
 
 
-@router.post("/{username}/avatar", response_model=UserSchema)
-async def upload_user_avatar(
+@router.patch("/{username}/avatar", response_model=UserSchema)
+async def update_user_avatar(
     *,
     db: Session = Depends(get_db),
     username: str,
-    file: UploadFile = File(...),
+    avatar: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user),
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_active_user),
 ):
     """
-    Upload user avatar. Only staff can upload their own avatars.
+    Update a user's avatar.
     """
-    # Get user by username
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found",
         )
-    
-    # Check permissions - only allow staff to upload their own avatars
-    if (user.id != current_user.id or not current_user.is_staff) and not current_user.is_superuser:
+
+    # Only superusers can update other users
+    if user.username != current_user.username and not current_user.is_superuser:
         raise HTTPException(
             status_code=403,
-            detail="Not enough permissions to update this user's avatar",
+            detail="Not enough permissions",
         )
-    
-    # Check file type
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400,
-            detail="File must be an image",
-        )
-    
-    # Upload avatar using username
-    await upload_avatar(file, username, background_tasks)
-    
-    return prepare_user_schema(db, user)
 
+    # Delete old avatar if exists
+    if hasattr(user, 'avatar') and user.avatar:
+        background_tasks.add_task(delete_avatar, user.avatar)
 
-@router.delete("/{username}/avatar", response_model=UserSchema)
-def delete_user_avatar(
-    *,
-    db: Session = Depends(get_db),
-    username: str,
-    current_user: User = Depends(get_current_active_user),
-):
-    """
-    Delete user avatar. Only staff can delete their own avatars.
-    """
-    # Get user by username
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
+    # Upload new avatar
+    avatar_name = await upload_avatar(avatar, user.username)
     
-    # Check permissions - only allow staff to delete their own avatars
-    if (user.id != current_user.id or not current_user.is_staff) and not current_user.is_superuser:
-        raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions to delete this user's avatar",
-        )
-    
-    # Delete avatar using username
-    delete_avatar(username)
+    # Update user avatar
+    user.avatar = avatar_name
+    db.commit()
+    db.refresh(user)
     
     return prepare_user_schema(db, user)
 
@@ -354,12 +341,12 @@ def prepare_user_list_item(user: User) -> UserListItem:
 
 
 def generate_username(
-    last_name: str, first_name: str, middle_name: str = None, db: Session = None
+    last_name: str, first_name: str, middle_name: str|None = None, db: Session = None
 ) -> str:
     # приведение к нижнему регистру
-    base = translit(last_name.strip().lower(), "ru", reversed=True)
-    first_initial = translit(first_name.strip().lower()[0], "ru", reversed=True)
-    middle_initial = translit(middle_name.strip().lower()[0] if middle_name else "", "ru", reversed=True)
+    base = translit(last_name.strip().lower(), "ru", reversed=True).replace("`", "")
+    first_initial = translit(first_name.strip().lower()[0], "ru", reversed=True).replace("`", "")
+    middle_initial = translit(middle_name.strip().lower()[0] if middle_name else "", "ru", reversed=True).replace("`", "")
 
     username = base
     candidate = username

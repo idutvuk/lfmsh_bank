@@ -118,9 +118,8 @@ export function TransactionItem({
   // Получатели после стрелки
   const renderedReceivers = () => {
     if (!showReceivers) return null
-    return receivers.map((r, idx) => (
-      <span key={r.username} className="flex items-center gap-1">
-        {idx > 0 && <span className="mx-1">→</span>}
+    return receivers.map((r) => (
+      <span key={r.username} className="flex items-center gap-2">
         <a
           href={`/user/${r.username}`}
           className="text-sm hover:underline"
@@ -144,7 +143,14 @@ export function TransactionItem({
             <div className="min-w-0 w-full">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 justify-between w-full min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
-                  <p className="font-medium truncate max-w-[120px] sm:max-w-[180px]" title={author}>{author}</p>
+                  <span key={author} className="flex items-center gap-2">
+                      <a
+                        href={`/user/${author}`}
+                        className="text-sm hover:underline"
+                      >
+                        {author}
+                      </a>
+                    </span>
                   {showReceivers && (
                     <span className="flex items-center gap-1 min-w-0">
                       <span className="mx-1">→</span>

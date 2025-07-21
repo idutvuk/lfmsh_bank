@@ -79,7 +79,7 @@ export function Navbar({
   }, []);
 
   const handleUserSelect = (user: UserListItem) => {
-    navigate(`/user/${user.id}`);
+    navigate(`/user/${user.username}`);
     setSearchQuery("");
     setShowSearchResults(false);
   };

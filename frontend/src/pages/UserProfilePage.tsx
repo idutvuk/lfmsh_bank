@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { getUserById, getMe, type UserData } from "../services/api"
+import { getUserByUsername, getMe, type UserData } from "../services/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Background } from "@/components/Background"
@@ -14,16 +14,16 @@ export default function UserProfilePage() {
   const [currentUser, setCurrentUser] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
-  const { userId } = useParams<{ userId: string }>()
+  const { username } = useParams<{ username: string }>()
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!userId) return
+      if (!username) return
       
       setLoading(true)
       try {
         const [user, me] = await Promise.all([
-          getUserById(parseInt(userId)),
+          getUserByUsername(username),
           getMe()
         ])
  
@@ -36,7 +36,7 @@ export default function UserProfilePage() {
       }
     }
     fetchData()
-  }, [userId])
+  }, [username])
 
   const getCounterLabel = (counterName: string) => {
     const labels: Record<string, string> = {
@@ -60,12 +60,12 @@ export default function UserProfilePage() {
 
   const handleReward = () => {
     // Navigate to create transaction page with reward type and recipient
-    navigate(`/create-transfer?type=general&recipientId=${userData?.id}`)
+    navigate(`/create-transfer?type=general&recipient=${userData?.username}`)
   }
 
   const handlePenalty = () => {
     // Navigate to create transaction page with fine type and recipient
-    navigate(`/create-transfer?type=fine&recipientId=${userData?.id}`)
+    navigate(`/create-transfer?type=fine&recipient=${userData?.username}`)
   }
   
   // Handle avatar changes

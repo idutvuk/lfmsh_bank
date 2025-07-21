@@ -29,7 +29,7 @@ interface UserTransactionListItem extends UserListItem {
 }
 
 type TableMeta = {
-  onAmountChange?: (id: number, value: number) => void;
+  onAmountChange?: (username: string, value: number) => void;
 };
 
 const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
@@ -69,7 +69,7 @@ const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
       </Button>
     ),
     cell: ({ row }: { row: any }) => (
-      <Link to={`/user/${row.original.id}`}>{row.original.name}</Link>
+      <Link to={`/user/${row.original.username}`}>{row.original.name}</Link>
     ),
   },
   {
@@ -92,7 +92,7 @@ const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
           value={row.original.bucks}
           onChange={e => {
             const newAmount = Number(e.target.value);
-            (table.options.meta as TableMeta)?.onAmountChange?.(row.original.id, newAmount);
+            (table.options.meta as TableMeta)?.onAmountChange?.(row.original.username, newAmount);
           }}
           className="w-20 text-right"
         />
@@ -112,10 +112,10 @@ export default function CreateTransactionPage() {
     const [description, setDescription] = useState("")
     const [transactionType, setTransactionType] = useState("")
     const [amount, setAmount] = useState<number>(0)
-    const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
+    const [selectedUsernames, setSelectedUsernames] = useState<string[]>([])
 
     const typeParam = searchParams.get('type')
-    const recipientIdParam = searchParams.get('recipientId')
+    const recipientParam = searchParams.get('recipient')
 
     useEffect(() => {
         const fetchData = async () => {
@@ -150,13 +150,12 @@ export default function CreateTransactionPage() {
                 }
 
                 // Auto-select recipient if provided in URL
-                if (recipientIdParam) {
-                    const recipientId = parseInt(recipientIdParam)
+                if (recipientParam) {
                     setUserTransactions(prev => 
                         prev.map(user => ({
                             ...user,
-                            isSelected: user.id === recipientId,
-                            bucks: user.id === recipientId ? amount : 0
+                            isSelected: user.username === recipientParam,
+                            bucks: user.username === recipientParam ? amount : 0
                         }))
                     )
                 }
@@ -168,7 +167,7 @@ export default function CreateTransactionPage() {
         }
 
         fetchData()
-    }, [typeParam, recipientIdParam])
+    }, [typeParam, recipientParam])
 
     // Reset selection when transaction type changes
     // useEffect(() => {
@@ -196,7 +195,7 @@ export default function CreateTransactionPage() {
                 type: transactionType,
                 description: description,
                 recipients: selectedUsers.map(user => ({
-                    id: user.id,
+                    username: user.username,
                     amount: isAttendanceType
                         ? 0
                         : user.bucks
@@ -296,7 +295,7 @@ export default function CreateTransactionPage() {
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                disabled={submitting || !description || !transactionType || amount === 0 || selectedUserIds.length === 0}
+                                disabled={submitting || !description || !transactionType || amount === 0 || selectedUsernames.length === 0}
                             >
                                 {submitting ? "Создание..." : "Создать перевод"}
                             </Button>
@@ -317,17 +316,17 @@ export default function CreateTransactionPage() {
                                         filterKey="name"
                                         filterPlaceholder="Найти жертву..."
                                         rowSelectionMode={transactionType === "p2p" ? "single" : "multiple"}
-                                        onRowSelectionChange={(selectedIds: number[]) => {
-                                            setSelectedUserIds(selectedIds);
+                                        onRowSelectionChange={(selectedUsernames: string[]) => {
+                                            setSelectedUsernames(selectedUsernames);
                                             setUserTransactions(prev =>
                                               prev.map(u => ({
                                                 ...u,
-                                                isSelected: selectedIds.includes(u.id)
+                                                isSelected: selectedUsernames.includes(u.username)
                                               }))
                                             )
                                         }}
-                                        onAmountChange={(uid: number, newAmount: number) => {
-                                            setUserTransactions(prev => prev.map(u => u.id === uid ? { ...u, bucks: newAmount } : u));
+                                        onAmountChange={(username: string, newAmount: number) => {
+                                            setUserTransactions(prev => prev.map(u => u.username === username ? { ...u, bucks: newAmount } : u));
                                         }}
                                         emptyMessage={searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
                                         searchQuery={searchQuery}

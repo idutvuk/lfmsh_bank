@@ -30,8 +30,8 @@ export default function PioneersPage() {
     fetchUsers();
   }, []);
 
-  const handleUserClick = (userId: number) => {
-    navigate(`/user/${userId}`);
+  const handleUserClick = (username: string) => {
+    navigate(`/user/${username}`);
   };
 
   // Get initial letters for avatar fallback
@@ -71,9 +71,9 @@ export default function PioneersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {users.map((user) => (
             <Card
-              key={user.id}
+              key={user.username}
               className="cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50/50"
-              onClick={() => handleUserClick(user.id)}
+              onClick={() => handleUserClick(user.username)}
             >
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-3">
