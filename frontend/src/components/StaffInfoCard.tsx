@@ -136,21 +136,23 @@ export function StaffInfoCard({ onNavigate, userData, onAvatarChange }: StaffInf
             <div className="absolute -bottom-2 -right-2 flex gap-1">
               <Button 
                 size="icon"
-                className="h-7 w-7 rounded-full bg-background"
+                variant="noShadow"
+                className="h-7 w-7 rounded-full bg-background text-destructive"
                 onClick={handleAvatarUploadClick}
                 disabled={isUploading}
               >
-                <Upload className="h-4 w-4" />
+                <Upload className="h-4 w-4 text-foreground"/>
               </Button>
               
               {hasAvatar && (
                 <Button 
                   size="icon"
+                  variant="noShadow"
                   className="h-7 w-7 rounded-full bg-background text-destructive"
                   onClick={handleDeleteAvatar}
                   disabled={isUploading}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 text-foreground" />
                 </Button>
               )}
               
