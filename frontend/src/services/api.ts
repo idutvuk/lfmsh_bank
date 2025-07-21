@@ -197,11 +197,74 @@ async function request<T>(endpoint: string, opts?: RequestInit): Promise<T> {
     }
 }
 
+// File upload helper function
+async function uploadFile(endpoint: string, file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const commonOpts = getCommonOpts();
+        const opts = {
+            method: 'POST',
+            headers: {
+                // Don't include Content-Type for multipart/form-data
+                Authorization: commonOpts.headers.Authorization,
+            },
+            body: formData,
+        };
+        
+        const res = await fetch(`${API_URL}${endpoint}`, opts);
+        
+        if (res.status === 401) {
+            // Token expired, attempt to refresh
+            await refreshTokenIfNeeded();
+            // Retry with new token
+            const newOpts = getCommonOpts();
+            const newUploadOpts = {
+                method: 'POST',
+                headers: {
+                    Authorization: newOpts.headers.Authorization,
+                },
+                body: formData,
+            };
+            const newRes = await fetch(`${API_URL}${endpoint}`, newUploadOpts);
+            
+            if (!newRes.ok) {
+                throw new Error(`API error ${endpoint}: ${newRes.status}`);
+            }
+            return newRes.json();
+        }
+        
+        if (!res.ok) {
+            throw new Error(`API error ${endpoint}: ${res.status}`);
+        }
+        
+        return res.json();
+    } catch (error) {
+        console.error(`Error in API request to ${endpoint}:`, error);
+        throw error;
+    }
+}
+
 export const getMe = (): Promise<UserData> => request<UserData>("users/me/");
 export const getTransactions = (): Promise<Transaction[]> => request<Transaction[]>("transactions/");
 export const getStatistics = (): Promise<Statistics> => request<Statistics>("statistics/");
 export const getUsers = (): Promise<UserListItem[]> => request<UserListItem[]>("users/");
 export const getUserById = (id: number): Promise<UserData> => request<UserData>(`users/${id}/`);
+
+// Avatar management - simplified to use username-based approach
+export const uploadAvatar = (userId: number, file: File): Promise<UserData> => 
+    uploadFile(`users/${userId}/avatar`, file);
+export const deleteAvatar = (userId: number): Promise<UserData> =>
+    request<UserData>(`users/${userId}/avatar`, {
+        method: "DELETE"
+    });
+
+// Helper function to get avatar URL by username and size
+export const getAvatarUrl = (username: string, size: string = 'medium'): string => 
+    `/media/avatars/${username}${size === 'original' ? '' : '_' + size}.png`;
+
+// Transaction management
 export const createTransaction = (data: TransactionCreate): Promise<Transaction> =>
     request<Transaction>("transactions/create/", {
         method: "POST",

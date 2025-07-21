@@ -24,6 +24,8 @@ dependencies = [
     "pyyaml>=6.0.2",
     "loguru>=0.7.0",
     "transliterate>=1.10.2",
+    "pillow>=10.0.0",
+    "aiofiles>=23.2.1",
 ]
 
 [project.optional-dependencies]

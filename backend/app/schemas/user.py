@@ -78,7 +78,6 @@ class User(UserInDBBase):
     staff: bool = False
     expected_penalty: float = 0
     counters: List[CounterSchema] = []
-    avatar: Optional[str] = None
 
     class Config:
         from_attributes = True

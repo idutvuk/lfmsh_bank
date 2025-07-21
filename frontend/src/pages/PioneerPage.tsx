@@ -47,6 +47,11 @@ export default function PioneerPage() {
   const handleNavigate = (path: string) => {
     navigate(path)
   }
+  
+  // Handle avatar changes
+  const handleAvatarChange = (updatedUser: UserData) => {
+    setUserData(updatedUser)
+  }
 
   if (loading) {
     return (
@@ -84,6 +89,7 @@ export default function PioneerPage() {
           statistics={statistics} 
           onNavigate={handleNavigate}
           isOwnProfile={true}
+          onAvatarChange={handleAvatarChange}
         />
         <TransactionsCard 
           transactions={transactions} 

@@ -26,6 +26,7 @@ export default function UserProfilePage() {
           getUserById(parseInt(userId)),
           getMe()
         ])
+ 
         setUserData(user)
         setCurrentUser(me)
       } catch (err) {
@@ -65,6 +66,11 @@ export default function UserProfilePage() {
   const handlePenalty = () => {
     // Navigate to create transaction page with fine type and recipient
     navigate(`/create-transfer?type=fine&recipientId=${userData?.id}`)
+  }
+  
+  // Handle avatar changes
+  const handleAvatarChange = (updatedUser: UserData) => {
+    setUserData(updatedUser)
   }
 
   if (loading) {
@@ -110,6 +116,7 @@ export default function UserProfilePage() {
           isStaffViewing={isStaffViewing}
           onReward={handleReward}
           onPenalty={handlePenalty}
+          onAvatarChange={handleAvatarChange}
         />
 
         {/* Counters */}

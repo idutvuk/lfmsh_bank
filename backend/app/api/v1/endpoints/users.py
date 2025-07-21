@@ -2,7 +2,7 @@ from typing import List
 import csv
 import io
 from transliterate import translit
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -17,6 +17,7 @@ from app.schemas.user import (
 from app.api.v1.deps import get_current_active_user, get_current_active_superuser
 from app.core.constants import SEM_NEEDED, LEC_NEEDED, FAC_NEEDED
 from app.core.security import get_password_hash
+from app.core.media import upload_avatar, delete_avatar
 
 router = APIRouter()
 
@@ -132,44 +133,109 @@ def update_user(
     db: Session = Depends(get_db),
     user_id: int,
     user_in: UserUpdate,
-    current_user: User = Depends(get_current_active_superuser),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
-    Update a user. Only accessible to superusers.
+    Update user information.
     """
+    # Only staff/superusers can update other users
+    if user_id != current_user.id and not current_user.is_staff and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions",
+        )
+    
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
             status_code=404,
             detail="User not found",
         )
-
+    
+    update_data = user_in.model_dump(exclude_unset=True)
+    
     # Update user fields
-    if user_in.username:
-        user.username = user_in.username
-    if user_in.is_active is not None:
-        user.is_active = user_in.is_active
-    if user_in.is_staff is not None:
-        user.is_staff = user_in.is_staff
-    if user_in.is_superuser is not None:
-        user.is_superuser = user_in.is_superuser
-    if user_in.first_name:
-        user.first_name = user_in.first_name
-    if user_in.last_name:
-        user.last_name = user_in.last_name
-    if user_in.middle_name:
-        user.middle_name = user_in.middle_name
-    if user_in.party is not None:
-        user.party = user_in.party
-    if user_in.grade is not None:
-        user.grade = user_in.grade
-    if user_in.password:
-        user.hashed_password = get_password_hash(user_in.password)
-
+    for field, value in update_data.items():
+        if field in ["is_staff", "is_superuser", "is_active"]:
+            # Only superusers can update these fields
+            if not current_user.is_superuser:
+                continue
+        setattr(user, field, value)
+    
     db.add(user)
     db.commit()
     db.refresh(user)
+    return prepare_user_schema(db, user)
 
+
+@router.post("/{user_id}/avatar", response_model=UserSchema)
+async def upload_user_avatar(
+    *,
+    db: Session = Depends(get_db),
+    user_id: int,
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Upload user avatar.
+    """
+    # Check permissions
+    if user_id != current_user.id and not current_user.is_staff and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions to update this user's avatar",
+        )
+    
+    # Get user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+    
+    # Check file type
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="File must be an image",
+        )
+    
+    # Upload avatar using username
+    await upload_avatar(file, user.username, background_tasks)
+    
+    return prepare_user_schema(db, user)
+
+
+@router.delete("/{user_id}/avatar", response_model=UserSchema)
+def delete_user_avatar(
+    *,
+    db: Session = Depends(get_db),
+    user_id: int,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Delete user avatar.
+    """
+    # Check permissions
+    if user_id != current_user.id and not current_user.is_staff and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions to update this user's avatar",
+        )
+    
+    # Get user
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+    
+    # Delete avatar using username
+    delete_avatar(user.username)
+    
     return prepare_user_schema(db, user)
 
 
