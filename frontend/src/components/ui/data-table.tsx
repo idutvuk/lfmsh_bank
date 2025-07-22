@@ -96,7 +96,7 @@ export function DataTable<TData, TValue>({
 
   React.useEffect(() => {
     if (onRowSelectionChange) {
-      const selectedIds = table.getSelectedRowModel().rows.map(r => r.original.id)
+      const selectedIds = table.getSelectedRowModel().rows.map(r => (r.original as any).id)
       onRowSelectionChange(selectedIds)
     }
     // eslint-disable-next-line
@@ -118,32 +118,6 @@ export function DataTable<TData, TValue>({
           onChange={event => setSearchQuery ? setSearchQuery(event.target.value) : table.getColumn(filterKey)?.setFilterValue(event.target.value)}
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="noShadow" className="ml-auto">
-              Columns <ChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
       <div>
         <Table>
@@ -205,6 +179,7 @@ export function DataTable<TData, TValue>({
         </div>
         <div className="space-x-2">
           <Button
+            type="button"
             variant="noShadow"
             size="sm"
             onClick={() => table.getColumn("party")?.setFilterValue(1)}
@@ -212,6 +187,7 @@ export function DataTable<TData, TValue>({
             1 отряд
           </Button>
           <Button
+            type="button"
             variant="noShadow"
             size="sm"
             onClick={() => table.getColumn("party")?.setFilterValue(2)}
@@ -219,6 +195,7 @@ export function DataTable<TData, TValue>({
             2 отряд
           </Button>
           <Button
+            type="button"
             variant="noShadow"
             size="sm"
             onClick={() => table.getColumn("party")?.setFilterValue(3)}
@@ -226,6 +203,7 @@ export function DataTable<TData, TValue>({
             3 отряд
           </Button>
           <Button
+            type="button"
             variant="noShadow"
             size="sm"
             onClick={() => table.getColumn("party")?.setFilterValue(4)}
@@ -233,6 +211,7 @@ export function DataTable<TData, TValue>({
             4 отряд
           </Button>
           <Button
+            type="button"
             variant="noShadow"
             size="sm"
             onClick={() => table.getColumn("party")?.setFilterValue("")}

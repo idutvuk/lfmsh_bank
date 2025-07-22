@@ -8,8 +8,8 @@ services:
     env_file: .env
     volumes:
       - pg-data:/var/lib/postgresql/data
-    ports:
-        - "5432:5432"
+    expose:
+      - "8000"
 
   backend:
     build:
@@ -23,15 +23,20 @@ services:
       - media_volume:/var/www/media
     depends_on:
       - db
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: ../docker/frontend/Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Prevent overwriting node_modules
     environment:
-      - VITE_API_URL=http://localhost:8000/api/v1/
+      - VITE_API_URL=/api/v1/
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
     depends_on:
       - backend
     expose:
@@ -42,20 +47,9 @@ services:
     volumes:
       - media_volume:/var/www/media
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     depends_on:
       - backend
       - frontend
 
-
-
-  adminer:
-    image: adminneoorg/adminneo:devel
-    expose:
-      - "8080"
-    depends_on:
-      - db
-    environment:
-      - NEO_DEFAULT_SERVER=db
-      - NEO_DEFAULT_DATABASE=$POSTGRES_DB

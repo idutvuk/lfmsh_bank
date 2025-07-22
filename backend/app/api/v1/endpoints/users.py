@@ -445,9 +445,9 @@ def generate_username(
     last_name: str, first_name: str, middle_name: str|None = None, db: Session = None
 ) -> str:
     # приведение к нижнему регистру
-    base = translit(last_name.strip().lower(), "ru", reversed=True).replace("`", "")
-    first_initial = translit(first_name.strip().lower()[0], "ru", reversed=True).replace("`", "")
-    middle_initial = translit(middle_name.strip().lower()[0] if middle_name else "", "ru", reversed=True).replace("`", "")
+    base = translit(last_name.strip().lower(), "ru", reversed=True).replace("'", "")
+    first_initial = translit(first_name.strip().lower()[0], "ru", reversed=True).replace("'", "")
+    middle_initial = translit(middle_name.strip().lower()[0] if middle_name else "", "ru", reversed=True).replace("'", "")
 
     username = base
     candidate = username

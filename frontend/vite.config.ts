@@ -15,6 +15,10 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: ['frontend', 'backend'],
     port: 5173,
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
     proxy: {
       '/api': {
         target: 'http://backend',

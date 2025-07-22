@@ -86,6 +86,13 @@ const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
         {row.original.party} отряд
       </span>
     ),
+    filterFn: (row, columnId, filterValue) => {
+      if (filterValue === "" || filterValue === null || filterValue === undefined) {
+        return true
+      }
+      const cellValue = row.getValue(columnId)
+      return cellValue === filterValue
+    },
   },
   {
     accessorKey: "balance",

@@ -97,6 +97,13 @@ const attendanceColumns: ColumnDef<UserAttendanceItem, any>[] = [
         {row.original.party} отряд
       </span>
     ),
+    filterFn: (row, columnId, filterValue) => {
+      if (filterValue === "" || filterValue === null || filterValue === undefined) {
+        return true
+      }
+      const cellValue = row.getValue(columnId)
+      return cellValue === filterValue
+    },
   },
 ];
 
