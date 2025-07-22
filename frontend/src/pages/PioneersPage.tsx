@@ -75,27 +75,19 @@ export default function PioneersPage() {
               className="cursor-pointer hover:shadow-lg transition-shadow duration-200 hover:bg-gray-50/50"
               onClick={() => handleUserClick(user.username)}
             >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={getAvatarUrl(user.username, 'small')} alt={user.name} />
-                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                  </Avatar>
-                  {user.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Логин:</span>
-                  <span className="text-sm font-medium">{user.username}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Отряд:</span>
-                  <span className="text-sm font-medium">{user.party}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Баланс:</span>
-                  <span className="text-sm font-bold text-[#1e99a0]">{user.balance}@</span>
+              <CardContent className="p-4 flex gap-4">
+                <Avatar className="h-20 w-20 flex-shrink-0">
+                  <AvatarImage src={getAvatarUrl(user.username, 'medium')} alt={user.name} />
+                  <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold">{user.name} (@{user.username})</h3>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-sm text-muted-foreground">{user.party} отряд</div>
+                    <div className="text-2xl font-bold text-[#1e99a0]">{user.balance}@</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

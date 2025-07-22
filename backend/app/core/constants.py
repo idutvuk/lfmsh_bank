@@ -19,7 +19,7 @@ LECTURE_PENALTY_INITIAL = 10
 
 # limits
 LAB_NEEDED = {8: 3, 9: 3, 10: 2}
-FAC_NEEDED = 20 # at lfmsh 38 todo addd equator handling
+FAC_NEEDED = 20 # at lfmsh 38
 SEM_NEEDED = 1
 LEC_NEEDED = 13 # at lfmsh 38
 

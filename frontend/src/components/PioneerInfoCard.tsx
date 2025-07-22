@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
+import { getPartyBgColorClass } from "@/lib/utils"
 
 interface PioneerInfoCardProps {
   userData: UserData
@@ -132,7 +133,12 @@ export function PioneerInfoCard({
             {userData.name}
             <div className="flex gap-2 ml-2">
               {userData.party > 0 && (
-                <Badge variant="default">{userData.party} отряд</Badge>
+                <Badge 
+                  variant="default" 
+                  className={`${getPartyBgColorClass(userData.party)} text-white border-none`}
+                >
+                  {userData.party} отряд
+                </Badge>
               )}
               {isOwnProfile === false && !userData.is_active && (
                 <Badge variant="neutral" className="bg-red-300">неактивен</Badge>

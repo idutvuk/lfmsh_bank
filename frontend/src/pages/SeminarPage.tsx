@@ -22,6 +22,7 @@ import { Link } from "react-router-dom"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowUpDown } from "lucide-react"
 import type { ColumnDef, Table as ReactTable } from "@tanstack/react-table"
+import { getPartyTextColorClass, getPartyBgColorLightClass } from "@/lib/utils"
 
 interface UserAttendanceItem extends UserListItem {
     isSelected: boolean;
@@ -70,16 +71,33 @@ const attendanceColumns: ColumnDef<UserAttendanceItem, any>[] = [
       </Button>
     ),
     cell: ({ row }: { row: any }) => (
-      <Link to={`/user/${row.original.username}`}>{row.original.party} {row.original.name}</Link>
+      <Link 
+        to={`/user/${row.original.username}`}
+        className={`font-medium ${getPartyTextColorClass(row.original.party)}`}
+      >
+        {row.original.name}
+      </Link>
     ),
   },
-    // todo заменить пагинацию на сортировку по отрядам
-    // todo добавить цвета
-  // {
-  //   accessorKey: "party",
-  //   header: "Отряд",
-  //   cell: ({ row }: { row: any }) => <span>{row.original.party} отряд</span>,
-  // },
+  {
+    accessorKey: "party",
+    header: ({ column }: { column: any }) => (
+      <Button
+        type="button"
+        variant="noShadow"
+        size="sm"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Отряд
+        <ArrowUpDown />
+      </Button>
+    ),
+    cell: ({ row }: { row: any }) => (
+      <span className={`font-medium ${getPartyTextColorClass(row.original.party)}`}>
+        {row.original.party} отряд
+      </span>
+    ),
+  },
 ];
 
 interface SeminarEvaluationForm {
@@ -183,7 +201,8 @@ export default function SeminarPage() {
                     .filter(user => !user.staff)
                     .map(user => ({
                         ...user, 
-                        isSelected: false
+                        isSelected: false,
+                        id: user.id  // Ensure id field exists for DataTable
                     }))
                 
                 setAttendees(filteredUsers)
@@ -597,14 +616,17 @@ export default function SeminarPage() {
                                         filterKey="name"
                                         filterPlaceholder="Найти участника..."
                                         rowSelectionMode="multiple"
-                                        onRowSelectionChange={(selectedUsernames: string[]) => {
+                                        onRowSelectionChange={(selectedIds: number[]) => {
+                                            const selectedUsernames = attendees
+                                                .filter(user => selectedIds.includes(user.id))
+                                                .map(user => user.username);
                                             setSelectedAttendees(selectedUsernames);
                                             setAttendees(prev =>
-                                              prev.map(u => ({
-                                                ...u,
-                                                isSelected: selectedUsernames.includes(u.username)
-                                              }))
-                                            )
+                                                prev.map(u => ({
+                                                    ...u,
+                                                    isSelected: selectedIds.includes(u.id)
+                                                }))
+                                            );
                                         }}
                                         emptyMessage="Пионеры не найдены"
                                     />

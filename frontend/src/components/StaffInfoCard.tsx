@@ -112,9 +112,7 @@ export function StaffInfoCard({ onNavigate, userData, onAvatarChange }: StaffInf
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            {/*todo убрать иконку пользователя и заменить "профиль педсостава" на имя фамилию*/}
-            <User className="h-5 w-5" />
-            Профиль педсостава
+            {userData.name}
           </CardTitle>
 
           {/* Avatar section */}

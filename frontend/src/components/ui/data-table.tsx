@@ -172,7 +172,7 @@ export function DataTable<TData, TValue>({
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
-                  className="bg-secondary-background text-foreground data-[state=selected]:bg-main data-[state=selected]:text-main-foreground"
+                  className="bg-secondary-background text-foreground data-[state=selected]:bg-main/50 data-[state=selected]:text-foreground"
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
@@ -201,25 +201,43 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="text-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          Выбрано {table.getFilteredSelectedRowModel().rows.length} пионеров
         </div>
         <div className="space-x-2">
           <Button
             variant="noShadow"
             size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => table.getColumn("party")?.setFilterValue(1)}
           >
-            Previous
+            1 отряд
           </Button>
           <Button
             variant="noShadow"
             size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => table.getColumn("party")?.setFilterValue(2)}
           >
-            Next
+            2 отряд
+          </Button>
+          <Button
+            variant="noShadow"
+            size="sm"
+            onClick={() => table.getColumn("party")?.setFilterValue(3)}
+          >
+            3 отряд
+          </Button>
+          <Button
+            variant="noShadow"
+            size="sm"
+            onClick={() => table.getColumn("party")?.setFilterValue(4)}
+          >
+            4 отряд
+          </Button>
+          <Button
+            variant="noShadow"
+            size="sm"
+            onClick={() => table.getColumn("party")?.setFilterValue("")}
+          >
+            Все
           </Button>
         </div>
       </div>

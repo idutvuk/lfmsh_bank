@@ -2,12 +2,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Check, X, AlertCircle } from "lucide-react"
 import { getAvatarUrl } from "@/services/api"
+import { getPartyBorderClass } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Link } from "react-router-dom"
 
 // Added currentUser prop to know who is logged in
 type Receiver = {
@@ -31,21 +33,7 @@ type TransactionProps = {
   currentUser: string
 }
 
-// Функция для выбора цвета рамки по номеру party
-const getAvatarBorderClass = (party: number) => {
-  switch (party) {
-    case 1:
-      return "outline outline-2 outline-[var(--lfmsh-1)]";
-    case 2:
-      return "outline outline-2 outline-[var(--lfmsh-2)]";
-    case 3:
-      return "outline outline-2 outline-[var(--lfmsh-3)]";
-    case 4:
-      return "outline outline-2 outline-[var(--lfmsh-4)]";
-    default:
-      return "outline outline-2 outline-black";
-  }
-};
+
 
 export function TransactionItem({
   description,
@@ -136,11 +124,12 @@ export function TransactionItem({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 w-full">
           {/* Левая часть: аватар + автор + получатели */}
           <div className="flex items-start gap-2 sm:gap-4 w-full min-w-0">
-            {/*todo добавить ссылку на профиль по кшлику на аватар*/}
-            {/*todo убрать растяжение (форма прямоугольная и квадратыне картинки растягиваются*/}
-            <Avatar className={`h-15 w-10 min-w-[40px] ${getAvatarBorderClass(authorParty)}`}>
-              <AvatarImage src={getAvatarUrl(author, 'small')} alt={author} />
+            
+            <Avatar className={`h-15 w-10 ${getPartyBorderClass(authorParty)}`} asChild>
+              <Link to={`/user/${author}`}>
+              <AvatarImage src={getAvatarUrl(author, 'small')} className="w-full h-full object-cover"/>
               <AvatarFallback>{author[0]}</AvatarFallback>
+              </Link>
             </Avatar>
             <div className="min-w-0 w-full">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 justify-between w-full min-w-0">

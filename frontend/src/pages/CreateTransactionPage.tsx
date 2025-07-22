@@ -22,6 +22,7 @@ import { Link } from "react-router-dom"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowUpDown } from "lucide-react"
 import type { ColumnDef, Table as ReactTable } from "@tanstack/react-table"
+import { getPartyTextColorClass } from "@/lib/utils"
 
 interface UserTransactionListItem extends UserListItem {
     isSelected: boolean;
@@ -29,7 +30,7 @@ interface UserTransactionListItem extends UserListItem {
 }
 
 type TableMeta = {
-  onAmountChange?: (username: string, value: number) => void;
+  onAmountChange?: (userId: number, value: number) => void;
 };
 
 const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
@@ -69,13 +70,22 @@ const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
       </Button>
     ),
     cell: ({ row }: { row: any }) => (
-      <Link to={`/user/${row.original.username}`}>{row.original.name}</Link>
+      <Link 
+        to={`/user/${row.original.username}`}
+        className={`font-medium ${getPartyTextColorClass(row.original.party)}`}
+      >
+        {row.original.name}
+      </Link>
     ),
   },
   {
     accessorKey: "party",
     header: "Отряд",
-    cell: ({ row }: { row: any }) => <span>{row.original.party} отряд</span>,
+    cell: ({ row }: { row: any }) => (
+      <span className={`font-medium ${getPartyTextColorClass(row.original.party)}`}>
+        {row.original.party} отряд
+      </span>
+    ),
   },
   {
     accessorKey: "balance",
@@ -89,17 +99,20 @@ const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
       row.getIsSelected() ? (
         <Input
           type="number"
-          value={row.original.bucks}
+          value={row.original.bucks || ""}
           onChange={e => {
             const newAmount = Number(e.target.value);
-            (table.options.meta as TableMeta)?.onAmountChange?.(row.original.username, newAmount);
+            (table.options.meta as TableMeta)?.onAmountChange?.(row.original.id, newAmount);
           }}
+          placeholder="0"
           className="w-20 text-right"
         />
       ) : null
     ),
   },
 ];
+
+
 
 export default function CreateTransactionPage() {
     const [loading, setLoading] = useState(true)
@@ -195,7 +208,7 @@ export default function CreateTransactionPage() {
                 type: transactionType,
                 description: description,
                 recipients: selectedUsers.map(user => ({
-                    username: user.username,
+                    id: user.id,
                     amount: isAttendanceType
                         ? 0
                         : user.bucks
@@ -316,17 +329,20 @@ export default function CreateTransactionPage() {
                                         filterKey="name"
                                         filterPlaceholder="Найти жертву..."
                                         rowSelectionMode={transactionType === "p2p" ? "single" : "multiple"}
-                                        onRowSelectionChange={(selectedUsernames: string[]) => {
+                                        onRowSelectionChange={(selectedIds: number[]) => {
+                                            const selectedUsernames = userTransactions
+                                                .filter(user => selectedIds.includes(user.id))
+                                                .map(user => user.username);
                                             setSelectedUsernames(selectedUsernames);
                                             setUserTransactions(prev =>
                                               prev.map(u => ({
                                                 ...u,
-                                                isSelected: selectedUsernames.includes(u.username)
+                                                isSelected: selectedIds.includes(u.id)
                                               }))
                                             )
                                         }}
-                                        onAmountChange={(username: string, newAmount: number) => {
-                                            setUserTransactions(prev => prev.map(u => u.username === username ? { ...u, bucks: newAmount } : u));
+                                        onAmountChange={(userId: number, newAmount: number) => {
+                                            setUserTransactions(prev => prev.map(u => u.id === userId ? { ...u, bucks: newAmount } : u));
                                         }}
                                         emptyMessage={searchQuery ? "Пионеры не найдены" : "Пионеров больше нет. ЛФМШ мертва😭"}
                                         searchQuery={searchQuery}
