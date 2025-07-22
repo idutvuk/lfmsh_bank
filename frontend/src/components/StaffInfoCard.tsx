@@ -112,6 +112,7 @@ export function StaffInfoCard({ onNavigate, userData, onAvatarChange }: StaffInf
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
+            {/*todo убрать иконку пользователя и заменить "профиль педсостава" на имя фамилию*/}
             <User className="h-5 w-5" />
             Профиль педсостава
           </CardTitle>
@@ -185,7 +186,7 @@ export function StaffInfoCard({ onNavigate, userData, onAvatarChange }: StaffInf
         </Button>
 
         <Button 
-          className="h-12 w-full bg-primary hover:bg-primary/90"
+          className="h-12 w-full"
           onClick={() => onNavigate('/seminar')}
         >
           <GraduationCap className="h-5 w-5 mr-2" />

@@ -70,19 +70,16 @@ const attendanceColumns: ColumnDef<UserAttendanceItem, any>[] = [
       </Button>
     ),
     cell: ({ row }: { row: any }) => (
-      <Link to={`/user/${row.original.username}`}>{row.original.name}</Link>
+      <Link to={`/user/${row.original.username}`}>{row.original.party} {row.original.name}</Link>
     ),
   },
-  {
-    accessorKey: "party",
-    header: "Отряд",
-    cell: ({ row }: { row: any }) => <span>{row.original.party} отряд</span>,
-  },
-  {
-    accessorKey: "balance",
-    header: "Баланс",
-    cell: ({ row }: { row: any }) => <span>{row.original.balance}@</span>,
-  },
+    // todo заменить пагинацию на сортировку по отрядам
+    // todo добавить цвета
+  // {
+  //   accessorKey: "party",
+  //   header: "Отряд",
+  //   cell: ({ row }: { row: any }) => <span>{row.original.party} отряд</span>,
+  // },
 ];
 
 interface SeminarEvaluationForm {

@@ -136,6 +136,8 @@ export function TransactionItem({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 w-full">
           {/* Левая часть: аватар + автор + получатели */}
           <div className="flex items-start gap-2 sm:gap-4 w-full min-w-0">
+            {/*todo добавить ссылку на профиль по кшлику на аватар*/}
+            {/*todo убрать растяжение (форма прямоугольная и квадратыне картинки растягиваются*/}
             <Avatar className={`h-15 w-10 min-w-[40px] ${getAvatarBorderClass(authorParty)}`}>
               <AvatarImage src={getAvatarUrl(author, 'small')} alt={author} />
               <AvatarFallback>{author[0]}</AvatarFallback>
