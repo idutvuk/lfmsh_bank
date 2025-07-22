@@ -40,6 +40,23 @@ class UserUpdate(UserBase):
     is_superuser: Optional[bool] = None
 
 
+# Properties for admin user updates - more comprehensive
+class UserAdminUpdate(BaseModel):
+    """Schema for admin user updates - allows updating any user field"""
+    username: Optional[str] = None
+    password: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    party: Optional[int] = None
+    grade: Optional[int] = None
+    bio: Optional[str] = None
+    position: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_staff: Optional[bool] = None
+    is_superuser: Optional[bool] = None
+
+
 # Properties for CSV import
 class UserCSVImport(BaseModel):
     """Schema for CSV import of users"""

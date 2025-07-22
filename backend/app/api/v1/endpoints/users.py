@@ -2,8 +2,9 @@ from typing import List
 import csv
 import io
 from transliterate import translit
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks, Form
 from sqlalchemy.orm import Session
+from loguru import logger
 
 from app.db.session import get_db
 from app.models.user import User
@@ -11,6 +12,7 @@ from app.schemas.user import (
     User as UserSchema,
     UserCreate,
     UserUpdate,
+    UserAdminUpdate,
     UserListItem,
     UserCSVImport,
 )
@@ -182,6 +184,105 @@ def update_user(
     
     db.commit()
     db.refresh(user)
+    return prepare_user_schema(db, user)
+
+
+@router.patch("/{username}", response_model=UserSchema)
+async def admin_update_user(
+    *,
+    db: Session = Depends(get_db),
+    username: str,
+    user_data: str = Form(None),  # JSON string with user data
+    avatar: UploadFile = File(None),  # Optional avatar file
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_superuser),
+):
+    """
+    Admin-only comprehensive user update endpoint.
+    Allows updating any user field and optionally uploading a new avatar.
+    Only accessible to superusers.
+    """
+    # Get target user
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found",
+        )
+
+    # Parse user data if provided
+    user_updates = None
+    if user_data:
+        try:
+            import json
+            user_dict = json.loads(user_data)
+            user_updates = UserAdminUpdate(**user_dict)
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid user data format: {str(e)}",
+            )
+
+    # Update user fields if provided
+    if user_updates:
+        # Check if username is being changed and if it already exists
+        if user_updates.username and user_updates.username != user.username:
+            existing_user = db.query(User).filter(User.username == user_updates.username).first()
+            if existing_user:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Username already exists",
+                )
+            user.username = user_updates.username
+
+        # Update password if provided
+        if user_updates.password:
+            user.hashed_password = get_password_hash(user_updates.password)
+
+        # Update personal information
+        if user_updates.first_name is not None:
+            user.first_name = user_updates.first_name
+        if user_updates.last_name is not None:
+            user.last_name = user_updates.last_name
+        if user_updates.middle_name is not None:
+            user.middle_name = user_updates.middle_name
+
+        # Update school-specific info
+        if user_updates.party is not None:
+            user.party = user_updates.party
+        if user_updates.grade is not None:
+            user.grade = user_updates.grade
+
+        # Update bio and position
+        if user_updates.bio is not None:
+            user.bio = user_updates.bio
+        if user_updates.position is not None:
+            user.position = user_updates.position
+
+        # Update status fields
+        if user_updates.is_active is not None:
+            user.is_active = user_updates.is_active
+        if user_updates.is_staff is not None:
+            user.is_staff = user_updates.is_staff
+        if user_updates.is_superuser is not None:
+            user.is_superuser = user_updates.is_superuser
+
+    # Handle avatar upload if provided
+    if avatar and avatar.filename:
+        # Check file type
+        if not avatar.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=400,
+                detail="Avatar file must be an image",
+            )
+
+        # Upload new avatar
+        await upload_avatar(avatar, user.username, background_tasks)
+    logger.info(f"User {user.username} updated, updated fields: {user_updates}")
+    # Commit changes
+    db.commit()
+    db.refresh(user)
+    
     return prepare_user_schema(db, user)
 
 
