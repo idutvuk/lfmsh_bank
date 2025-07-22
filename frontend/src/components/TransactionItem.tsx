@@ -99,9 +99,9 @@ export function TransactionItem({
       ? "text-teal-600"
       : "text-pink-600"
 
-  // Не показываем получателей, если их только один и это текущий пользователь
+  // Не показываем получателей, если их только один и это текущий пользователь или если получателей больше 3
   const showReceivers =
-    receivers.length > 1 || receivers[0]?.username !== currentUser
+    receivers.length <= 3 && (receivers.length > 1 || receivers[0]?.username !== currentUser)
 
   // Получатели после стрелки
   const renderedReceivers = () => {

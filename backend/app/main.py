@@ -41,7 +41,7 @@ def create_test_users(db):
         return
     test_users = [
         {
-            "username": "bank_manager",
+            "username": "bank",
             "first_name": "Банкир",
             "last_name": "ЛФМШ",
             "is_superuser": True,

@@ -32,7 +32,7 @@ def apply_daily_tax(
     transaction = Transaction.new_transaction(
         creator=current_user,
         transaction_type=TransactionTypeEnum.tax,
-        description=f"Ежедневный налог",
+        description=f"",
         db=db
     )
     
@@ -43,7 +43,7 @@ def apply_daily_tax(
             transaction_id=transaction.id,
             user_id=user.id,
             bucks=-DAILY_TAX_AMOUNT,
-            description=f"Ежедневный налог"
+            description=f""
         )
         db.add(recipient)
         recipients_count += 1
