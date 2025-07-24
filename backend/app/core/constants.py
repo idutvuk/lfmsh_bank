@@ -5,11 +5,11 @@ SIGN_BUCKS = "@"
 SIGN_CERTS = "🕮"
 
 # Academic constants
-SEM_NOT_READ_PEN = 100
+SEM_NOT_READ_PEN = 80
+LAB_PASS_NEEDED_EQUATOR = 1
 LAB_PENALTY = 30
 STEP_OBL_STD = 5
 INITIAL_STEP_OBL_STD = 5
-LAB_PASS_NEEDED_EQUATOR = 1
 OBL_STUDY_NEEDED = 4
 OBL_STUDY_NEEDED_EQUATOR = 2
 FAC_PASS_NEEDED = {8: 0, 9: 1, 10: 1}
@@ -37,25 +37,48 @@ class States(Enum):
 
 class TransactionTypeEnum(Enum):
     p2p = "p2p"
-    fine = "fine"
-    tax = "tax"
-    equatorial_fine = "equatorial_fine"
-    final_fine = "final_fine"
-    activity = "activity"
-    seminar = "seminar"
-    lecture = "lecture"
+
+    # +
+    initial = "initial"
+    staff_help = "staff_help"
+    dining_services = "dining_services"
     table = "table"
+    sem_attend = "sem_attend"
+    workout = "workout" # зарядка
+    general = "general"
+    sport_event = "sport_event"
+    activity = "activity"
+    olympiad = "olympiad"
+    problem = "problem" # убойки
+
+
+    # + study
+    exam = "exam"
+    class_pass= "class_pas"
     fac_attend = "fac_attend"
     fac_pass = "fac_pass"
     lab = "lab"
-    lab_pass = "lab_pass"
     lec_attend = "lec_attend"
-    sem_attend = "sem_attend"
-    workout = "workout"
+    seminar = "seminar"
+
+    # -
     purchase = "purchase"
-    general = "general"
-    ds = "ds"
-    exam = "exam"
+    purchase_book= "purchase_boo"
+    purchase_auction= "purchase_auction"
+
+    fine = "fine"
+    fine_lab= "fine_lab"
+    fine_lecture= "fine_lecture"
+    fine_equatorial= "fine_equatorial"
+    fine_final= "fine_fina"
+
+    fine_schedule= "fine_schedule"
+    fine_damage= "fine_damage"
+    fine_moral= "fine_mora"
+    fine_language= "fine_language"
+    fine_safety = "fine_safety"
+
+    tax = "tax"
 
 
 class AttendanceTypeEnum(Enum):
