@@ -10,7 +10,7 @@ interface CommonOpts {
 // Helper to build fetch options with auth header
 function getCommonOpts(): CommonOpts {
     const token = localStorage.getItem("accessToken");
-    
+
     if (!token) {
         throw new Error("Нет JWT-токена");
     }
@@ -23,14 +23,18 @@ function getCommonOpts(): CommonOpts {
 }
 
 // Authentication function
-export const login = async (username: string, password: string): Promise<{ access_token: string; refresh_token: string; token_type: string }> => {
+export const login = async (username: string, password: string): Promise<{
+    access_token: string;
+    refresh_token: string;
+    token_type: string
+}> => {
     const formData = new URLSearchParams();
     formData.append('username', username);
     formData.append('password', password);
 
     const res = await fetch(`${API_URL}auth/jwt/create/`, {
         method: "POST",
-        headers: { 
+        headers: {
             "Content-Type": "application/x-www-form-urlencoded"
         },
         body: formData,
@@ -60,7 +64,7 @@ async function refreshTokenIfNeeded() {
 
         const res = await fetch(`${API_URL}auth/jwt/refresh/`, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
             body: formData,
         });
 
@@ -87,6 +91,15 @@ export interface Counter {
     max_value: number;
 }
 
+export interface Badge {
+    id: number;
+    name: string;
+    description?: string;
+    image_filename?: string;
+    is_active: boolean;
+}
+
+
 export interface UserData {
     id: number;
     username: string;
@@ -97,6 +110,7 @@ export interface UserData {
     counters: Counter[];
     party: number;
     is_active: boolean;
+    badge?: Badge;
 }
 
 export interface UserListItem {
@@ -106,9 +120,10 @@ export interface UserListItem {
     party: number,
     staff: boolean;
     balance: number;
+    badge?: Badge;
 }
 
-export interface UserTransactionListItem extends UserListItem{
+export interface UserTransactionListItem extends UserListItem {
     isSelected: boolean;
     bucks: number;
 }
@@ -158,7 +173,7 @@ async function request<T>(endpoint: string, opts?: RequestInit): Promise<T> {
         };
 
         const res = await fetch(`${API_URL}${endpoint}`, mergedOpts);
-        
+
         if (res.status === 401) {
             // Token expired, attempt to refresh
             await refreshTokenIfNeeded();
@@ -172,28 +187,28 @@ async function request<T>(endpoint: string, opts?: RequestInit): Promise<T> {
                 },
             };
             const newRes = await fetch(`${API_URL}${endpoint}`, newMergedOpts);
-            
+
             if (!newRes.ok) {
                 throw new Error(`API error ${endpoint}: ${newRes.status}`);
             }
             return newRes.json();
         }
-        
+
         if (!res.ok) {
             throw new Error(`API error ${endpoint}: ${res.status}`);
         }
-        
+
         return res.json();
     } catch (error) {
         console.error(`Error in API request to ${endpoint}:`, error);
-        
+
         // If we have auth errors that weren't resolved by refresh, redirect to login
         if (error instanceof Error && error.message.includes("JWT")) {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             window.location.href = "/login";
         }
-        
+
         throw error;
     }
 }
@@ -202,7 +217,7 @@ async function request<T>(endpoint: string, opts?: RequestInit): Promise<T> {
 async function uploadFile(endpoint: string, file: File): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     try {
         const commonOpts = getCommonOpts();
         const opts = {
@@ -213,9 +228,9 @@ async function uploadFile(endpoint: string, file: File): Promise<any> {
             },
             body: formData,
         };
-        
+
         const res = await fetch(`${API_URL}${endpoint}`, opts);
-        
+
         if (res.status === 401) {
             // Token expired, attempt to refresh
             await refreshTokenIfNeeded();
@@ -229,17 +244,17 @@ async function uploadFile(endpoint: string, file: File): Promise<any> {
                 body: formData,
             };
             const newRes = await fetch(`${API_URL}${endpoint}`, newUploadOpts);
-            
+
             if (!newRes.ok) {
                 throw new Error(`API error ${endpoint}: ${newRes.status}`);
             }
             return newRes.json();
         }
-        
+
         if (!res.ok) {
             throw new Error(`API error ${endpoint}: ${res.status}`);
         }
-        
+
         return res.json();
     } catch (error) {
         console.error(`Error in API request to ${endpoint}:`, error);
@@ -260,7 +275,7 @@ export const importUsersFromImages = (files: File[]): Promise<any> => {
     files.forEach(file => {
         formData.append('files', file);
     });
-    
+
     const commonOpts = getCommonOpts();
     return fetch(`${API_URL}users/import-images`, {
         method: 'POST',
@@ -273,21 +288,42 @@ export const importUsersFromImages = (files: File[]): Promise<any> => {
             throw new Error(`API error users/import-images: ${response.status}`);
         }
         return response.json();
-    });
-};
+    })
+}
+
+
+export const getBadges = async (): Promise<Badge[]> => {
+    const res = await fetch(`${API_URL}badges/`, getCommonOpts());
+
+    if (!res.ok) {
+        throw new Error(`Ошибка загрузки плашек: ${res.status}`);
+    }
+
+    return res.json();
+}
+
+export const getBadge = async (id: number): Promise<Badge> => {
+    const res = await fetch(`${API_URL}badges/${id}`, getCommonOpts());
+
+    if (!res.ok) {
+        throw new Error(`Ошибка загрузки плашки: ${res.status}`);
+    }
+
+    return res.json();
+}
 
 // Avatar management - simplified to use username-based approach
-export const uploadAvatar = (username: string, file: File): Promise<UserData> => 
+export const uploadAvatar = (username: string, file: File): Promise<UserData> =>
     uploadFile(`users/${username}/avatar`, file);
 export const deleteAvatar = (username: string): Promise<UserData> =>
     request<UserData>(`users/${username}/avatar`, {
         method: "DELETE"
     });
-export const adminSetUserAvatar = (username: string, file: File): Promise<UserData> => 
+export const adminSetUserAvatar = (username: string, file: File): Promise<UserData> =>
     uploadFile(`users/admin/set-avatar/${username}`, file);
 
 // Helper function to get avatar URL by username and size
-export const getAvatarUrl = (username: string, size: string = 'medium'): string => 
+export const getAvatarUrl = (username: string, size: string = 'medium'): string =>
     `/media/avatars/${username}${size === 'original' ? '' : '_' + size}.png`;
 
 // Transaction management
@@ -356,3 +392,92 @@ export const createSeminar = async (data: SeminarCreate): Promise<any> => {
 export const getSeminars = (): Promise<Seminar[]> => request<Seminar[]>("seminars/");
 
 export const getSeminarById = (id: number): Promise<Seminar> => request<Seminar>(`seminars/${id}/`);
+
+
+
+// Helper function to get badge image URL
+export const getBadgeImageUrl = (badgeId: number, size: 'small' | 'medium' | 'large' | 'original' = 'medium'): string => {
+    const baseUrl = import.meta.env.VITE_PUBLIC_API_URL || "/api/v1/";
+    const mediaUrl = baseUrl.replace('/api/v1/', '/media/');
+    
+    if (size === 'original') {
+        return `${mediaUrl}badges/badge_${badgeId}.png`;
+    }
+    return `${mediaUrl}badges/badge_${badgeId}_${size}.png`;
+};
+
+// Admin badge management functions
+export const createBadge = async (badgeData: Omit<Badge, 'id' | 'is_active' | 'image_filename'>): Promise<Badge> => {
+    const res = await fetch(`${API_URL}badges/`, {
+        ...getCommonOpts(),
+        method: "POST",
+        body: JSON.stringify(badgeData),
+    });
+
+    if (!res.ok) {
+        throw new Error(`Ошибка создания плашки: ${res.status}`);
+    }
+
+    return res.json();
+}
+
+export const updateBadge = async (id: number, badgeData: Partial<Omit<Badge, 'id'>>): Promise<Badge> => {
+    const res = await fetch(`${API_URL}badges/${id}`, {
+        ...getCommonOpts(),
+        method: "PUT",
+        body: JSON.stringify(badgeData),
+    });
+
+    if (!res.ok) {
+        throw new Error(`Ошибка обновления плашки: ${res.status}`);
+    }
+
+    return res.json();
+}
+
+export const deleteBadge = async (id: number): Promise<void> => {
+    const res = await fetch(`${API_URL}badges/${id}`, {
+        ...getCommonOpts(),
+        method: "DELETE",
+    });
+
+    if (!res.ok) {
+        throw new Error(`Ошибка удаления плашки: ${res.status}`);
+    }
+}
+
+export const getAllBadgesAdmin = async (): Promise<Badge[]> => {
+    const res = await fetch(`${API_URL}badges/all`, getCommonOpts());
+
+    if (!res.ok) {
+        throw new Error(`Ошибка загрузки всех плашек: ${res.status}`);
+    }
+
+    return res.json();
+}
+
+export const assignBadgeToUser = async (badgeId: number, userId: number): Promise<{message: string, user_id: number, badge_id: number}> => {
+    const res = await fetch(`${API_URL}badges/${badgeId}/assign/${userId}`, {
+        ...getCommonOpts(),
+        method: "PATCH",
+    });
+
+    if (!res.ok) {
+        throw new Error(`Ошибка назначения плашки: ${res.status}`);
+    }
+
+    return res.json();
+}
+
+export const unassignBadgeFromUser = async (userId: number): Promise<{message: string, user_id: number}> => {
+    const res = await fetch(`${API_URL}badges/unassign/${userId}`, {
+        ...getCommonOpts(),
+        method: "PATCH",
+    });
+
+    if (!res.ok) {
+        throw new Error(`Ошибка удаления плашки у пользователя: ${res.status}`);
+    }
+
+    return res.json();
+}

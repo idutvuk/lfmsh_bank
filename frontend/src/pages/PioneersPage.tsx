@@ -1,12 +1,13 @@
 "use client"
 import { useEffect, useState } from "react"
 import { getUsers, getAvatarUrl, type UserListItem } from "../services/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Background } from "@/components/Background"
 import { Navbar } from "@/components/Navbar"
 import { Loading } from "@/components/loading"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useNavigate } from "react-router-dom";
+import { UserName } from "@/components/UserName";
 
 export default function PioneersPage() {
   const [users, setUsers] = useState<UserListItem[]>([]);
@@ -82,7 +83,11 @@ export default function PioneersPage() {
                 </Avatar>
                 <div className="flex-1 space-y-2">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold">{user.name} (@{user.username})</h3>
+                    <UserName 
+                      user={user}
+                      showPartyColor={true}
+                    />
+                    <div className="text-sm text-muted-foreground">@{user.username}</div>
                   </div>
                   <div className="space-y-1">
                     <div className="text-sm text-muted-foreground">{user.party} отряд</div>

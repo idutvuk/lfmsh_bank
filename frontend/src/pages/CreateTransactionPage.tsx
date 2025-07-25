@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowUpDown } from "lucide-react"
 import type { ColumnDef, Table as ReactTable } from "@tanstack/react-table"
 import { getPartyTextColorClass } from "@/lib/utils"
+import { UserName } from "@/components/UserName"
 
 interface UserTransactionListItem extends UserListItem {
     isSelected: boolean;
@@ -70,12 +71,10 @@ const userColumns: ColumnDef<UserTransactionListItem, any>[] = [
       </Button>
     ),
     cell: ({ row }: { row: any }) => (
-      <Link 
-        to={`/user/${row.original.username}`}
-        className={`font-medium ${getPartyTextColorClass(row.original.party)}`}
-      >
-        {row.original.name}
-      </Link>
+      <UserName
+        user={row.original}
+        showPartyColor={true}
+      />
     ),
   },
   {

@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
 import { getPartyBgColorClass } from "@/lib/utils"
+import { UserName } from "./UserName"
 
 interface PioneerInfoCardProps {
   userData: UserData
@@ -129,8 +130,11 @@ export function PioneerInfoCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            {userData.name}
+            <UserName
+              user={userData}
+              showPartyColor={true}
+              badgeSize="large"
+            />
             <div className="flex gap-2 ml-2">
               {userData.party > 0 && (
                 <Badge 

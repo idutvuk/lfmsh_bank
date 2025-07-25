@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, String, Integer, Float, DateTime
+from sqlalchemy import Boolean, Column, String, Integer, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -45,6 +45,10 @@ class User(Base):
     # New fields
     bio = Column(String(1024), default="", nullable=True)  # Биография
     position = Column(String(256), default="", nullable=True)  # Должность
+    badge_id = Column(Integer, ForeignKey("badges.id"), nullable=True)  # Плашка пользователя
+    
+    # Badge relationship
+    badge = relationship("Badge", lazy="select")
     
     # Count attendance by type
     def get_counter(self, counter_name, db):

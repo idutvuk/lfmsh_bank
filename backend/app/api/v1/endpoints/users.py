@@ -422,6 +422,7 @@ def prepare_user_schema(db: Session, user: User) -> UserSchema:
         "expected_penalty": expected_penalty,
         "counters": counters,
         "avatar": None,  # Add avatar implementation later
+        "badge": user.badge.full_info_as_dict() if user.badge else None,
     }
 
     return UserSchema(**user_dict)
@@ -438,6 +439,7 @@ def prepare_user_list_item(user: User) -> UserListItem:
         party=user.party,
         staff=user.is_staff,
         balance=user.balance,
+        badge=user.badge.full_info_as_dict() if user.badge else None,
     )
 
 

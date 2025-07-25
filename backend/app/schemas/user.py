@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
+from .badge import Badge
 
 
 class CounterSchema(BaseModel):
@@ -52,6 +53,7 @@ class UserAdminUpdate(BaseModel):
     grade: Optional[int] = None
     bio: Optional[str] = None
     position: Optional[str] = None
+    badge_id: Optional[int] = None
     is_active: Optional[bool] = None
     is_staff: Optional[bool] = None
     is_superuser: Optional[bool] = None
@@ -95,6 +97,7 @@ class User(UserInDBBase):
     staff: bool = False
     expected_penalty: float = 0
     counters: List[CounterSchema] = []
+    badge: Optional[Badge] = None
 
     class Config:
         from_attributes = True
@@ -108,6 +111,7 @@ class UserListItem(BaseModel):
     party: int
     staff: bool
     balance: float
+    badge: Optional[Badge] = None
 
     model_config = ConfigDict(from_attributes=True)
 
