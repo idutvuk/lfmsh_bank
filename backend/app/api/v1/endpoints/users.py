@@ -181,7 +181,11 @@ def update_user(
         user.is_superuser = user_in.is_superuser
     if user_in.is_staff is not None and current_user.is_superuser:
         user.is_staff = user_in.is_staff
-    
+    if user_in.bio is not None:
+        user.bio = user_in.bio
+    if user_in.position is not None:
+        user.position = user_in.position
+
     db.commit()
     db.refresh(user)
     return prepare_user_schema(db, user)

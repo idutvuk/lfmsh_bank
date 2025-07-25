@@ -88,11 +88,13 @@ export function UserName({
                     type="button"
                     title={user.badge.name}
                 >
-                    <Avatar className={`${badgeSizeClasses[getSizeKey(badgeSize)]} border-0`}>
+                    {/*badge*/}
+                    <Avatar className={`${badgeSizeClasses[getSizeKey(badgeSize)]} outline-0`}>
                         {user.badge.image_filename ? (
                             <AvatarImage
                                 src={getBadgeUrl(user.badge.id, badgeSize)}
                                 alt={user.badge.name}
+                                className="object-contain bg-transparent border-0 border-none"
                                 onError={(e) => {
                                     const target = e.currentTarget as HTMLImageElement;
                                     target.style.display = 'none';
@@ -115,11 +117,12 @@ export function UserName({
                     <AlertDialogContent className="text-center">
                         <AlertDialogHeader className="items-center">
                             <div className="flex justify-center mb-4">
-                                <Avatar className="w-16 h-16 flex-shrink-0 border-0">
+                                <Avatar className="w-16 h-16 flex-shrink-0">
                                     {user.badge.image_filename ? (
                                         <AvatarImage
                                             src={getBadgeUrl(user.badge.id, 'large')}
                                             alt={user.badge.name}
+                                            className="object-contain bg-transparent"
                                             onError={(e) => {
                                                 const target = e.currentTarget as HTMLImageElement;
                                                 target.style.display = 'none';

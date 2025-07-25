@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, Wallet, AlertTriangle, Send, Plus, Minus, Upload, X } from "lucide-react"
+import { User, Wallet, AlertTriangle, Send, Plus, Minus, Upload, X, Edit, Check } from "lucide-react"
 import { type UserData, uploadAvatar, deleteAvatar, getAvatarUrl } from "@/services/api"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -8,6 +8,7 @@ import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
 import { getPartyBgColorClass } from "@/lib/utils"
 import { UserName } from "./UserName"
+import { Textarea } from "@/components/ui/textarea"
 
 interface PioneerInfoCardProps {
   userData: UserData
@@ -19,8 +20,8 @@ interface PioneerInfoCardProps {
   onAvatarChange?: (userData: UserData) => void
 }
 
-export function PioneerInfoCard({ 
-  userData, 
+export function PioneerInfoCard({
+  userData,
   onNavigate,
   isOwnProfile = false,
   isStaffViewing = false,
@@ -33,11 +34,13 @@ export function PioneerInfoCard({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [hasAvatar, setHasAvatar] = useState<boolean>(false)
+  const [editingBio, setEditingBio] = useState(false)
+  const [bio, setBio] = useState(userData.bio || "")
 
   // Check if avatar exists
   const checkAvatar = () => {
     if (!userData.username) return
-    
+
     // Create a temporary image element to check if avatar exists
     const img = new Image()
     img.onload = () => setHasAvatar(true)
@@ -48,7 +51,8 @@ export function PioneerInfoCard({
   // Check for avatar on component mount and when username changes
   useEffect(() => {
     checkAvatar()
-  }, [userData.username])
+    setBio(userData.bio || "")
+  }, [userData.username, userData.bio])
 
   // Handler for avatar upload button click
   const handleAvatarUploadClick = () => {
@@ -77,7 +81,7 @@ export function PioneerInfoCard({
       await uploadAvatar(userData.username, file)
       toast.success('Аватар успешно обновлен')
       setHasAvatar(true)
-      
+
       // Update user data in parent component if needed
       if (onAvatarChange) {
         onAvatarChange(userData)
@@ -103,7 +107,7 @@ export function PioneerInfoCard({
       await deleteAvatar(userData.username)
       toast.success('Аватар удален')
       setHasAvatar(false)
-      
+
       // Update user data in parent component if needed
       if (onAvatarChange) {
         onAvatarChange(userData)
@@ -113,6 +117,50 @@ export function PioneerInfoCard({
       console.error('Avatar deletion error:', error)
     } finally {
       setIsUploading(false)
+    }
+  }
+
+  // Handler for bio edit toggle
+  const handleEditBioClick = () => {
+    setEditingBio(!editingBio)
+    if (!editingBio) {
+      // If starting to edit, set bio to current value
+      setBio(userData.bio || "")
+    }
+  }
+
+  // Handler for bio save
+  const handleSaveBio = async () => {
+    try {
+      // API call to update user bio
+      const response = await fetch(`/api/v1/users/${userData.username}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({
+          username: userData.username,
+          bio: bio
+        })
+      })
+
+      if (response.ok) {
+        const updatedUser = await response.json()
+        toast.success('Биография обновлена')
+
+        // Update user data in parent component if needed
+        if (onAvatarChange) {
+          onAvatarChange({...userData, bio})
+        }
+
+        setEditingBio(false)
+      } else {
+        toast.error('Не удалось обновить биографию')
+      }
+    } catch (error) {
+      toast.error('Ошибка при обновлении биографии')
+      console.error('Bio update error:', error)
     }
   }
 
@@ -137,8 +185,8 @@ export function PioneerInfoCard({
             />
             <div className="flex gap-2 ml-2">
               {userData.party > 0 && (
-                <Badge 
-                  variant="default" 
+                <Badge
+                  variant="default"
                   className={`${getPartyBgColorClass(userData.party)} text-white border-none`}
                 >
                   {userData.party} отряд
@@ -157,10 +205,10 @@ export function PioneerInfoCard({
           <div className="relative">
             <div className="border-2 border-primary overflow-hidden rounded-md">
               {hasAvatar ? (
-                <img 
-                  src={getAvatarUrl(userData.username, 'large')} 
+                <img
+                  src={getAvatarUrl(userData.username, 'large')}
                   alt={userData.name}
-                  className="h-24 w-24 object-cover" 
+                  className="h-24 w-24 object-cover"
                 />
               ) : (
                 <div className="h-24 w-24 flex items-center justify-center bg-secondary-background text-foreground font-base">
@@ -168,11 +216,11 @@ export function PioneerInfoCard({
                 </div>
               )}
             </div>
-            
+
             {/* Avatar controls - only show if it's the user's own profile */}
             {isOwnProfile && userData.staff && (
               <div className="absolute -bottom-2 -right-2 flex gap-1">
-                <Button 
+                <Button
                   size="icon"
                   className="h-7 w-7 rounded-full bg-background"
                   onClick={handleAvatarUploadClick}
@@ -180,9 +228,9 @@ export function PioneerInfoCard({
                 >
                   <Upload className="h-4 w-4" />
                 </Button>
-                
+
                 {hasAvatar && (
-                  <Button 
+                  <Button
                     size="icon"
                     className="h-7 w-7 rounded-full bg-background text-destructive"
                     onClick={handleDeleteAvatar}
@@ -191,8 +239,8 @@ export function PioneerInfoCard({
                     <X className="h-4 w-4" />
                   </Button>
                 )}
-                
-                <input 
+
+                <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden"
@@ -205,6 +253,58 @@ export function PioneerInfoCard({
         </div>
       </CardHeader>
       <CardContent>
+        {/* Bio section */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-medium text-muted-foreground">О себе</h3>
+            {isOwnProfile && (
+              <Button
+                variant="text"
+                size="sm"
+                className="h-6 px-2"
+                onClick={handleEditBioClick}
+              >
+                {editingBio ? <Check className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+              </Button>
+            )}
+          </div>
+
+          {editingBio ? (
+            <div className="space-y-2">
+              <Textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Расскажите о себе..."
+                className="min-h-[100px] resize-none"
+                maxLength={1000}
+              />
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setEditingBio(false)
+                    setBio(userData.bio || "")
+                  }}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSaveBio}
+                >
+                  Сохранить
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm whitespace-pre-wrap">
+              {userData.bio || (isOwnProfile ? "Добавьте информацию о себе..." : "Нет информации")}
+            </p>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
           <Card variant="clean" className="bg-[#1e99a0]/10">
             <CardContent className="flex items-center gap-3 p-3">
@@ -227,6 +327,7 @@ export function PioneerInfoCard({
               </CardContent>
             </Card>
           )}
+
         </div>
 
         {showCreateTransaction && (

@@ -111,6 +111,7 @@ export interface UserData {
     party: number;
     is_active: boolean;
     badge?: Badge;
+    bio?: string;
 }
 
 export interface UserListItem {

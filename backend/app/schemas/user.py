@@ -39,6 +39,8 @@ class UserUpdate(UserBase):
     grade: Optional[int] = None
     is_staff: Optional[bool] = None
     is_superuser: Optional[bool] = None
+    bio: Optional[str] = None
+    position: Optional[str] = None
 
 
 # Properties for admin user updates - more comprehensive
