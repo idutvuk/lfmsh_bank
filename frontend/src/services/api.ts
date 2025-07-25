@@ -112,6 +112,7 @@ export interface UserData {
     is_active: boolean;
     badge?: Badge;
     bio?: string;
+    position?: string;
 }
 
 export interface UserListItem {

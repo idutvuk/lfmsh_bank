@@ -28,6 +28,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Set maximum upload file size to 10MB
+app.max_upload_size = 100 * 1024 * 1024  # 100 MB
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to LFMSH Bank API"}
