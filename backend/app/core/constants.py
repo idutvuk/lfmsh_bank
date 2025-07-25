@@ -57,6 +57,7 @@ class TransactionTypeEnum(Enum):
     class_pass= "class_pas"
     fac_attend = "fac_attend"
     fac_pass = "fac_pass"
+    lab_pass = "lab_pass" # wtf fixme remove it
     lab = "lab"
     lec_attend = "lec_attend"
     seminar = "seminar"

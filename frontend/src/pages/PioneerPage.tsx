@@ -94,6 +94,7 @@ export default function PioneerPage() {
         <TransactionsCard 
           transactions={transactions} 
           isStaff={userData.staff} 
+          currentUser={userData.username}
         />
         <AttendanceCard userData={userData} />
       </div>

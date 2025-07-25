@@ -63,6 +63,15 @@ export default function App() {
         />
 
         <Route
+          path="/create-transaction"
+          element={
+            <PrivateRoute>
+              <CreateTransactionPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
           path="/user/:username"
           element={
             <PrivateRoute>

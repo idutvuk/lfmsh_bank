@@ -143,6 +143,7 @@ export interface TransactionCreate {
         id: number;
         amount: number;
     }>;
+    update_of?: number; // For replacing transactions
 }
 
 async function request<T>(endpoint: string, opts?: RequestInit): Promise<T> {
@@ -306,6 +307,9 @@ export const declineTransaction = (id: number): Promise<Transaction> =>
     request<Transaction>(`transactions/${id}/decline`, {
         method: "POST"
     });
+
+export const getTransactionById = (id: number): Promise<Transaction> =>
+    request<Transaction>(`transactions/${id}`);
 
 // Seminar interfaces and functions
 export interface SeminarEvaluation {

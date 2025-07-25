@@ -182,7 +182,7 @@ def create_transaction_frontend(
             transaction_type=transaction_type,
             description=description or "",
             recipients=recipients,
-            update_of=None,
+            update_of=transaction_data.get("update_of"),
             db=db
         )
         
@@ -190,6 +190,21 @@ def create_transaction_frontend(
         if current_user.is_staff or current_user.is_superuser:
             logger.info(f"Auto-processing transaction {transaction.id} for staff user {current_user.username}")
             transaction.process(db)
+        
+        # If this is an update transaction, decline/substitute the original
+        update_of_id = transaction_data.get("update_of")
+        if update_of_id:
+            original_transaction = db.query(Transaction).filter(Transaction.id == update_of_id).first()
+            if original_transaction:
+                # If transaction is processed, substitute it; if created, decline it
+                if original_transaction.state.value == "processed":
+                    logger.info(f"Substituting processed transaction {update_of_id} with new transaction {transaction.id}")
+                    original_transaction.substitute(db)
+                elif original_transaction.state.value == "created":
+                    logger.info(f"Declining created transaction {update_of_id} and creating replacement {transaction.id}")
+                    original_transaction.decline(db)
+                else:
+                    logger.warning(f"Cannot replace transaction {update_of_id} in state {original_transaction.state.value}")
         
         logger.info(f"Successfully created transaction with ID: {transaction.id}")
         return format_transaction_for_frontend(transaction, db)

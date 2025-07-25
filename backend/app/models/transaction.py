@@ -193,6 +193,17 @@ class Transaction(Base):
         try:
             if self.can_be_transitioned_to(States.processed, db):
                 if not self._is_counted():
+                    # For p2p transactions, check sender balance and deduct money
+                    if self.type == TransactionTypeEnum.p2p:
+                        total_amount = self._get_total_amount(db)
+                        if self.creator.balance < total_amount:
+                            raise ValueError(f"Insufficient balance. Required: {total_amount}, Available: {self.creator.balance}")
+                        
+                        # Deduct money from sender
+                        self.creator.balance -= total_amount
+                        db.add(self.creator)
+                    
+                    # Apply all recipients
                     for atomic in self.get_all_atomics(db):
                         atomic.apply()
 
@@ -228,12 +239,24 @@ class Transaction(Base):
     def _undo(self, db: Session):
         """Undo the effects of the transaction"""
         if self._is_counted():
+            # For p2p transactions, return money to sender
+            if self.type == TransactionTypeEnum.p2p:
+                total_amount = self._get_total_amount(db)
+                self.creator.balance += total_amount
+                db.add(self.creator)
+            
+            # Undo all recipients
             for atomic in self.get_all_atomics(db):
                 atomic.undo()
 
     def _is_counted(self):
         """Check if transaction is counted based on state"""
         return self.state in [States.processed]
+    
+    def _get_total_amount(self, db: Session):
+        """Calculate total amount of money in this transaction"""
+        recipients = self.get_all_atomics(db)
+        return sum(recipient.bucks for recipient in recipients)
 
     def get_all_atomics(self, db: Session):
         """Get all atomic transactions (recipients) related to this transaction"""

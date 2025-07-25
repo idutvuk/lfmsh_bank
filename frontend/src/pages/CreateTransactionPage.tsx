@@ -13,7 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import {Search, X} from "lucide-react"
-import {getUsers, type UserListItem, createTransaction, getMe} from "@/services/api"
+import {getUsers, type UserListItem, createTransaction, getMe, getTransactionById} from "@/services/api"
 import {Navbar} from "@/components/Navbar"
 import {Loading} from "@/components/loading"
 import {useNavigate, useSearchParams} from "react-router-dom"
@@ -136,6 +136,8 @@ export default function CreateTransactionPage() {
 
     const typeParam = searchParams.get('type')
     const recipientParam = searchParams.get('recipient')
+    const editParam = searchParams.get('edit')
+    const duplicateParam = searchParams.get('duplicate')
 
     useEffect(() => {
         const fetchData = async () => {
@@ -179,6 +181,37 @@ export default function CreateTransactionPage() {
                         }))
                     )
                 }
+
+                // Load transaction data for editing or duplicating
+                if (editParam || duplicateParam) {
+                    const transactionId = parseInt(editParam || duplicateParam || '0')
+                    if (transactionId) {
+                        try {
+                            const transactionData = await getTransactionById(transactionId)
+                            
+                            // Set form data from transaction
+                            setTransactionType(transactionData.type)
+                            setDescription(transactionData.description)
+                            
+                            // Set recipients data
+                            setUserTransactions(prev => 
+                                prev.map(user => {
+                                    const receiverData = transactionData.receivers.find(r => r.username === user.username)
+                                    if (receiverData) {
+                                        return {
+                                            ...user,
+                                            isSelected: true,
+                                            bucks: receiverData.bucks
+                                        }
+                                    }
+                                    return user
+                                })
+                            )
+                        } catch (error) {
+                            console.error("Error loading transaction data:", error)
+                        }
+                    }
+                }
             } catch (err) {
                 console.error("Error fetching data:", err)
             } finally {
@@ -187,7 +220,7 @@ export default function CreateTransactionPage() {
         }
 
         fetchData()
-    }, [typeParam, recipientParam])
+    }, [typeParam, recipientParam, editParam, duplicateParam])
 
     // Reset selection when transaction type changes
     // useEffect(() => {
@@ -210,6 +243,14 @@ export default function CreateTransactionPage() {
 
             // For attendance transaction types, the amount should be 0
             const isAttendanceType = ["fac_attend", "lec_attend", "sem_attend", "lab_pass"].includes(transactionType)
+            
+            // Check balance for p2p transactions
+            if (hasInsufficientBalance()) {
+                const totalAmount = getTotalTransactionAmount()
+                alert(`Недостаточно средств для перевода. Необходимо: ${totalAmount}@, доступно: ${currentUser.balance}@`)
+                setSubmitting(false)
+                return
+            }
 
             const transactionData = {
                 type: transactionType,
@@ -219,7 +260,9 @@ export default function CreateTransactionPage() {
                     amount: isAttendanceType
                         ? 0
                         : user.bucks
-                }))
+                })),
+                // Add update_of for transaction replacement
+                ...(editParam && { update_of: parseInt(editParam) })
             }
 
             await createTransaction(transactionData)
@@ -250,12 +293,31 @@ export default function CreateTransactionPage() {
     // Show transaction type selector only for staff users
     const showTransactionTypeSelector = currentUser?.staff
 
+    // Helper function to calculate total transaction amount
+    const getTotalTransactionAmount = () => {
+        return userTransactions
+            .filter(user => user.isSelected)
+            .reduce((sum, user) => sum + (user.bucks || 0), 0)
+    }
+
+    // Check if user has sufficient balance for p2p transaction
+    const hasInsufficientBalance = () => {
+        return transactionType === "p2p" && currentUser && getTotalTransactionAmount() > currentUser.balance
+    }
+
+    // Determine page title based on mode
+    const getPageTitle = () => {
+        if (editParam) return "Редактирование транзакции"
+        if (duplicateParam) return "Дублирование транзакции"
+        return "Создание перевода"
+    }
+
     return (
         <Background>
             {/* Header */}
             <Navbar
                 showBackButton={true}
-                title="Создание перевода"
+                title={getPageTitle()}
             />
 
             <div className="max-w-4xl mx-auto px-4 py-6">
@@ -301,6 +363,24 @@ export default function CreateTransactionPage() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="amount">Сумма</Label>
+                                    {/* Show balance info for p2p transactions */}
+                                    {transactionType === "p2p" && currentUser && (
+                                        <div className="text-sm text-gray-600 mb-2">
+                                            Ваш баланс: <span className="font-semibold">{currentUser.balance}@</span>
+                                            {(() => {
+                                                const totalAmount = getTotalTransactionAmount()
+                                                if (totalAmount > 0) {
+                                                    const remaining = currentUser.balance - totalAmount
+                                                    return (
+                                                        <span className={`ml-2 ${remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                                            | Сумма перевода: {totalAmount}@ | Остаток: {remaining}@
+                                                        </span>
+                                                    )
+                                                }
+                                                return null
+                                            })()}
+                                        </div>
+                                    )}
                                     <Input
                                         id="amount"
                                         type="number"
@@ -308,6 +388,7 @@ export default function CreateTransactionPage() {
                                         value={amount}
                                         onChange={(e) => onAmountChanged(e)}
                                         required
+                                        className={hasInsufficientBalance() ? "border-red-500" : ""}
                                     />
                                 </div>
                             </CardContent>
@@ -315,7 +396,14 @@ export default function CreateTransactionPage() {
                         <div className="flex justify-center">
                             <Button
                                 type="submit"
-                                disabled={submitting || !description || !transactionType || amount === 0 || selectedUsernames.length === 0}
+                                disabled={
+                                    submitting || 
+                                    !description || 
+                                    !transactionType || 
+                                    amount === 0 || 
+                                    selectedUsernames.length === 0 ||
+                                    hasInsufficientBalance()
+                                }
                             >
                                 {submitting ? "Создание..." : "Создать перевод"}
                             </Button>

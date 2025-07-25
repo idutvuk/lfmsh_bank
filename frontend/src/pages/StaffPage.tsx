@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { getMe, getTransactions, getStatistics, type UserData, type Statistics, type Transaction } from "../services/api"
+import { getMe, getTransactions, getStatistics, declineTransaction, processTransaction, type UserData, type Statistics, type Transaction } from "../services/api"
 import { Background } from "@/components/Background"
 import { Navbar } from "@/components/Navbar"
 import { Loading } from "@/components/loading"
@@ -50,6 +50,43 @@ export default function StaffPage() {
     setUserData(updatedUser)
   }
 
+  // Handle transaction actions
+  const handleTransactionCancel = async (transactionId: number) => {
+    try {
+      await declineTransaction(transactionId)
+      // Refresh transactions list
+      const updatedTransactions = await getTransactions()
+      setTransactions(updatedTransactions)
+    } catch (error) {
+      console.error("Error cancelling transaction:", error)
+      // TODO: Show error toast
+    }
+  }
+
+  const handleTransactionEdit = async (transactionId: number) => {
+    // TODO: Navigate to edit transaction page
+    console.log("Edit transaction", transactionId)
+    navigate(`/create-transaction?edit=${transactionId}`)
+  }
+
+  const handleTransactionDuplicate = async (transactionId: number) => {
+    // TODO: Navigate to create transaction page with prefilled data
+    console.log("Duplicate transaction", transactionId)
+    navigate(`/create-transaction?duplicate=${transactionId}`)
+  }
+
+  const handleTransactionApprove = async (transactionId: number) => {
+    try {
+      await processTransaction(transactionId)
+      // Refresh transactions list
+      const updatedTransactions = await getTransactions()
+      setTransactions(updatedTransactions)
+    } catch (error) {
+      console.error("Error approving transaction:", error)
+      // TODO: Show error toast
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
@@ -92,7 +129,12 @@ export default function StaffPage() {
 
         <TransactionsCard 
           transactions={transactions} 
-          isStaff={userData.staff} 
+          isStaff={userData.staff}
+          currentUser={userData.username}
+          onTransactionCancel={handleTransactionCancel}
+          onTransactionEdit={handleTransactionEdit}
+          onTransactionDuplicate={handleTransactionDuplicate}
+          onTransactionApprove={handleTransactionApprove}
         />
       </div>
     </Background>
